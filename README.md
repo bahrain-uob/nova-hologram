@@ -109,7 +109,7 @@ npm audit fix --force
 
 #### 🚀 Deploy the CDK application
 
-```cdk deploy```
+```cdk deploy --all```
 
 #### ⚠️ Notes
 
