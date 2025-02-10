@@ -102,6 +102,9 @@ npm install web-vitals
 ```
 npm audit fix --force
 ```
+```
+npm run build
+```
 
 #### 🔙 Return to the root directory
 
