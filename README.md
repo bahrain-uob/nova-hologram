@@ -29,7 +29,7 @@ IGA-Tawasul-MVP/
 
 ### **Project Structure Breakdown:**
 
-### 1. **Frontend (`frontend/`)**
+##### 1. **Frontend (`frontend/`)**
 
 The `frontend/` directory contains the React app that is built and hosted on S3. When you run `npm run build`, it generates a production-ready build inside the `frontend/build/` folder.
 
@@ -40,21 +40,21 @@ The `frontend/` directory contains the React app that is built and hosted on S3.
 - **README.md**: Contains documentation specific to your React frontend, describing setup, usage, and other relevant details.
 - **build/**: The output folder where your production build is stored. These static files are later uploaded to an S3 bucket for hosting.
 
-### 2. **Lambda Functions / API Gateway (`lambda/`)**
+##### 2. **Lambda Functions / API Gateway (`lambda/`)**
 
 The `lambda/` directory contains the Lambda function code, which is part of your backend. In your case, the `index.js` file contains a simple "Hello, World!" function, but this will likely be expanded to serve as the backend for your React app.
 
 - **index.js**: This is where your Lambda function is defined. It currently includes a simple "Hello, World!" function that can be extended to perform more complex tasks like interacting with a database or handling API requests.
 - **package.json**: Manages any Node.js dependencies specific to your Lambda functions.
 
-### 3. **CDK Infrastructure (`bin/` and `lib/`)**
+##### 3. **CDK Infrastructure (`bin/` and `lib/`)**
 
 The `bin/` and `lib/` directories are where your AWS Cloud Development Kit (CDK) application lives.
 
 - **bin/**: The entry point for your CDK app, typically a file like `my-cdk-app.ts`. This file defines which stack is to be deployed.
 - **lib/**: Contains the CDK stack, where you define the resources (S3, API Gateway, Lambda) that will be deployed to AWS. In your case, `my-cdk-app-stack.ts` is where the CDK resources such as the S3 bucket, API Gateway, and Lambda function are defined.
 
-### 4. **CDK Configuration (`cdk.json`, `package.json`, `tsconfig.json`)**
+##### 4. **CDK Configuration (`cdk.json`, `package.json`, `tsconfig.json`)**
 
 These files handle the configuration and dependencies for your CDK setup.
 
