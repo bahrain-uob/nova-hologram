@@ -5,7 +5,7 @@ function App() {
 
   useEffect(() => {
     // Replace YOUR_API_GATEWAY_URL with the actual API Gateway URL
-    fetch("https://4k4367ikcc.execute-api.us-east-1.amazonaws.com/prod/")
+    fetch("https://48uhf1p39d.execute-api.us-east-1.amazonaws.com/prod/")
       .then((res) => res.json())
       .then((data) => setMessage(data.message))
       .catch((err) => console.error("Error fetching data:", err));
@@ -14,7 +14,7 @@ function App() {
   return (
     <div>
       <h1>Welcome to Tawasul.bh</h1>
-      <p>Message from the Backend: {message}</p>
+      <p>Message from the Backend system: {message}</p>
     </div>
   );
 }
