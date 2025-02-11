@@ -135,7 +135,7 @@ Ensure you are authenticated with AWS before running cdk deploy.
 
 If you encounter permission errors, check your AWS IAM roles or NCSC boundaries/policies.
 
-  **After successful initial deployement:**
+  **After successful initial deployment:**
   1. Copy your API Endpoint URL from your API stack deployment outputs
   2. Go to ```frontend > src > app.js```
   3. Modify the fetch statement in line 8 with your own API endpoint
