@@ -81,23 +81,33 @@ Clone this repository into your local environment.
 
 #### 📌 Install AWS CDK globally
 
-```npm install -g aws-cdk```
+```
+npm install -g aws-cdk
+```
 
 #### 📌 Install AWS CDK library
 
-```npm install aws-cdk-lib```
+```
+npm install aws-cdk-lib
+```
 
 #### 🛠 Fix any security vulnerabilities
 
-```npm audit fix```
+```
+npm audit fix
+```
 
 #### 📂 Navigate to the frontend directory
 
-```cd frontend```
+```
+cd frontend
+```
 
 #### 📌 Install frontend dependencies
 ```
 npm install
+```
+```
 npm install web-vitals
 ```
 ```
@@ -109,11 +119,15 @@ npm run build
 
 #### 🔙 Return to the root directory
 
-```cd ..```
+```
+cd ..
+```
 
 #### 🚀 Deploy the CDK application
 
-```cdk deploy --all```
+```
+cdk deploy --all
+```
 
 #### ⚠️ Notes
 
