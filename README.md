@@ -40,7 +40,7 @@ The `frontend/` directory contains the React app that is built and hosted on S3.
 - **README.md**: Contains documentation specific to your React frontend, describing setup, usage, and other relevant details.
 - **build/**: The output folder where your production build is stored. These static files are later uploaded to an S3 bucket for hosting.
 
-##### 2. **Lambda Functions / API Gateway (`lambda/`)**
+##### 2. **Lambda Functions (`lambda/`)**
 
 The `lambda/` directory contains the Lambda function code, which is part of your backend. In your case, the `index.js` file contains a simple "Hello, World!" function, but this will likely be expanded to serve as the backend for your React app.
 
