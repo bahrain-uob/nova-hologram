@@ -138,7 +138,7 @@ If you encounter permission errors, check your AWS IAM roles or NCSC boundaries/
   **After successful initial deployment:**
   1. Copy your API Endpoint URL from your API stack deployment outputs
   2. Go to ```frontend > src > app.js```
-  3. Modify the fetch statement in line 8 with your own API endpoint
+  3. Replace YOUR_API_GATEWAY_URL, line 8 with your own API endpoint
   4. Build the React App:```npm run build```
   6. Sync the Build Files to S3:```aws s3 sync build/ s3://your-bucket-name --delete```
   7. **if needed** Invalidate CloudFront Cache:```aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"```
