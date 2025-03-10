@@ -9,7 +9,7 @@ exports.insertCase = async (event) => {
   const complaintText = event.complaintText;
 
   const params = {
-    TableName: 'TawasulCaseHistory',
+    TableName: '[ChallengeName]CaseHistory',
     Item: {
       caseID: caseID,
       submissionDate: submissionDate,

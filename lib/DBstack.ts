@@ -9,7 +9,7 @@ export class DBStack extends cdk.Stack {
     super(scope, id, props);
 
     // Create DynamoDB Table for cases
-    this.casesTable = new dynamodb.Table(this, "TawasulCaseHistory", {
+    this.casesTable = new dynamodb.Table(this, "[ChallengeName]CaseHistory", {
       partitionKey: { name: "caseID", type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY, // Ensure table is deleted during stack removal
     });

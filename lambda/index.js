@@ -7,7 +7,7 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",  // Allow methods
         "Access-Control-Allow-Headers": "Content-Type", // Allow specific headers
       },
-      body: JSON.stringify({ message: "Hello IGA team!" }),
+      body: JSON.stringify({ message: "Hello CIC team!" }),
     };
   };
   

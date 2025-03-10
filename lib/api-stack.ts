@@ -50,8 +50,8 @@ export class APIStack extends cdk.Stack {
     dbStack.casesTable.grantReadWriteData(insertSampleCaseLambda);
 
     // Create the API Gateway
-    const api = new apigateway.RestApi(this, "TawasulApi", {
-      restApiName: "Tawasul Service",
+    const api = new apigateway.RestApi(this, "[ChallengeName]Api", {
+      restApiName: "[ChallengeName] Service",
     });
 
     // Resource for '/cases' to insert new case

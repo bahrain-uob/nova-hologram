@@ -1,10 +1,10 @@
-# IGA Innovation Hub - Tawasul MVP
+# CIC Innovation Center - [ChallengeName] MVP
 
 ### 📁 **Project Structure**
 
 ```
 
-IGA-Tawasul-MVP/
+CIC-[ChallengeName]-MVP/
 │── frontend/                # React app (S3-hosted website)
 │   ├── public/
 │   ├── src/
