@@ -1,4 +1,4 @@
-# CIC Innovation Center - [ChallengeName] MVP
+# CIC Innovation Center - [ChallengeName] PoC
 
 ### 📁 **Project Structure**
 
