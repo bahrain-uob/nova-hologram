@@ -4,7 +4,7 @@
 
 ```
 
-CIC-[ChallengeName]-MVP/
+CIC-[ChallengeName]-PoC/
 │── frontend/                # React app (S3-hosted website)
 │   ├── public/
 │   ├── src/
