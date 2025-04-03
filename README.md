@@ -12,6 +12,8 @@ CIC-[ChallengeName]-PoC/
 │   ├── .gitignore
 │   ├── README.md
 │   ├── build/               # React build output (deployed to S3)
+│── docs/                    # Documentation folder
+│   ├── 01-deployment-architecture.md # Deployment architecture overview
 │── lambda/                  # Lambda function code
 │   ├── index.js             # Simple "Hello, World!" function
 │   ├── package.json
