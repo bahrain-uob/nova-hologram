@@ -1,75 +1,101 @@
 import * as cdk from "aws-cdk-lib";
-import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { DBStack } from "./DBstack"; // Import DBStack
+import * as s3 from "aws-cdk-lib/aws-s3";
+import { MyCdkStack } from "./my-cdk-app-stack";
+import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import { RemovalPolicy } from "aws-cdk-lib";
 
 export class APIStack extends cdk.Stack {
+  public readonly ReadingMaterials: s3.Bucket;
   constructor(scope: cdk.App, id: string, dbStack: DBStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Lambda function to insert sample cases into DynamoDB
-    const insertSampleCaseLambda = new lambda.Function(this, "InsertSampleCaseLambda", {
+    const api = new apigatewayv2.HttpApi(this, 'ApiGateway', {
+      corsPreflight: { allowOrigins: ['*'] },
+    });
+    new cdk.CfnOutput(this, 'S3-Lambda-POST', {
+      value: api.url!,
+      description: 'API Gateway endpoint between Lambda and S3 for POST requests',
+    });
+
+
+    const WritetoReadingMaterialS3 = new lambda.Function(this, 'WritetoReadingMaterials', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: "insertSampleCase.handler",  // Ensure this points to the correct handler
-      code: lambda.Code.fromAsset("lambda"),
-      environment: {
-        CASES_TABLE_NAME: dbStack.casesTable.tableName, // Pass table name as environment variable
-      },
+      code: lambda.Code.fromAsset('Lambda/index.js'), // directory with index.js
+      handler: 'index.handler',
     });
 
-    // Lambda function to insert new case into DynamoDB
-    const insertCaseLambda = new lambda.Function(this, "InsertCaseLambda", {
+    const ReadingMaterials = new s3.Bucket(this, "ReadingMaterials", {
+      websiteIndexDocument: "index.html",
+      websiteErrorDocument: "error.html",
+      removalPolicy: RemovalPolicy.DESTROY,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,  // Block public access to the bucket
+    });
+    //Write Lambda Function to S3 bucket
+    ReadingMaterials.grantWrite(WritetoReadingMaterialS3);
+    WritetoReadingMaterialS3.addEnvironment("READING_BUCKET", ReadingMaterials.bucketName);
+
+    api.addRoutes({
+      path: '/upload',
+      methods: [apigatewayv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        'UploadIntegration',
+        WritetoReadingMaterialS3
+      ),
+    });
+
+
+    // Create a Lambda function to read from DynamoDB
+    const r = new apigatewayv2.HttpApi(this, 'ApiGateway', {
+      corsPreflight: { allowOrigins: ['*'] },
+    });
+    new cdk.CfnOutput(this, 'S3-Lambda-POST', {
+      value: api.url!,
+      description: 'API Gateway endpoint between Lambda and S3 for POST requests',
+    });
+
+        // Lambda to READ from ReadingMaterials bucket
+    const ReadFromReadingMaterialS3 = new lambda.Function(this, 'ReadFromReadingMaterials', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: "insertCase.handler",
-      code: lambda.Code.fromAsset("lambda"),
-      environment: {
-        CASES_TABLE_NAME: dbStack.casesTable.tableName,
-      },
+      code: lambda.Code.fromAsset('Lambda/read.js'), // adjust path as needed
+      handler: 'read.handler',
     });
+    ReadingMaterials.grantRead(ReadFromReadingMaterialS3); // Grant read access
+    ReadFromReadingMaterialS3.addEnvironment("READING_BUCKET", ReadingMaterials.bucketName);
 
-    // Lambda function to get all cases from DynamoDB
-    const getCasesLambda = new lambda.Function(this, "GetCasesLambda", {
+    // Lambda to DELETE from ReadingMaterials bucket
+    const DeleteFromReadingMaterialS3 = new lambda.Function(this, 'DeleteFromReadingMaterials', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: "getCases.handler",
-      code: lambda.Code.fromAsset("lambda"),
-      environment: {
-        CASES_TABLE_NAME: dbStack.casesTable.tableName,
-      },
+      code: lambda.Code.fromAsset('Lambda/delete.js'), // adjust path as needed
+      handler: 'delete.handler',
     });
+    ReadingMaterials.grantDelete(DeleteFromReadingMaterialS3); // Grant delete access
+    DeleteFromReadingMaterialS3.addEnvironment("READING_BUCKET", ReadingMaterials.bucketName);
 
-    // Lambda function for Hello World
-    const helloLambda = new lambda.Function(this, "HelloLambda", {
+    const readingMaterialsQueue = new sqs.Queue(this, 'ReadingMaterialsQueue');
+    
+    ReadingMaterials.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.SqsDestination(readingMaterialsQueue)
+    );
+
+    const textExtractionLambda = new lambda.Function(this, 'TextExtractionLambda', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: "index.handler",
-      code: lambda.Code.fromAsset("lambda"),
+      code: lambda.Code.fromAsset('Lambda/text-extract.js'),
+      handler: 'text-extract.handler',
     });
 
-    // Grant permissions for Lambda functions to interact with DynamoDB
-    dbStack.casesTable.grantReadWriteData(insertCaseLambda);
-    dbStack.casesTable.grantReadData(getCasesLambda);
-    dbStack.casesTable.grantReadWriteData(insertSampleCaseLambda);
+    textExtractionLambda.addEventSource(
+      new lambdaEventSources.SqsEventSource(readingMaterialsQueue)
+    );
 
-    // Create the API Gateway
-    const api = new apigateway.RestApi(this, "[ChallengeName]Api", {
-      restApiName: "[ChallengeName] Service",
-    });
 
-    // Resource for '/cases' to insert new case
-    const cases = api.root.addResource("cases");
-    cases.addMethod("POST", new apigateway.LambdaIntegration(insertCaseLambda)); // POST /cases
-    cases.addMethod("GET", new apigateway.LambdaIntegration(getCasesLambda));   // GET /cases
-
-    // Resource for '/cases/sample' to insert sample cases
-    const sampleCases = cases.addResource("sample");
-    sampleCases.addMethod("POST", new apigateway.LambdaIntegration(insertSampleCaseLambda));  // POST /cases/sample
-
-    // Resource for '/hello'
-    const hello = api.root.addResource("hello");
-    hello.addMethod("GET", new apigateway.LambdaIntegration(helloLambda));  // GET /hello
-
-    // Outputs for both APIs
-    new cdk.CfnOutput(this, "ApiEndpoint", {
-      value: api.url,  // Combined API URL
-    });
   }
 }
