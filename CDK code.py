@@ -1,7 +1,7 @@
 import boto3
 import json
 
-bedrock_runtime = boto3.clinet('bedrock_runtime' , region_name='us-east-1')
+bedrock_runtime = boto3.client('bedrock_runtime' , region_name='us-east-1')
 
 prompt="Describe the purpose of a hello world program in one line."
 
