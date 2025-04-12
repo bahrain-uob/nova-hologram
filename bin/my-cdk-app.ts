@@ -11,7 +11,12 @@ const dbStack = new DBStack(app, "DBStack", {
 });
 
 // Create the APIStack, passing in the DBStack as a dependency
-new APIStack(app, "APIStack", dbStack); // Pass the DBStack as the second argument
+// Pass the DBStack as the second argument along with required additional arguments
+
+const myCdkStack = new MyCdkStack(app, "MyCdkStack", dbStack,);
+new MyCdkStack(app, "MyCdkAppStack",dbStack);
+
+new APIStack(app, "APIStack", dbStack);
 
 // Optionally, you can create your other stacks here if needed
-new MyCdkStack(app, "MyCdkAppStack");
+
