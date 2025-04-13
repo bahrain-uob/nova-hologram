@@ -22,14 +22,13 @@ kwagrgs= {
         "content": [
         {
             "type": "text",
-            "text": "hello world"
+            "text": prompt
         }
         ]
         }
         ]
         } )
 }
-
 
 response =bedrock_runtime.invoke_model(**kwagrgs)
 body = json. loads (response ['body']. read ( ))
