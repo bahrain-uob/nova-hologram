@@ -10,6 +10,7 @@ import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import { RemovalPolicy } from "aws-cdk-lib";
 import { DBStack } from "./DBstack"; // Import DBStack
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 
 
@@ -160,8 +161,24 @@ export class MyCdkStack extends cdk.Stack {
     dbStack.extractedTextTable.grantWriteData(saveExtractedTextLambda); //this permission will allow lambda function to write the extracted text to the DynamoDB table
     saveExtractedTextLambda.addEventSource(new lambdaEventSources.SqsEventSource(extractedTextQueue)); //
 
-    
 
+    
+    //BedRock Lambda function
+    const BedRockFunction = new lambda.Function(this, 'MyBedrockFunction', {
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('lambda/Bedrock'),
+      timeout: cdk.Duration.seconds(30), // ⏱ Set a longer timeout here
+      memorySize: 1024,                  // (Optional) More memory can help reduce latency
+    });
+    
+    BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'bedrock:InvokeModel',
+        'bedrock:InvokeModelWithResponseStream'
+      ],
+      resources: ['*'], // or limit to specific model ARN
+    }));
 
     
 
