@@ -5,15 +5,27 @@ import "./Login.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
 import { FaArrowLeftLong } from "react-icons/fa6";
+// import Amplify, { Auth } from "aws-amplify";
+// import awsConfig from "./aws-exports";
 
-function Login({ onBackToHome }) {
+// Amplify.configure(awsConfig);
+
+function Login({ onBackToHome, onLoginSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    // try {
+    //   const user = await Auth.signIn(email, password);
+    //   console.log("Login successful:", user);
+    //   onLoginSuccess(); // Call the success callback
+    // } catch (err) {
+    //   console.error("Login failed:", err);
+    //   setError("Invalid email or password. Please try again.");
+    // }
     console.log("Login attempt with:", { email, password });
-    //login logic here
   };
 
   return (
