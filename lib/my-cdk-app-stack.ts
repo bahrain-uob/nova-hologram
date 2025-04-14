@@ -10,6 +10,7 @@ import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import { RemovalPolicy } from "aws-cdk-lib";
 import { DBStack } from "./DBstack"; // Import DBStack
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import { Distribution, OriginAccessIdentity } from 'aws-cdk-lib/aws-cloudfront';
 
 
 
