@@ -163,22 +163,56 @@ export class MyCdkStack extends cdk.Stack {
 
 
     
-    //BedRock Lambda function
+    const GenVideos = new s3.Bucket(this, "GenVideos", {
+      websiteIndexDocument: "index.html",
+      websiteErrorDocument: "error.html",
+      removalPolicy: RemovalPolicy.DESTROY,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    });
+
+    
     const BedRockFunction = new lambda.Function(this, 'MyBedrockFunction', {
       runtime: lambda.Runtime.PYTHON_3_12,
-      handler: 'index.handler',
+      handler: 'index.lambda_handler',  // Match the Python handler
       code: lambda.Code.fromAsset('lambda/Bedrock'),
-      timeout: cdk.Duration.seconds(30), // ⏱ Set a longer timeout here
-      memorySize: 1024,                  // (Optional) More memory can help reduce latency
+      timeout: cdk.Duration.seconds(900),  // Increase to 15 minutes
+      memorySize: 2048,
+      environment: {
+        VIDEO_BUCKET: GenVideos.bucketName,  // Used in Python code
+      }
     });
     
-    BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: [
-        'bedrock:InvokeModel',
-        'bedrock:InvokeModelWithResponseStream'
-      ],
-      resources: ['*'], // or limit to specific model ARN
-    }));
+// Update the addToRolePolicy statement
+BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
+  actions: [
+    'bedrock:InvokeModel',
+    'bedrock:StartAsyncInvoke',  
+    'bedrock:GetAsyncInvoke',    
+    's3:PutObject',
+    's3:GetObject',
+    's3:ListBucket'
+  ],
+  resources: [
+    'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-reel-v1*',
+    'arn:aws:bedrock:us-east-1:672461264983:async-invoke/*',  
+    GenVideos.bucketArn,
+    `${GenVideos.bucketArn}/*`
+  ]
+}));
+
+    
+    GenVideos.grantReadWrite(BedRockFunction);
+    
+    new cdk.CfnOutput(this, "GenVideosBucketURI", {
+      value: `s3://${GenVideos.bucketName}/upload/`,
+      description: "S3 URI where generated videos will be stored by the Nova Reel Lambda"
+    });
+    
+    
+    
+    
+
+    
 
     
 

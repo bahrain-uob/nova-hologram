@@ -1,25 +1,65 @@
-import json
 import boto3
+import random
+import time
 
-# Initialize Bedrock client
-bedrock_client = boto3.client(
-    service_name="bedrock-runtime",
-    region_name="us-east-1"
-)
+# Replace with your own S3 bucket to store the generated video
+# Format: s3://your-bucket-name
+OUTPUT_S3_URI = "s3://mycdkstack-genvideosb3836295-xaimbyezl0dl/upload/"
 
-# Claude 3.5 Sonnet model ID
-modelID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+def start_text_to_video_generation_job(bedrock_runtime, prompt, output_s3_uri):
+    """
+    Starts an asynchronous text-to-video generation job using Amazon Nova Reel.
 
-def handler(event, context):
-    freeform_text = event.get("freeform_text", "")
+    :param bedrock_runtime: The Bedrock runtime client
+    :param prompt: The text description of the video to generate
+    :param output_s3_uri: S3 URI where the generated video will be stored
 
-    if not freeform_text:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "Missing 'freeform_text' in request."})
-        }
+    :return: The invocation ARN of the async job
+    """
+    model_id = "amazon.nova-reel-v1:1"
+    seed = random.randint(0, 2147483646)
 
-    prompt = f"""
+    model_input = {
+        "taskType": "MULTI_SHOT_AUTOMATED",
+        "multiShotAutomatedParams": {
+            "text": prompt
+        },
+        "videoGenerationConfig": {
+            "fps": 24,
+            "durationSeconds": 60,
+            "dimension": "1280x720",
+            "seed": seed,
+        },
+    }
+
+    output_config = {"s3OutputDataConfig": {"s3Uri": output_s3_uri}}
+
+    response = bedrock_runtime.start_async_invoke(
+        modelId=model_id, modelInput=model_input, outputDataConfig=output_config
+    )
+
+    return response["invocationArn"]
+
+def query_job_status(bedrock_runtime, invocation_arn):
+    """
+    Queries the status of an asynchronous video generation job.
+
+    :param bedrock_runtime: The Bedrock runtime client
+    :param invocation_arn: The ARN of the async invocation to check
+
+    :return: The runtime response containing the job status and details
+    """
+    return bedrock_runtime.get_async_invoke(invocationArn=invocation_arn)
+
+def lambda_handler(event, context):
+    """
+    Lambda entry point function.
+    Starts the video generation job and polls for its status.
+    """
+    bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+    # Base prompt template for educational holographic scenes
+    base_prompt = """
 You are an AI that transforms story content into immersive holographic scene descriptions for an educational reading platform.
 
 Generate a rich, multi-sensory scene description from this input text. Include:
@@ -27,44 +67,37 @@ Generate a rich, multi-sensory scene description from this input text. Include:
 - Main characters or objects (description, motion)
 - Sounds or ambient noise
 - Suggested narration with emphasis for pronunciation practice
+    """
 
-Text:
-\"{freeform_text}\"
-"""
+    # Story content provided by the user/event
+    input_text = event.get("prompt", "")
+    prompt = f"{base_prompt.strip()}\n\nInput Text:\n{input_text}"
 
-    try:
-        response = bedrock_client.invoke_model(
-            modelId=modelID,
-            contentType="application/json",
-            accept="application/json",
-            body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",  # ✅ Required field
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "max_tokens": 2000,
-                "temperature": 0.9
-            })
-        )
+    # Start video generation job
+    invocation_arn = start_text_to_video_generation_job(
+        bedrock_runtime, prompt, OUTPUT_S3_URI
+    )
+    print(f"Job started with invocation ARN: {invocation_arn}")
 
-        # Parse response
-        response_body = response['body'].read().decode('utf-8')
-        response_data = json.loads(response_body)
+    # Poll job status until it completes or fails
+    while True:
+        print("\nPolling job status...")
+        job = query_job_status(bedrock_runtime, invocation_arn)
+        status = job["status"]
 
-        generated_output = response_data['content'][0]['text'] if 'content' in response_data else "No content returned."
-
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "generated_scene": generated_output
-            })
-        }
-
-    except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        if status == "Completed":
+            bucket_uri = job["outputDataConfig"]["s3OutputDataConfig"]["s3Uri"]
+            print(f"\nSuccess! The video is available at: {bucket_uri}/output.mp4")
+            return {
+                "status": "Success",
+                "videoUri": f"{bucket_uri}/output.mp4"
+            }
+        elif status == "Failed":
+            print(f"\nVideo generation failed: {job.get('failureMessage', 'Unknown error')}")
+            return {
+                "status": "Failed",
+                "message": job.get("failureMessage", "Unknown error")
+            }
+        else:
+            print("In progress. Waiting 15 seconds...")
+            time.sleep(15)
