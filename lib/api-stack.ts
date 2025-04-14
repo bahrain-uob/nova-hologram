@@ -49,9 +49,15 @@ export class APIStack extends cdk.Stack {
     dbStack.casesTable.grantReadData(getCasesLambda);
     dbStack.casesTable.grantReadWriteData(insertSampleCaseLambda);
 
-    // Create the API Gateway
+    // Create the API Gateway with CORS enabled
     const api = new apigateway.RestApi(this, "[ChallengeName]Api", {
       restApiName: "[ChallengeName] Service",
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key'],
+        allowCredentials: true,
+      },
     });
 
     // Resource for '/cases' to insert new case
@@ -73,3 +79,4 @@ export class APIStack extends cdk.Stack {
     });
   }
 }
+
