@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Login";
+import Signup from "./Signup";
 import Dashboard from "./Dashboard";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const [authMode, setAuthMode] = useState("none"); // none, login, signup
   const [showDashboard, setShowDashboard] = useState(false);
   const [message, setMessage] = useState("");
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,16 +40,29 @@ function App() {
     fetchData();
   }, []);
 
-  // if (isLoggedIn || showDashboard) {
-  //   return <Dashboard />;
-  // }
-
-  if (showLogin) {
-    return <Login onBackToHome={() => setShowLogin(false)} onLoginSuccess={() => setIsLoggedIn(true)} />;
+  if (isLoggedIn || showDashboard) {
+    return <Dashboard userData={userData} />;
   }
 
-  if (showDashboard) {
-    return <Dashboard />;
+  if (authMode === "login") {
+    return (
+      <Login 
+        onBackToHome={() => setAuthMode("none")} 
+        onLoginSuccess={(user) => {
+          setIsLoggedIn(true);
+          setUserData(user);
+        }}
+        onSignupClick={() => setAuthMode("signup")}
+      />
+    );
+  }
+
+  if (authMode === "signup") {
+    return (
+      <Signup 
+        onBackToLogin={() => setAuthMode("login")}
+      />
+    );
   }
 
   return (
@@ -66,12 +81,20 @@ function App() {
             <div>
               <h1>Welcome to [ChallengeName].bh</h1>
               <p>Message from the Backend system: {message}</p>
-              <button className="login-button" onClick={() => setShowLogin(true)}>
-                Go to Login
-              </button>
-              <button className="login-button" onClick={() => setShowDashboard(true)}>
-                Go to Dashboard
-              </button>
+              <div className="button-container">
+                <button
+                  className="cta-button"
+                  onClick={() => setAuthMode("login")}
+                >
+                  Login
+                </button>
+                <button
+                  className="cta-button"
+                  onClick={() => setAuthMode("signup")}
+                >
+                  Sign Up
+                </button>
+              </div>
             </div>
           }
         />

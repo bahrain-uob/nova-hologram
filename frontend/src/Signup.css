@@ -12,11 +12,9 @@
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 65px;
-  padding-left: 100px;
-  padding-right: 100px;
+  padding: 65px 40px;
   width: 100%;
-  max-width: 450px;
+  max-width: 550px;
 }
 
 .logo {
@@ -27,10 +25,20 @@
 }
 
 .circle {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background-color: #5a5cff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.circle img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 h1 {
@@ -80,14 +88,14 @@ label {
   font-size: 14px;
   color: #333;
   margin-bottom: 8px;
-  width: 70%;
+  width: 100%;
 }
 
 .input-container {
   position: relative;
   display: flex;
   align-items: center;
-  width: 70%;
+  width: 100%;
 }
 
 .input-icon {
@@ -95,6 +103,28 @@ label {
   left: 12px;
   color: #999;
   font-size: 14px;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 14px;
+  width: 100%;
+}
+
+.verification-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.verification-form .form-group {
+  width: 100%;
 }
 
 input[type="text"],
@@ -118,7 +148,7 @@ input::placeholder {
 }
 
 .signup-button {
-  width: 70%;
+  width: 100%;
   padding: 12px;
   background-color: #2563eb;
   color: white;
@@ -140,7 +170,7 @@ input::placeholder {
 }
 
 .form-footer {
-  width: 70%;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   font-size: 14px;
