@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import "./Signup.css";
 import { IoIosLock } from "react-icons/io";
@@ -166,8 +164,11 @@ function Signup({ onBackToLogin }) {
           </button>
 
           <div className="form-footer">
-            <a href="#" onClick={onBackToLogin} className="back-to-login">
-              ← Back to Login
+            <a href="#" className="guest-link">
+              Enter as a Guest
+            </a>
+            <a href="#" className="login-link" onClick={onBackToLogin}>
+              ← Go to Login
             </a>
           </div>
         </form>
