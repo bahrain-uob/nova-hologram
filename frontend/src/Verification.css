@@ -1,0 +1,131 @@
+.verification-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f5f5f7;
+}
+
+.verification-card {
+  position: relative;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 65px;
+  padding-left: 100px;
+  padding-right: 100px;
+  width: 100%;
+  max-width: 450px;
+}
+
+.logo {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  margin-bottom: 0;
+}
+
+.circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #5a5cff;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.verification-subtitle {
+  margin-left: 68px;
+  text-align: left;
+  color: #666;
+  font-size: 14px;
+  width: 70%;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+  width: 70%;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 70%;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: #5a5cff;
+}
+
+input::placeholder {
+  color: #aaa;
+}
+
+.verify-button {
+  width: 70%;
+  padding: 12px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  transition: background-color 0.3s;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.verify-button:hover {
+  background-color: #1d4ed8;
+}
+
+.form-footer-verification {
+  width: 70%;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.back-to-signup {
+  color: #666;
+  text-decoration: none;
+}
+
+.back-to-signup:hover {
+  color: #2563eb;
+}
