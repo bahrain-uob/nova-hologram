@@ -5,12 +5,10 @@ function App() {
 
   useEffect(() => {
     // Replace YOUR_API_GATEWAY_URL with the actual API Gateway URL
-    fetch("https://dn8qsiexp5.execute-api.us-east-1.amazonaws.com/upload"),
-      {
-        method: "GET",
-      }
+    fetch("https://dn8qsiexp5.execute-api.us-east-1.amazonaws.com/upload", {
+      method: "GET",
+    })
       .then((res) => res.json())
-      .then((data) => setMessage(data.message))
       .then((data) => setMessage(data.message))
       .catch((err) => console.error("Error fetching data:", err));
   }, []);

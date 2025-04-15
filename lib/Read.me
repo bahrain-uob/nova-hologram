@@ -1,0 +1,41 @@
+Hey This is Me Sayed Hadi Almusawi
+
+
+This is the Documentation for CDK and how i and you will use it.
+
+1. The Architecture Photo is in the folder with the name : Nova-Hologram-Page-6.drawio.png
+
+First you have to add whatever stack you are making to the bin folder
+    For example if i wanted to add a stack in ./lib directory 
+    1. I would create a ts file (for example : testing.ts)
+
+    2. After that i would take the inital cdk stack code and add it:
+    import * as cdk from "aws-cdk-lib";
+    export class <Name of Class> extends cdk.Stack {
+
+        constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+            super(scope, id, props);
+        }
+    }
+
+    3. after that go to the bin folder and import the file you just did like this --> import { DBStack } from "../lib/DB/db-stack"; (but ofcourse change it to your file/class  name and location)
+
+    4. create a const for the stack in bin --> const apiStack = new APIStack(app, "APIStack", dbStack, lambdaStack); (add whatever dependencies you'll need but make sure to include them in step 2 parameters) --> example: since we have APISTACK and it has a dependency on dbstack and lambdaStack we just add them (you'd have to import dbstack and lambdaStack to apiStack too)
+    import * as cdk from "aws-cdk-lib";
+    export class <Name of Class> extends cdk.Stack {
+
+        constructor(scope: Construct, id: string, dbStack: DBStack , lambdastack: lambdastack,  props?: cdk.StackProps) {
+            super(scope, id, props);
+        }
+    }
+
+    5. It is important to make some tables/buckets/functions public to other classes so these are the steps (i'll be using an example from the real code):
+        a. first initialize above the constructor a line that goes like this --> public readonly extractedTextTable: dynamodb.Table;   (<<<this is in dbstack>>>>>)
+        b. then go to the class you want to import the table/bucket/function and import in this case dbstack like this --> import { DBStack } from "../DB/db-stack"; // Import DBStack
+        c. then if you want to use it in the new class just to this --> dbStack.extractedTextTable 
+        
+    6.
+
+    7. If you want to understand the Architecture cdk code (AKA resources initialisation + permissions + connection between resource and other) go through the comments above and inside each function/line (<<<inside the lib folder>>>)
+
+
