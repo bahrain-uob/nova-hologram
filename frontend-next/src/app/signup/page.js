@@ -1,34 +1,84 @@
-"use client";
+"use client"
 
 import { useState } from "react";
-import Link from "next/link";
+import "./signup.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
+import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaUser } from "react-icons/fa";
-import "./signup.css";
+import { CognitoUserAttribute, CognitoUser } from "amazon-cognito-identity-js";
+import { userPool } from "src/aws-config";
 
-export default function Signup() {
+function Signup({ onBackToLogin }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userType, setUserType] = useState("reader");
+  const [error, setError] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isConfirming, setIsConfirming] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Signup attempt with:", {
-      fullName,
-      email,
-      password,
-      userType,
-    });
-    // Signup logic here
+    setError("");
+
+    try {
+      const attributeList = [
+        new CognitoUserAttribute({
+          Name: 'name',
+          Value: fullName
+        }),
+        new CognitoUserAttribute({
+          Name: 'custom:userType',
+          Value: userType
+        })
+      ];
+
+      userPool.signUp(email, password, attributeList, null, (err, result) => {
+        if (err) {
+          console.error('Error signing up:', err);
+          setError(err.message || 'An error occurred during signup');
+          return;
+        }
+        console.log('Sign up successful:', result);
+        setIsConfirming(true);
+      });
+    } catch (err) {
+      console.error('Error in signup process:', err);
+      setError(err.message || 'An error occurred during signup');
+    }
+  };
+
+  const handleVerification = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const cognitoUser = new CognitoUser({
+        Username: email,
+        Pool: userPool
+      });
+
+      cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
+        if (err) {
+          console.error('Error confirming sign up:', err);
+          setError(err.message || 'Error confirming verification code');
+          return;
+        }
+        console.log('Verification successful');
+        onBackToLogin(); // Redirect to login after successful verification
+      });
+    } catch (err) {
+      console.error('Error in verification process:', err);
+      setError(err.message || 'Error confirming verification code');
+    }
   };
 
   return (
     <div className="signup-container">
       <div className="signup-card">
         <div className="logo">
-          <div className="circle"></div>
+          <img src="/logo.svg" alt="Logo" />
         </div>
 
         <div className="user-type-selector">
@@ -40,7 +90,7 @@ export default function Signup() {
               checked={userType === "reader"}
               onChange={() => setUserType("reader")}
             />
-            <span className="radio-text">I&apos;m a Reader</span>
+            <span className="radio-text">I'm a Reader</span>
           </label>
           <label className="radio-label">
             <input
@@ -50,13 +100,16 @@ export default function Signup() {
               checked={userType === "librarian"}
               onChange={() => setUserType("librarian")}
             />
-            <span className="radio-text">I&apos;m a Librarian</span>
+            <span className="radio-text">I'm a Librarian</span>
           </label>
         </div>
 
         <h1>Get started!</h1>
 
-        <form onSubmit={handleSubmit}>
+        {error && <div className="error-message">{error}</div>}
+
+        {!isConfirming ? (
+          <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="fullName">Full name</label>
             <div className="input-container">
@@ -109,19 +162,41 @@ export default function Signup() {
           </div>
 
           <button type="submit" className="signup-button">
-            Sign up
+            Sign Up
           </button>
 
           <div className="form-footer">
-            <Link href="#" className="guest-link">
+            <a href="#" className="guest-link">
               Enter as a Guest
-            </Link>
-            <Link href="/login" className="login-link">
+            </a>
+            <a href="#" className="login-link" onClick={onBackToLogin}>
               ← Go to Login
-            </Link>
+            </a>
           </div>
         </form>
+        ) : (
+          <form onSubmit={handleVerification} className="verification-form">
+            <div className="form-group">
+              <label htmlFor="verificationCode">Verification Code</label>
+              <div className="input-container">
+                <input
+                  type="text"
+                  id="verificationCode"
+                  placeholder="Enter verification code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" className="signup-button">
+              Verify Account
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
 }
+
+export default Signup;
