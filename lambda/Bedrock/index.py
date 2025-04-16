@@ -4,7 +4,7 @@ import time
 
 # Replace with your own S3 bucket to store the generated video
 # Format: s3://your-bucket-name
-OUTPUT_S3_URI = "s3://mycdkstack-genvideosb3836295-xaimbyezl0dl/upload/"
+OUTPUT_S3_URI = "s3://storagestack-genvideosb3836295-cgsm7lv3g2uy/upload/" # the s3 bucket to store the generated video
 
 def start_text_to_video_generation_job(bedrock_runtime, prompt, output_s3_uri):
     """
@@ -17,7 +17,7 @@ def start_text_to_video_generation_job(bedrock_runtime, prompt, output_s3_uri):
     :return: The invocation ARN of the async job
     """
     model_id = "amazon.nova-reel-v1:1"
-    seed = random.randint(0, 2147483646)
+    seed = random.randint(0, 2147483646) #default seed range for Nova Reel is 42
 
     model_input = {
         "taskType": "MULTI_SHOT_AUTOMATED",
