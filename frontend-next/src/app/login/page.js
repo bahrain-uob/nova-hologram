@@ -1,27 +1,63 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import "./login.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-import "./login.css";
+import { FaArrowLeftLong } from "react-icons/fa6";
+import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
+import { userPool, calculateSecretHash } from "../aws-config";
 
-export default function Login() {
+function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempt with:", { email, password });
-    // Login logic here
+    setError("");
+
+    try {
+      const authenticationDetails = new AuthenticationDetails({
+        Username: email,
+        Password: password,
+      });
+
+      const cognitoUser = new CognitoUser({
+        Username: email,
+        Pool: userPool,
+      });
+
+      cognitoUser.authenticateUser(authenticationDetails, {
+        onSuccess: (result) => {
+          console.log("Login successful:", result);
+          onLoginSuccess({
+            email,
+            accessToken: result.getAccessToken().getJwtToken(),
+            idToken: result.getIdToken().getJwtToken(),
+          });
+        },
+        onFailure: (err) => {
+          console.error("Login failed:", err);
+          setError(err.message || "Invalid email or password. Please try again.");
+        },
+        newPasswordRequired: (userAttributes, requiredAttributes) => {
+          // Handle new password required scenario
+          console.log("New password required");
+          setError("Please contact administrator to set up your password.");
+        },
+      });
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message || "An error occurred during login.");
+    }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
         <div className="logo">
-          <div className="circle"></div>
+          <img src="../logo.svg" alt="Logo" />
         </div>
 
         <h1>Welcome back!</h1>
@@ -66,15 +102,17 @@ export default function Login() {
           </button>
 
           <div className="form-footer">
-            <Link href="#" className="forgot-password">
+            <a href="#" className="forgot-password">
               Forgot password?
-            </Link>
-            <Link href="/signup" className="back-to-signup">
-              ← Back to Signup
-            </Link>
+            </a>
+            <a href="#" onClick={onSignupClick} className="back-to-signup">
+            ← Back to Signup
+            </a>
           </div>
         </form>
       </div>
     </div>
   );
 }
+
+export default Login;
