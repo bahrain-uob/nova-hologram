@@ -14,7 +14,7 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("https://d-9067828166.awsapps.com/start", {
+        const response = await fetch("https://dn8qsiexp5.execute-api.us-east-1.amazonaws.com/upload", {
           method: "GET",
           redirect: "follow", // Allow following redirects
         });
@@ -79,7 +79,7 @@ function App() {
           path="/"
           element={
             <div>
-              <h1>Welcome to [ChallengeName].bh</h1>
+              <h1>Welcome to [Hologram Challenge].bh</h1>
               <p>Message from the Backend system: {message}</p>
               <div className="button-container">
                 <button
