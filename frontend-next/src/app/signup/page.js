@@ -7,7 +7,7 @@ import { MdEmail } from "react-icons/md";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaUser } from "react-icons/fa";
 import { CognitoUserAttribute, CognitoUser } from "amazon-cognito-identity-js";
-import { userPool } from "src/aws-config";
+import { userPool } from "../aws-config";
 
 function Signup({ onBackToLogin }) {
   const [fullName, setFullName] = useState("");
