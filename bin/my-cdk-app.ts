@@ -1,17 +1,20 @@
 import * as cdk from "aws-cdk-lib";
-import { MyCdkStack } from "../lib/my-cdk-app-stack";
-import { DBStack } from "../lib/DBstack"; // Import your DBStack
-import { APIStack } from "../lib/api-stack"; // Import your APIStack
+import { DBStack } from "../lib/DB/db-stack";
+import { StorageStack } from "../lib/Storage/storage-stack";
+import { BedrockStack } from "../lib/Backend/bedrock-stack";
+import { lambdastack } from "../lib/Backend/lambda-stacks";
+import { SharedResourcesStack } from "../lib/sharedresources/SharedResourcesStack";
+import { APIStack } from "../lib/Backend/api-stacks";
+import { FrontendStack } from "../lib/Frontend/website-stack";
 
 const app = new cdk.App();
 
-// Create the DBStack
-const dbStack = new DBStack(app, "DBStack", {
-  // Any custom stack props you may have for DBStack
-});
+const dbStack = new DBStack(app, "DBStack");
+const sharedResourcesStack = new SharedResourcesStack(app, "SharedResourcesStack");
+const storageStack = new StorageStack(app, "StorageStack", sharedResourcesStack);
+const lambdaStack = new lambdastack(app, "LambdaStack", dbStack, storageStack, sharedResourcesStack);
+const Bedrock = new BedrockStack(app, "BedrockStack", lambdaStack, storageStack);
+const apiStack = new APIStack(app, "APIStack", dbStack, lambdaStack);
+const frontendStack = new FrontendStack(app, "FrontendStack");
 
-// Create the APIStack, passing in the DBStack as a dependency
-new APIStack(app, "APIStack", dbStack); // Pass the DBStack as the second argument
 
-// Optionally, you can create your other stacks here if needed
-new MyCdkStack(app, "MyCdkAppStack");

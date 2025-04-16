@@ -11,7 +11,7 @@ import { userPool, calculateSecretHash } from "../aws-config";
 function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  // const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();

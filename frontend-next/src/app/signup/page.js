@@ -1,15 +1,18 @@
 "use client"
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import "./signup.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-import { FaArrowLeftLong } from "react-icons/fa6";
+// import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaUser } from "react-icons/fa";
 import { CognitoUserAttribute, CognitoUser } from "amazon-cognito-identity-js";
 import { userPool } from "../aws-config";
+import Image from 'next/image';
 
-function Signup({ onBackToLogin }) {
+function Signup() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,13 +37,13 @@ function Signup({ onBackToLogin }) {
         })
       ];
 
-      userPool.signUp(email, password, attributeList, null, (err, result) => {
+      userPool.signUp(email, password, attributeList, null, (err) => {
         if (err) {
           console.error('Error signing up:', err);
           setError(err.message || 'An error occurred during signup');
           return;
         }
-        console.log('Sign up successful:', result);
+        console.log('Sign up successful');
         setIsConfirming(true);
       });
     } catch (err) {
@@ -59,14 +62,14 @@ function Signup({ onBackToLogin }) {
         Pool: userPool
       });
 
-      cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
+      cognitoUser.confirmRegistration(verificationCode, true, (err) => {
         if (err) {
           console.error('Error confirming sign up:', err);
           setError(err.message || 'Error confirming verification code');
           return;
         }
         console.log('Verification successful');
-        onBackToLogin(); // Redirect to login after successful verification
+        router.push('/login'); // Redirect to login after successful verification
       });
     } catch (err) {
       console.error('Error in verification process:', err);
@@ -78,7 +81,7 @@ function Signup({ onBackToLogin }) {
     <div className="signup-container">
       <div className="signup-card">
         <div className="logo">
-          <img src="/logo.svg" alt="Logo" />
+          <Image src="/logo.svg" alt="Logo" width={500} height={300} />
         </div>
 
         <div className="user-type-selector">
@@ -90,7 +93,7 @@ function Signup({ onBackToLogin }) {
               checked={userType === "reader"}
               onChange={() => setUserType("reader")}
             />
-            <span className="radio-text">I'm a Reader</span>
+            <span className="radio-text">I&apos;m a Reader</span>
           </label>
           <label className="radio-label">
             <input
@@ -100,7 +103,7 @@ function Signup({ onBackToLogin }) {
               checked={userType === "librarian"}
               onChange={() => setUserType("librarian")}
             />
-            <span className="radio-text">I'm a Librarian</span>
+            <span className="radio-text">I&apos;m a Librarian</span>
           </label>
         </div>
 
@@ -169,7 +172,7 @@ function Signup({ onBackToLogin }) {
             <a href="#" className="guest-link">
               Enter as a Guest
             </a>
-            <a href="#" className="login-link" onClick={onBackToLogin}>
+            <a href="#" className="login-link" onClick={() => router.push('/login')}>
               ← Go to Login
             </a>
           </div>
