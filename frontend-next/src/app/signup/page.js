@@ -8,8 +8,9 @@ import { FaUser } from "react-icons/fa";
 import { CognitoUserAttribute, CognitoUser } from "amazon-cognito-identity-js";
 import { userPool } from "@/app/aws-config";
 import { getSecretHash } from "@/lib/utils";
+import Image from "next/image";
 
-function Signup({ onBackToLogin, onBackToHome }) {
+export default function Signup() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +18,20 @@ function Signup({ onBackToLogin, onBackToHome }) {
   const [error, setError] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
+
+  const handleBackToHome = () => {
+    router.push('/');
+  };
+
+  const handleLoginClick = (e) => {
+    e.preventDefault();
+    router.push('/login');
+  };
+
+  // const handleLoginSuccess = (userData) => {
+  //   localStorage.setItem('userSession', JSON.stringify(userData));
+  //   router.push('/dashboard');
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +88,7 @@ function Signup({ onBackToLogin, onBackToHome }) {
           setError(err.message || 'Error confirming verification code');
           return;
         }
-        console.log('Verification successful');
+        console.log('Verification successful', result);
         onBackToLogin(); // Redirect to login after successful verification
       });
     } catch (err) {
@@ -86,7 +101,7 @@ function Signup({ onBackToLogin, onBackToHome }) {
     <div className="signup-container">
       <div className="signup-card">
         <div className="logo">
-          <img src="logo.svg" alt="Logo" onClick={onBackToHome} />
+          <Image src="/logo.svg" alt="Logo" onClick={handleBackToHome} width={150} height={50} />
         </div>
 
         <div className="user-type-selector">
@@ -98,7 +113,7 @@ function Signup({ onBackToLogin, onBackToHome }) {
               checked={userType === "reader"}
               onChange={() => setUserType("reader")}
             />
-            <span className="radio-text">I'm a Reader</span>
+            <span className="radio-text">I&apos;m a Reader</span>
           </label>
           <label className="radio-label">
             <input
@@ -108,7 +123,7 @@ function Signup({ onBackToLogin, onBackToHome }) {
               checked={userType === "librarian"}
               onChange={() => setUserType("librarian")}
             />
-            <span className="radio-text">I'm a Librarian</span>
+            <span className="radio-text">I&apos;m a Librarian</span>
           </label>
         </div>
 
@@ -177,7 +192,7 @@ function Signup({ onBackToLogin, onBackToHome }) {
             <a href="dashboard" className="guest-link">
               Enter as a Guest
             </a>
-            <a href="login" className="login-link" onClick={onBackToLogin}>
+            <a href="login" className="login-link" onClick={handleLoginClick}>
               ← Go to Login
             </a>
           </div>
@@ -206,5 +221,3 @@ function Signup({ onBackToLogin, onBackToHome }) {
     </div>
   );
 }
-
-export default Signup;

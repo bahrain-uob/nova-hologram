@@ -2,18 +2,32 @@
 
 import { useState } from "react";
 import "./login.css";
-import "./login.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-// import { FaArrowLeftLong } from "react-icons/fa6";
 import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
 import { userPool } from "@/app/aws-config";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
-function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleBackToHome = () => {
+    router.push('/');
+  };
+
+  const handleSignupClick = (e) => {
+    e.preventDefault();
+    router.push('/signup');
+  };
+
+  const handleLoginSuccess = (userData) => {
+    localStorage.setItem('userSession', JSON.stringify(userData));
+    router.push('/dashboard');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,7 +47,7 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
       cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: (result) => {
           console.log("Login successful:", result);
-          onLoginSuccess({
+          handleLoginSuccess({
             email,
             accessToken: result.getAccessToken().getJwtToken(),
             idToken: result.getIdToken().getJwtToken(),
@@ -44,62 +58,27 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
           setError(err.message || "Invalid email or password. Please try again.");
         },
         newPasswordRequired: (userAttributes, requiredAttributes) => {
-          // Handle new password required scenario
-          console.log("New password required");
+          console.log("New password required", userAttributes, requiredAttributes);
           setError("Please contact administrator to set up your password.");
         },
       });
     } catch (err) {
       console.error("Login error:", err);
       setError(err.message || "An error occurred during login.");
-    }
-    setError("");
-
-    try {
-      const authenticationDetails = new AuthenticationDetails({
-        Username: email,
-        Password: password,
-      });
-
-      const cognitoUser = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-
-      cognitoUser.authenticateUser(authenticationDetails, {
-        onSuccess: (result) => {
-          console.log("Login successful:", result);
-          onLoginSuccess({
-            email,
-            accessToken: result.getAccessToken().getJwtToken(),
-            idToken: result.getIdToken().getJwtToken(),
-          });
-        },
-        onFailure: (err) => {
-          console.error("Login failed:", err);
-          setError(err.message || "Invalid email or password. Please try again.");
-        },
-        newPasswordRequired: (userAttributes, requiredAttributes) => {
-          // Handle new password required scenario
-          console.log("New password required");
-          setError("Please contact administrator to set up your password.");
-        },
-      });
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err.message || "An error occurred during login.");
+      console.log("Login error:", error);
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        {/* if we click on the logo, we will be redirected to the home page */}
         <div className="logo">
-          <img src="logo.svg" alt="Logo" />
+          <Image src="/logo.svg" alt="Logo" onClick={handleBackToHome} width={150} height={50} />
         </div>
 
         <h1>Welcome back!</h1>
+
+        {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -144,8 +123,8 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
             <a href="#" className="forgot-password">
               Forgot password?
             </a>
-            <a href="signup" onClick={onSignupClick} className="back-to-signup">
-              Don't have an account? Sign up
+            <a href="#" onClick={handleSignupClick} className="back-to-signup">
+              Don&apos;t have an account? Sign up
             </a>
           </div>
         </form>
@@ -153,5 +132,3 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
     </div>
   );
 }
-
-export default Login;

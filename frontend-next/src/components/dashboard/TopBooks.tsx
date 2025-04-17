@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 
 const books = [
   {
@@ -32,7 +33,7 @@ export function TopBooks() {
           {books.map((book, i) => (
             <div key={i} className="flex items-start gap-4">
               <div className="w-10 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
-                <img 
+                <Image 
                   src={book.cover} 
                   alt={book.title}
                   className="w-full h-full object-cover"
