@@ -12,11 +12,11 @@ const data = [
 const COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#10B981'];
 
 export function GenreChart() {
-  const renderLegend = (props) => {
+  const renderLegend = (props: any) => {
     const { payload } = props;
     return (
       <ul className="flex flex-wrap gap-4 justify-center mt-8">
-        {payload.map((entry, index) => (
+        {payload.map((entry: any, index: any) => (
           <li key={`item-${index}`} className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full"

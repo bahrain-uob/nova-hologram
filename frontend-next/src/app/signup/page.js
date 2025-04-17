@@ -1,18 +1,15 @@
-"use client"
+"use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import "./signup.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-// import { FaArrowLeftLong } from "react-icons/fa6";
 import { FaUser } from "react-icons/fa";
 import { CognitoUserAttribute, CognitoUser } from "amazon-cognito-identity-js";
-import { userPool } from "../aws-config";
-import Image from 'next/image';
+import { userPool } from "@/app/aws-config";
+import { getSecretHash } from "@/lib/utils";
 
-function Signup() {
-  const router = useRouter();
+function Signup({ onBackToLogin, onBackToHome }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,15 +34,23 @@ function Signup() {
         })
       ];
 
-      userPool.signUp(email, password, attributeList, null, (err) => {
+      const clientId = userPool.clientId;
+      const secretHash = getSecretHash(email, clientId);
+
+      userPool.signUp(email, password, attributeList, null, (err, result) => {
         if (err) {
           console.error('Error signing up:', err);
           setError(err.message || 'An error occurred during signup');
           return;
         }
-        console.log('Sign up successful');
+        console.log('Sign up successful:', result);
         setIsConfirming(true);
-      });
+        setIsConfirming(true);
+      },
+      {
+        SECRET_HASH: secretHash  // Pass the SECRET_HASH here in the clientMetadata
+      }
+    );
     } catch (err) {
       console.error('Error in signup process:', err);
       setError(err.message || 'An error occurred during signup');
@@ -62,14 +67,14 @@ function Signup() {
         Pool: userPool
       });
 
-      cognitoUser.confirmRegistration(verificationCode, true, (err) => {
+      cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
         if (err) {
           console.error('Error confirming sign up:', err);
           setError(err.message || 'Error confirming verification code');
           return;
         }
         console.log('Verification successful');
-        router.push('/login'); // Redirect to login after successful verification
+        onBackToLogin(); // Redirect to login after successful verification
       });
     } catch (err) {
       console.error('Error in verification process:', err);
@@ -81,7 +86,7 @@ function Signup() {
     <div className="signup-container">
       <div className="signup-card">
         <div className="logo">
-          <Image src="/logo.svg" alt="Logo" width={500} height={300} />
+          <img src="logo.svg" alt="Logo" onClick={onBackToHome} />
         </div>
 
         <div className="user-type-selector">
@@ -93,7 +98,7 @@ function Signup() {
               checked={userType === "reader"}
               onChange={() => setUserType("reader")}
             />
-            <span className="radio-text">I&apos;m a Reader</span>
+            <span className="radio-text">I'm a Reader</span>
           </label>
           <label className="radio-label">
             <input
@@ -103,7 +108,7 @@ function Signup() {
               checked={userType === "librarian"}
               onChange={() => setUserType("librarian")}
             />
-            <span className="radio-text">I&apos;m a Librarian</span>
+            <span className="radio-text">I'm a Librarian</span>
           </label>
         </div>
 
@@ -169,10 +174,10 @@ function Signup() {
           </button>
 
           <div className="form-footer">
-            <a href="#" className="guest-link">
+            <a href="dashboard" className="guest-link">
               Enter as a Guest
             </a>
-            <a href="#" className="login-link" onClick={() => router.push('/login')}>
+            <a href="login" className="login-link" onClick={onBackToLogin}>
               ← Go to Login
             </a>
           </div>
