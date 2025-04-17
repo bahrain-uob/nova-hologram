@@ -11,20 +11,14 @@ export class BedrockStack extends cdk.Stack {
     // Update the addToRolePolicy statement
     lambdastack.BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: [
-        'bedrock:InvokeModel',
-        'bedrock:StartAsyncInvoke',
-        'bedrock:GetAsyncInvoke',
+        'bedrock:*',  // Full access to Amazon Bedrock
         's3:PutObject',
         's3:GetObject',
         's3:ListBucket'
       ],
-      resources: [
-        'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-reel-v1',
-        'arn:aws:bedrock:us-east-1:672461264983:async-invoke/amazon.nova-reel-v1',
-        `arn:aws:s3:::${storagestack.genVideos.bucketName}`,
-        `arn:aws:s3:::${storagestack.genVideos.bucketName}/*`
-      ]
+      resources: ['*']  // Use specific ARNs for tighter control
     }));
+    
     
 
         

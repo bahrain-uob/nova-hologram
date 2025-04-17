@@ -15,7 +15,8 @@ export class APIStack extends cdk.Stack {
           allowHeaders: ['Content-Type', 'Authorization'],
           allowMethods: [apigatewayv2.CorsHttpMethod.GET, apigatewayv2.CorsHttpMethod.POST, apigatewayv2.CorsHttpMethod.DELETE],
           allowCredentials: true,
-          allowOrigins: ['XXXXXXXXXXXXXXXXXXXXX'],
+          allowOrigins: ['https://d3b5ch7wjgk3ht.cloudfront.net'] // ✅ valid
+,
         }
       });   
 
