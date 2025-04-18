@@ -19,6 +19,16 @@ export default function Home() {
       path: "/verification",
       description: "Verify your account",
     },
+    {
+      name: "Forgot Password",
+      path: "/fPassword",
+      description: "Retrieve your password",
+    },
+    {
+      name: "Reader Home Page",
+      path: "/rHomepage",
+      description: "Reader home page",
+    },
   ];
 
   return (

@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import "./verification.css";
+import "./fPassword.css";
 import Image from "next/image";
 
-export default function Verification() {
-  const [verificationCode, setVerificationCode] = useState("");
+export default function PasswordRetrieve() {
+  const [emailAddress, setEmailAddress] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Verification attempt with code:", verificationCode);
-    // Verification logic here
+    console.log("Forgot password from email:", emailAddress);
+    // Forgot Password logic here
   };
 
   return (
@@ -21,29 +21,29 @@ export default function Verification() {
           <Image src="/logo.svg" alt="Logo" width={50} height={50} />
         </div>
 
-        <h1>Verification</h1>
+        <h1>Forgot Password?</h1>
 
         <p className="verification-subtitle">
-          Enter the verification code we sent you through your email.
+          No worries! Enter your email address and we'll send you a reset link.
         </p>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="verificationCode">Verification code</label>
+            <label htmlFor="EmailAddress">Email Address</label>
             <div className="input-container">
               <input
                 type="text"
-                id="verificationCode"
-                placeholder="Enter the code"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                id="emailAddress"
+                placeholder="Enter your email"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
                 required
               />
             </div>
           </div>
 
           <button type="submit" className="verify-button">
-            Verify
+            Send Reset Link
           </button>
 
           <div className="form-footer-verification">

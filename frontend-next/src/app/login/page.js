@@ -16,17 +16,29 @@ export default function Login() {
   const router = useRouter();
 
   const handleBackToHome = () => {
-    router.push('/');
+    router.push("/");
   };
 
   const handleSignupClick = (e) => {
     e.preventDefault();
-    router.push('/signup');
+    router.push("/signup");
+  };
+
+  const handleForgotPasswordClick = (e) => {
+    e.preventDefault();
+    router.push("/fPassword");
   };
 
   const handleLoginSuccess = (userData) => {
-    localStorage.setItem('userSession', JSON.stringify(userData));
-    router.push('/dashboard');
+    localStorage.setItem("userSession", JSON.stringify(userData));
+    if (userData.userType === "reader") {
+      router.push("/rHomepage");
+    } else if (userData.userType === "librarian") {
+      router.push("/dashboard");
+    } else {
+      // Default fallback if userType is not specified
+      router.push("/dashboard");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -55,10 +67,16 @@ export default function Login() {
         },
         onFailure: (err) => {
           console.error("Login failed:", err);
-          setError(err.message || "Invalid email or password. Please try again.");
+          setError(
+            err.message || "Invalid email or password. Please try again."
+          );
         },
         newPasswordRequired: (userAttributes, requiredAttributes) => {
-          console.log("New password required", userAttributes, requiredAttributes);
+          console.log(
+            "New password required",
+            userAttributes,
+            requiredAttributes
+          );
           setError("Please contact administrator to set up your password.");
         },
       });
@@ -73,7 +91,13 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="logo">
-          <Image src="/logo.svg" alt="Logo" onClick={handleBackToHome} width={150} height={50} />
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            onClick={handleBackToHome}
+            width={50}
+            height={50}
+          />
         </div>
 
         <h1>Welcome back!</h1>
@@ -120,11 +144,15 @@ export default function Login() {
           </button>
 
           <div className="form-footer">
-            <a href="#" className="forgot-password">
+            <a
+              href="#"
+              onClick={handleForgotPasswordClick}
+              className="forgot-password"
+            >
               Forgot password?
             </a>
             <a href="#" onClick={handleSignupClick} className="back-to-signup">
-              Don&apos;t have an account? Sign up
+              ← Back to Sign up
             </a>
           </div>
         </form>
