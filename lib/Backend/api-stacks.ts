@@ -11,6 +11,12 @@ export class APIStack extends cdk.Stack {
 
     const PostGetDelete = new apigatewayv2.HttpApi(this, 'HttpApi', {
         apiName: 'WebAppHttpApi',
+        corsPreflight: {
+          allowHeaders: ['Content-Type', 'Authorization'],
+          allowMethods: [apigatewayv2.CorsHttpMethod.GET, apigatewayv2.CorsHttpMethod.POST, apigatewayv2.CorsHttpMethod.DELETE],
+          allowCredentials: true,
+          allowOrigins: ['XXXXXXXXXXXXXXXXXXXXX'],
+        }
       });   
 
     // Add route for upload 
