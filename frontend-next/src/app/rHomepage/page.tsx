@@ -327,16 +327,16 @@ export default function ReadingApp() {
                   <div>
                     <h4 className="font-medium mb-2">The Voice of the River</h4>
                     <p className="text-sm text-gray-600 italic">
-                      "The river whispered secrets that only the ancient trees
-                      could understand..."
+                      &quot;The river whispered secrets that only the ancient trees
+                      could understand...&quot;
                     </p>
                   </div>
 
                   <div>
                     <h4 className="font-medium mb-2">A Journey Within</h4>
                     <p className="text-sm text-gray-600 italic">
-                      "As the sun set behind the mountains, she realized the
-                      journey had only begun..."
+                      &quot;As the sun set behind the mountains, she realized the
+                      journey had only begun...&quot;
                     </p>
                   </div>
                 </div>

@@ -30,9 +30,15 @@ export default function Login() {
   };
 
   const handleLoginSuccess = (userData) => {
+    // Store in localStorage for client-side access
     localStorage.setItem("userSession", JSON.stringify(userData));
+    
+    // Store in cookies for middleware access
+    document.cookie = `userSession=${JSON.stringify(userData)}; path=/; max-age=86400; SameSite=Strict`;
+    
+    // Redirect based on user type
     if (userData.userType === "reader") {
-      router.push("/rHomepage");
+      router.push("/reader-dashboard");
     } else if (userData.userType === "librarian") {
       router.push("/dashboard");
     } else {
@@ -59,10 +65,29 @@ export default function Login() {
       cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: (result) => {
           console.log("Login successful:", result);
-          handleLoginSuccess({
-            email,
-            accessToken: result.getAccessToken().getJwtToken(),
-            idToken: result.getIdToken().getJwtToken(),
+          
+          // Get user attributes to determine user type
+          cognitoUser.getUserAttributes((err, attributes) => {
+            if (err) {
+              console.error("Error getting user attributes:", err);
+              return;
+            }
+            
+            // Find userType from attributes
+            let userType = "reader"; // Default to reader
+            for (let i = 0; i < attributes.length; i++) {
+              if (attributes[i].getName() === "custom:userType") {
+                userType = attributes[i].getValue();
+                break;
+              }
+            }
+            
+            handleLoginSuccess({
+              email,
+              userType,
+              accessToken: result.getAccessToken().getJwtToken(),
+              idToken: result.getIdToken().getJwtToken(),
+            });
           });
         },
         onFailure: (err) => {
