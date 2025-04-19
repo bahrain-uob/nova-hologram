@@ -26,7 +26,7 @@ export default function Home() {
     },
     {
       name: "Reader Home Page",
-      path: "/rHomepage",
+      path: "/reader-dashboard",
       description: "Reader home page",
     },
   ];
