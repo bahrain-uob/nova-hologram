@@ -1,7 +1,13 @@
 import React from 'react';
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
-export function StatsCard({ title, value, icon: Icon }) {
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+}
+
+export function StatsCard({ title, value, icon: Icon }: StatsCardProps) {
   return (
     <Card className="bg-white shadow-sm">
       <CardContent className="flex flex-col gap-4 p-6">
