@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function Home() {
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const pages = [
     {

@@ -19,17 +19,24 @@ export default function Login() {
     router.push("/");
   };
 
-  const handleSignupClick = (e) => {
+  const handleSignupClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     router.push("/signup");
   };
 
-  const handleForgotPasswordClick = (e) => {
+  const handleForgotPasswordClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     router.push("/fPassword");
   };
 
-  const handleLoginSuccess = (userData) => {
+  interface UserData {
+    email: string;
+    userType: string;
+    accessToken: string;
+    idToken: string;
+  }
+
+  const handleLoginSuccess = (userData: UserData) => {
     // Store in localStorage for client-side access
     localStorage.setItem("userSession", JSON.stringify(userData));
     
@@ -47,7 +54,7 @@ export default function Login() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -75,10 +82,12 @@ export default function Login() {
             
             // Find userType from attributes
             let userType = "reader"; // Default to reader
-            for (let i = 0; i < attributes.length; i++) {
-              if (attributes[i].getName() === "custom:userType") {
-                userType = attributes[i].getValue();
-                break;
+            if (attributes) {
+              for (let i = 0; i < attributes.length; i++) {
+                if (attributes[i].getName() === "custom:userType") {
+                  userType = attributes[i].getValue();
+                  break;
+                }
               }
             }
             
@@ -105,9 +114,10 @@ export default function Login() {
           setError("Please contact administrator to set up your password.");
         },
       });
-    } catch (err) {
+    } catch (err: Error | unknown) {
+      const error = err as Error;
       console.error("Login error:", err);
-      setError(err.message || "An error occurred during login.");
+      setError(error.message || "An error occurred during login.");
       console.log("Login error:", error);
     }
   };
