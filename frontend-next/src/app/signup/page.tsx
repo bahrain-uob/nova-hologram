@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useState } from "react";
 import "./signup.css";
 import { IoIosLock } from "react-icons/io";
@@ -9,16 +10,10 @@ import { CognitoUserAttribute, CognitoUser } from "amazon-cognito-identity-js";
 import { userPool } from "@/app/aws-config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { addUserToGroup } from "@/app/actions/cognito-actions";
 
 export default function Signup() {
-  const router = useRouter();
-
-  const generateUsername = (name: string) => {
-    // Generate a username from the name (removing spaces) and add a random suffix
-    return (
-      name.replace(/\s+/g, "").toLowerCase() + Math.floor(Math.random() * 1000)
-    );
-  };
+  const router = useRouter();  
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,7 +22,7 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
-  const [username, setUsername] = useState("");
+  // const [username, setUsername] = useState("");
 
   const handleBackToHome = () => {
     router.push("/");
@@ -48,10 +43,6 @@ export default function Signup() {
     setError("");
 
     try {
-      // Generate a username from the full name
-      const generatedUsername = generateUsername(fullName);
-      setUsername(generatedUsername);
-
       const attributeList = [
         new CognitoUserAttribute({
           Name: "name",
@@ -67,9 +58,8 @@ export default function Signup() {
         }),
       ];
 
-
       userPool.signUp(
-        generatedUsername,
+        email, // Use email instead of username
         password,
         attributeList,
         [],
@@ -104,11 +94,11 @@ export default function Signup() {
 
     try {
       const cognitoUser = new CognitoUser({
-        Username: username, // Use the stored username instead of email
+        Username: email, // Use email instead of username
         Pool: userPool,
       });
 
-      cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
+      cognitoUser.confirmRegistration(verificationCode, true, async (err, result) => {
         if (err) {
           console.error("Error confirming sign up:", err);
           if (err instanceof Error) {
@@ -119,30 +109,40 @@ export default function Signup() {
           return;
         }
         console.log("Verification successful", result);
-        router.push("/login"); // Redirect to login after successful verification
-      });
+
+        try {
+          // Add the user to the selected group
+          const groupResult = await addUserToGroup(email, userType)
+
+          if (!groupResult.success) {
+            console.error("Error adding user to group:", groupResult.error)
+            // We dont want to block the user from proceeding if group assignment fails, log & continue
+          }
+
+          // Redirect to login after successful verification
+          router.push("/login")
+        } catch (error) {
+          console.error("Error in group assignment:", error)
+          // Still redirect to login even if group assignment fails
+          router.push("/login")
+        }
+      })
     } catch (err) {
       if (err instanceof Error) {
-        console.error("Error in verification process:", err);
-        setError(err.message || "Error confirming verification code");
+        console.error("Error in verification process:", err)
+        setError(err.message || "Error confirming verification code")
       } else {
-        console.error("Unknown error in verification process:", err);
-        setError("An unknown error occurred during verification");
+        console.error("Unknown error in verification process:", err)
+        setError("An unknown error occurred during verification")
       }
     }
-  };
+  }
 
   return (
     <div className="signup-container">
       <div className="signup-card">
         <div className="logo">
-          <Image
-            src="/logo.svg"
-            alt="Logo"
-            onClick={handleBackToHome}
-            width={50}
-            height={50}
-          />
+          <Image src="/logo.svg" alt="Logo" onClick={handleBackToHome} width={50} height={50} />
         </div>
 
         <div className="user-type-selector">
@@ -174,6 +174,24 @@ export default function Signup() {
 
         {!isConfirming ? (
           <form onSubmit={handleSubmit}>
+            {/* Comment out the username field in the form */}
+            {/* <div className="form-group">
+              <label htmlFor="userName">Username</label>
+              <div className="input-container">
+                <span className="input-icon">
+                  <FaUser />
+                </span>
+                <input
+                  type="text"
+                  id="userName"
+                  placeholder="Enter a unique username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+            </div> */}
+
             <div className="form-group">
               <label htmlFor="fullName">Full name</label>
               <div className="input-container">
