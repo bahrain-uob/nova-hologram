@@ -29,6 +29,11 @@ export default function Home() {
       path: "/reader-dashboard",
       description: "Reader home page",
     },
+    {
+      name: "Manage Readers(Librarian)",
+      path: "/manage-reader",
+      description: "Manage readers and their accounts",
+    },
   ];
 
   return (

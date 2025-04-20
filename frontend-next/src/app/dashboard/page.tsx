@@ -212,9 +212,3 @@ const Dashboard: React.FC = () => {
 
 // Protect this route - only librarians can access it
 export default withRoleProtection(Dashboard, ['librarian']);
-
-
-
-
-
-
