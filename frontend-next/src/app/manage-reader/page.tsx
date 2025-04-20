@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; //not used (<yet>)
 import { Edit as EditIcon, Trash2 as DeleteIcon, Filter as FilterIcon } from "lucide-react";
 import { ReadersSidebar } from "@/components/dashboard/ReadersSidebar";
 import { Top } from "@/components/dashboard/Top";
@@ -25,7 +24,6 @@ const fetchBooks = async (): Promise<Book[]> => [
   { id: 5, title: "Atomic Habits", author: "James Clear", cover: "/covers/atomichabits.jpg", genre: "Self Help", readingLevel: "Easy", publicationYear: 2018 },
   { id: 6, title: "The Catcher in the Rye", author: "J.D. Salinger", cover: "/covers/catcher.jpg", genre: "Coming-of-Age", readingLevel: "Medium", publicationYear: 1951 },
 ];
-
 
 const ManageBooks: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -77,7 +75,12 @@ const ManageBooks: React.FC = () => {
           <main className="flex-1 p-8 bg-gray-50 ml-64">
             <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-semibold text-gray-700">Manage Books</h2>
-              {/* Remove the button that navigates to add-book page */}
+              <button
+                onClick={() => {}}
+                className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg gap-2 hover:bg-indigo-700 transition-colors duration-200"
+              >
+                <span>Add New Book</span>
+              </button>
             </div>
 
             {/* Filters */}
