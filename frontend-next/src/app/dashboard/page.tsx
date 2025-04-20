@@ -1,15 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Users, BookOpen, Library, Search, Bell } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Users, BookOpen, Library, Search } from 'lucide-react';
 import withRoleProtection from "@/components/auth/withRoleProtection";
+
+// Import UI components
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Sidebar and top bar layout
-const ManageReader: React.FC = () => {
+// Import dashboard components
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { ActivityChart } from "@/components/dashboard/ActivityChart";
+import { GenreChart } from "@/components/dashboard/GenreChart";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { TopBooks } from "@/components/dashboard/TopBooks";
+
+const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,15 +28,17 @@ const ManageReader: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      // Simulate a data fetch
+      // In a real app, this would be an API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       setLoading(false);
     } catch (err) {
       console.error('Error:', err);
-      setError('Failed to load data');
+      setError('Failed to load dashboard data');
       setLoading(false);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -67,6 +78,16 @@ const ManageReader: React.FC = () => {
                 <Skeleton key={i} className="h-24" />
               ))}
             </div>
+
+            <div className="grid gap-4 md:grid-cols-7 mb-8">
+              <Skeleton className="col-span-4 h-[300px]" />
+              <Skeleton className="col-span-3 h-[300px]" />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Skeleton className="h-[400px]" />
+              <Skeleton className="h-[400px]" />
+            </div>
           </main>
         </div>
       </div>
@@ -76,23 +97,27 @@ const ManageReader: React.FC = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="w-[420px] bg-red-500 text-white p-4 rounded-lg">
-          <p>{error}</p>
-        </div>
+        <Alert variant="destructive" className="w-[420px]">
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-white">
         <div className="flex h-16 items-center px-6">
-          <div className="flex items-center gap-2 text-primary">
-            <Library className="h-6 w-6" />
+          <div className="flex items-center gap-2">
+            <div className="text-primary">
+              <Library className="h-6 w-6" />
+            </div>
             <span className="font-semibold">ClarityUI</span>
           </div>
-
+          
           {/* Search */}
           <div className="flex items-center ml-4 md:ml-10 lg:ml-16 space-x-4 flex-1">
             <form className="flex-1 max-w-2xl">
@@ -100,21 +125,15 @@ const ManageReader: React.FC = () => {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search books, authors, or categories"
+                  placeholder="Type to search"
                   className="pl-8 bg-background w-full"
                 />
               </div>
             </form>
           </div>
 
-          {/* Profile and Notifications */}
-          <div className="ml-auto flex items-center space-x-4">
-            {/* Notification Bell */}
-            <div className="relative">
-              <Bell className="h-5 w-5 text-muted-foreground" />
-              <div className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500" />
-            </div>
-            {/* Avatar */}
+          {/* Profile */}
+          <div className="ml-auto">
             <Avatar>
               <AvatarImage src="/avatars/user.png" alt="User" />
               <AvatarFallback>S</AvatarFallback>
@@ -154,29 +173,36 @@ const ManageReader: React.FC = () => {
           </nav>
         </aside>
 
-        {/* Main Content */}
+        {/* Main content */}
         <main className="flex-1 p-8 bg-gray-50">
-          <div className="flex justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-gray-700">Manage Readers</h2>
-            <button className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg gap-2">
-              <span>Add New Reader</span>
-            </button>
+          <div className="flex flex-col gap-2 mb-6">
+            <h1 className="text-2xl font-semibold">Dashboard Overview</h1>
+            <p className="text-muted-foreground">Welcome back, Sarah!</p>
           </div>
 
-          {/* Reader Cards */}
-          <div className="grid grid-cols-3 gap-6 mb-8">
-            {/* Cards for readers would go here */}
+          {/* Stats */}
+          <div className="grid gap-6 grid-cols-3 mb-8">
+            <StatsCard title="Readers" value="245" icon={Users} />
+            <StatsCard title="Books" value="180" icon={BookOpen} />
+            <StatsCard title="Collections" value="23" icon={Library} />
           </div>
 
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-4">
-            <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
-              {/* Pagination arrow icon */}
-            </button>
-            <button className="w-10 h-10 rounded-lg bg-indigo-600 text-white">1</button>
-            <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
-              {/* Pagination arrow icon */}
-            </button>
+          {/* Charts */}
+          <div className="grid gap-6 grid-cols-2 mb-8">
+            <div className="col-span-1 bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-base font-medium mb-4">Reading Activity</h3>
+              <ActivityChart />
+            </div>
+            <div className="col-span-1 bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-base font-medium mb-4">Popular Genre</h3>
+              <GenreChart />
+            </div>
+          </div>
+
+          {/* Activity and Books */}
+          <div className="grid gap-6 grid-cols-2">
+            <RecentActivity />
+            <TopBooks />
           </div>
         </main>
       </div>
@@ -185,4 +211,4 @@ const ManageReader: React.FC = () => {
 };
 
 // Protect this route - only librarians can access it
-export default withRoleProtection(ManageReader, ['librarian']);
+export default withRoleProtection(Dashboard, ['librarian']);
