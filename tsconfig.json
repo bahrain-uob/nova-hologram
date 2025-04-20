@@ -6,6 +6,8 @@
       "es2020",
       "dom"
     ],
+    "esModuleInterop": true,
+    "jsx": "react",
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
