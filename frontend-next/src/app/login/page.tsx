@@ -19,20 +19,33 @@ export default function Login() {
     router.push("/");
   };
 
-  const handleSignupClick = (e) => {
+  const handleSignupClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     router.push("/signup");
   };
 
-  const handleForgotPasswordClick = (e) => {
+  const handleForgotPasswordClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     router.push("/fPassword");
   };
 
-  const handleLoginSuccess = (userData) => {
+  interface UserData {
+    email: string;
+    userType: string;
+    accessToken: string;
+    idToken: string;
+  }
+
+  const handleLoginSuccess = (userData: UserData) => {
+    // Store in localStorage for client-side access
     localStorage.setItem("userSession", JSON.stringify(userData));
+    
+    // Store in cookies for middleware access
+    document.cookie = `userSession=${JSON.stringify(userData)}; path=/; max-age=86400; SameSite=Strict`;
+    
+    // Redirect based on user type
     if (userData.userType === "reader") {
-      router.push("/rHomepage");
+      router.push("/reader-dashboard");
     } else if (userData.userType === "librarian") {
       router.push("/dashboard");
     } else {
@@ -41,7 +54,7 @@ export default function Login() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -59,10 +72,31 @@ export default function Login() {
       cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: (result) => {
           console.log("Login successful:", result);
-          handleLoginSuccess({
-            email,
-            accessToken: result.getAccessToken().getJwtToken(),
-            idToken: result.getIdToken().getJwtToken(),
+          
+          // Get user attributes to determine user type
+          cognitoUser.getUserAttributes((err, attributes) => {
+            if (err) {
+              console.error("Error getting user attributes:", err);
+              return;
+            }
+            
+            // Find userType from attributes
+            let userType = "reader"; // Default to reader
+            if (attributes) {
+              for (let i = 0; i < attributes.length; i++) {
+                if (attributes[i].getName() === "custom:userType") {
+                  userType = attributes[i].getValue();
+                  break;
+                }
+              }
+            }
+            
+            handleLoginSuccess({
+              email,
+              userType,
+              accessToken: result.getAccessToken().getJwtToken(),
+              idToken: result.getIdToken().getJwtToken(),
+            });
           });
         },
         onFailure: (err) => {
@@ -80,9 +114,10 @@ export default function Login() {
           setError("Please contact administrator to set up your password.");
         },
       });
-    } catch (err) {
+    } catch (err: Error | unknown) {
+      const error = err as Error;
       console.error("Login error:", err);
-      setError(err.message || "An error occurred during login.");
+      setError(error.message || "An error occurred during login.");
       console.log("Login error:", error);
     }
   };

@@ -8,7 +8,7 @@ import Image from "next/image";
 export default function PasswordRetrieve() {
   const [emailAddress, setEmailAddress] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Forgot password from email:", emailAddress);
     // Forgot Password logic here
@@ -24,7 +24,7 @@ export default function PasswordRetrieve() {
         <h1>Forgot Password?</h1>
 
         <p className="verification-subtitle">
-          No worries! Enter your email address and we'll send you a reset link.
+          No worries! Enter your email address and we&apos;ll send you a reset link.
         </p>
 
         <form onSubmit={handleSubmit}>

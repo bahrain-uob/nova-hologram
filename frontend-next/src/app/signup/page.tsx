@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 export default function Signup() {
   const router = useRouter();
 
-  const generateUsername = (name) => {
+  const generateUsername = (name: string) => {
     // Generate a username from the name (removing spaces) and add a random suffix
     return (
       name.replace(/\s+/g, "").toLowerCase() + Math.floor(Math.random() * 1000)
@@ -33,7 +33,7 @@ export default function Signup() {
     router.push("/");
   };
 
-  const handleLoginClick = (e) => {
+  const handleLoginClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     router.push("/login");
   };
@@ -43,7 +43,7 @@ export default function Signup() {
   //   router.push('/dashboard');
   // };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -67,17 +67,20 @@ export default function Signup() {
         }),
       ];
 
-      const clientId = userPool.clientId; // Cognito User Pool Client ID
 
       userPool.signUp(
         generatedUsername,
         password,
         attributeList,
-        null,
+        [],
         (err, result) => {
           if (err) {
             console.error("Error signing up:", err);
-            setError(err.message || "An error occurred during signup");
+            if (err instanceof Error) {
+              setError(err.message || "An error occurred during signup");
+            } else {
+              setError("An error occurred during signup");
+            }
             return;
           }
           console.log("Sign up successful:", result);
@@ -85,12 +88,17 @@ export default function Signup() {
         }
       );
     } catch (err) {
-      console.error("Error in signup process:", err);
-      setError(err.message || "An error occurred during signup");
+      if (err instanceof Error) {
+        console.error("Error in signup process:", err);
+        setError(err.message || "An error occurred during signup");
+      } else {
+        console.error("Unknown error in signup process:", err);
+        setError("An unknown error occurred during signup");
+      }
     }
   };
 
-  const handleVerification = async (e) => {
+  const handleVerification = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -103,15 +111,24 @@ export default function Signup() {
       cognitoUser.confirmRegistration(verificationCode, true, (err, result) => {
         if (err) {
           console.error("Error confirming sign up:", err);
-          setError(err.message || "Error confirming verification code");
+          if (err instanceof Error) {
+            setError(err.message || "Error confirming verification code");
+          } else {
+            setError("Error confirming verification code");
+          }
           return;
         }
         console.log("Verification successful", result);
         router.push("/login"); // Redirect to login after successful verification
       });
     } catch (err) {
-      console.error("Error in verification process:", err);
-      setError(err.message || "Error confirming verification code");
+      if (err instanceof Error) {
+        console.error("Error in verification process:", err);
+        setError(err.message || "Error confirming verification code");
+      } else {
+        console.error("Unknown error in verification process:", err);
+        setError("An unknown error occurred during verification");
+      }
     }
   };
 
