@@ -1,5 +1,6 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { Payload } from 'recharts/types/component/DefaultLegendContent';
 
 const data = [
   { name: 'Fiction', value: 35 },
@@ -11,16 +12,24 @@ const data = [
 
 const COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#10B981'];
 
+// Use Recharts provided types instead of custom interfaces
+interface LegendProps {
+  payload?: Payload[];
+}
+
 export function GenreChart() {
-  const renderLegend = (props) => {
+  // Use Recharts' Payload type
+  const renderLegend = (props: LegendProps) => {
     const { payload } = props;
+    if (!payload) return null;
+
     return (
       <ul className="flex flex-wrap gap-4 justify-center mt-8">
         {payload.map((entry, index) => (
           <li key={`item-${index}`} className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
+              style={{ backgroundColor: entry.color || '' }}
             />
             <span className="text-sm text-gray-600">{entry.value}</span>
           </li>

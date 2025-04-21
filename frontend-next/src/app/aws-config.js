@@ -1,10 +1,12 @@
-import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { CognitoUserPool } from "amazon-cognito-identity-js";
 
 const poolConfig = {
-    UserPoolId: 'me-south-1_X7adr285t',
-    ClientId: '2vb47i69h5hqh01i3n0au12q8l',
-    Region: 'me-south-1'
+  UserPoolId: "us-east-1_U0iB4Rowp",
+  ClientId: "6925kdsf62jk6pv40e32oa3e7u",
+  Region: "us-east-1",
+  // add the client secret
 };
 
-export const userPool = new CognitoUserPool(poolConfig);
+//export const CLIENT_SECRET = '1ubm054n3ic02h1t1e90ofhb3rup4pao56cdipqfoglgcvqsae07'; // <- export separately
 
+export const userPool = new CognitoUserPool(poolConfig);

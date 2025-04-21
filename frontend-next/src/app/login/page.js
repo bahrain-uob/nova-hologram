@@ -4,14 +4,42 @@ import { useState } from "react";
 import "./login.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-import { FaArrowLeftLong } from "react-icons/fa6";
 import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
-import { userPool, calculateSecretHash } from "../aws-config";
+import { userPool } from "@/app/aws-config";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // const [error, setError] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleBackToHome = () => {
+    router.push("/");
+  };
+
+  const handleSignupClick = (e) => {
+    e.preventDefault();
+    router.push("/signup");
+  };
+
+  const handleForgotPasswordClick = (e) => {
+    e.preventDefault();
+    router.push("/fPassword");
+  };
+
+  const handleLoginSuccess = (userData) => {
+    localStorage.setItem("userSession", JSON.stringify(userData));
+    if (userData.userType === "reader") {
+      router.push("/rHomepage");
+    } else if (userData.userType === "librarian") {
+      router.push("/dashboard");
+    } else {
+      // Default fallback if userType is not specified
+      router.push("/dashboard");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +59,7 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
       cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: (result) => {
           console.log("Login successful:", result);
-          onLoginSuccess({
+          handleLoginSuccess({
             email,
             accessToken: result.getAccessToken().getJwtToken(),
             idToken: result.getIdToken().getJwtToken(),
@@ -39,17 +67,23 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
         },
         onFailure: (err) => {
           console.error("Login failed:", err);
-          setError(err.message || "Invalid email or password. Please try again.");
+          setError(
+            err.message || "Invalid email or password. Please try again."
+          );
         },
         newPasswordRequired: (userAttributes, requiredAttributes) => {
-          // Handle new password required scenario
-          console.log("New password required");
+          console.log(
+            "New password required",
+            userAttributes,
+            requiredAttributes
+          );
           setError("Please contact administrator to set up your password.");
         },
       });
     } catch (err) {
       console.error("Login error:", err);
       setError(err.message || "An error occurred during login.");
+      console.log("Login error:", error);
     }
   };
 
@@ -57,10 +91,18 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
     <div className="login-container">
       <div className="login-card">
         <div className="logo">
-          <img src="../logo.svg" alt="Logo" />
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            onClick={handleBackToHome}
+            width={50}
+            height={50}
+          />
         </div>
 
         <h1>Welcome back!</h1>
+
+        {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -102,11 +144,15 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
           </button>
 
           <div className="form-footer">
-            <a href="#" className="forgot-password">
+            <a
+              href="#"
+              onClick={handleForgotPasswordClick}
+              className="forgot-password"
+            >
               Forgot password?
             </a>
-            <a href="#" onClick={onSignupClick} className="back-to-signup">
-            ← Back to Signup
+            <a href="#" onClick={handleSignupClick} className="back-to-signup">
+              ← Back to Sign up
             </a>
           </div>
         </form>
@@ -114,5 +160,3 @@ function Login({ onBackToHome, onLoginSuccess, onSignupClick }) {
     </div>
   );
 }
-
-export default Login;
