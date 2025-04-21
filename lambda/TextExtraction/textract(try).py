@@ -1,29 +1,9 @@
-import boto3
-textract = boto3. client( 'textract')
-with open ('lambda/TextExtraction/img1.jpeg','rb') as img:
-    document_bytes = img.read()
+from textract import extract_text_from_image
+import os # making  file path dynamic and compatible across all systems 
 
-response= textract.detect_document_text(Document = {'Bytes': document_bytes})
+image_path = os.path.join(os.path.dirname(__file__), 'img1.jpeg')
 
-print ("printing the text in the imge")
-for item in response[ 'Blocks']:
-    if item[ 'BlockType'] == 'LINE':
-        print (item['Text'])
+lines = extract_text_from_image(image_path)
 
-
-'''
-print ("printing the Key value pairs") # For the future 
-for item in response[ 'Blocks']:
-    if item[ 'BlockType'] == 'KEY_VALUE_SET':
-        print (item['Text'])    
-
-print ("printing the Key value Tables") # For the future 
-for item in response[ 'Blocks']:
-    if item[ 'BlockType'] == 'TABLE':
-        print (item['Text']) 
-'''
-
-# This code should print (You can do it!) like what is in the (img.jpeg)
-        # in real life we will apload more content pages, which will print (extract) More 
-        # this code could be 
-# Make sure to modify the path of the image in line 3 <3
+for line in lines:
+    print(line)
