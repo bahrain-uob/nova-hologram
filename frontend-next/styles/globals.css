@@ -1,4 +1,5 @@
-@import "tailwindcss/preflight";
+@tailwind base;
+@tailwind components;
 @tailwind utilities;
 
 @layer base {
@@ -32,6 +33,26 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    --6: 0px 1px 0px 0px rgba(18, 32, 59, 0.09);
+    --baseblack: rgba(0, 0, 0, 1);
+    --basewhite: rgba(255, 255, 255, 1);
+    --color-2: rgba(79, 70, 229, 1);
+    --ffffff: rgba(255, 255, 255, 1);
+    --gray-200: rgba(228, 228, 231, 1);
+    --gray-400: rgba(161, 161, 170, 1);
+    --gray-700: rgba(63, 63, 70, 1);
+    --indigo-600: rgba(79, 70, 229, 1);
+    --primary-100: rgba(79, 70, 229, 1);
+    --white-100: rgba(255, 255, 255, 1);
+    --x-4: rgba(250, 250, 251, 1);
+
+    --bold-11px-font-family: "Plus Jakarta Sans", Helvetica;
+    --bold-11px-font-size: 11px;
+    --bold-11px-font-weight: 700;
+    --semi-bold-11px-font-family: "Plus Jakarta Sans", Helvetica;
+    --semi-bold-13px-font-family: "Plus Jakarta Sans", Helvetica;
+    --semi-bold-16px-font-family: "Inter", Helvetica;
   }
 
   .dark {
@@ -68,13 +89,19 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .all-\[unset\] {
+    all: unset;
   }
 }
