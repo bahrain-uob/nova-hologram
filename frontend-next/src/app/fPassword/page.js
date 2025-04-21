@@ -24,8 +24,9 @@ export default function PasswordRetrieve() {
         <h1>Forgot Password?</h1>
 
         <p className="verification-subtitle">
-          No worries! Enter your email address and we'll send you a reset link.
+        No worries! Enter your email address and we&apos;ll send you a reset link.
         </p>
+
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

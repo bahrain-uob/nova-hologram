@@ -67,7 +67,7 @@ export default function Signup() {
         }),
       ];
 
-      const clientId = userPool.clientId; // Cognito User Pool Client ID
+      //const clientId = userPool.clientId; // Cognito User Pool Client ID
 
       userPool.signUp(
         generatedUsername,

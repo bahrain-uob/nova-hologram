@@ -8,11 +8,12 @@ import {
 } from "lucide-react";
 import React from "react";
 
-import { Button } from "../../components/addbook/button";
+import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/addbook/card";
 import { Input } from "../../components/addbook/input";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import {
   Select,
@@ -307,7 +308,7 @@ const fetchBookData = async () => {
 <div className="mb-4">
   <label className="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label>
   <div className="space-y-2">
-    {objectives.map((objective, index) => (
+    {objectives.map((objective) => (
       <div key={objective.id} className="flex items-center gap-2">
         <Input
           defaultValue={objective.text}
@@ -360,14 +361,16 @@ const fetchBookData = async () => {
     >
       {(uploadedImage || bookData?.imageLinks?.thumbnail) ? (
         <div className="relative">
-          <img
+          <Image
             src={
               uploadedImage
                 ? URL.createObjectURL(uploadedImage)
-                : bookData?.imageLinks?.thumbnail || ""
+                : bookData?.imageLinks?.thumbnail || "/placeholder.png"
             }
             alt="Book Cover"
-            className="w-24 h-32 object-cover rounded mb-2"
+            width={96}
+            height={128}
+            className="object-cover rounded mb-2"
           />
 
           <button
