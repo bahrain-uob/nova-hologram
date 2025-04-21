@@ -5,6 +5,7 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    "./src/**/*.{html,js,ts,jsx,tsx}",
   ],
   theme: {
     container: {
@@ -36,6 +37,8 @@ module.exports = {
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
         "gray-e4": "#E4E4E7",
+        "cool-gray900": "var(--cool-gray900)",
+
 
 
         //  Chart colors
@@ -96,6 +99,9 @@ module.exports = {
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
 
       keyframes: {
