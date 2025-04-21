@@ -29,10 +29,10 @@ def lambda_handler(event, context):
 '''
 
 
+
+
 import boto3
 import time
-
-# Example: your bucket where images are uploaded
 S3_BUCKET_NAME = "s3://textract-console-us-east-1-83c86fc7-c823-4e34-916d-3b702b3ab15e/Handler/"
 
 def start_text_extraction_job(textract_client, bucket, document_key):
@@ -56,7 +56,7 @@ def lambda_handler(event, context):
     """
     textract_client = boto3.client('textract', region_name='us-east-1')
 
-    # Get the S3 image key from the event (passed by S3 trigger or API Gateway)
+    # Get the S3 image key from the event
     document_key = event.get("img2.png", "")
     
     if not document_key:
