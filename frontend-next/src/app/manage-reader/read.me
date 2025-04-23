@@ -1,0 +1,52 @@
+For the backend we need to:
+🔄 Core Backend Responsibilities
+1. Fetch All Books
+Endpoint: GET /books
+
+Purpose: Get a list of all books to display on the dashboard.
+
+Enhancements: Support query params for search, filter by genre, reading level, and publication year.
+
+Example: /books?search=gatsby&genre=Classic Fiction&level=Medium
+
+
+2. Add a New Book
+Endpoint: POST /books
+
+Payload:
+
+json
+Copy
+Edit
+{
+  "title": "The Great Gatsby",
+  "author": "F. Scott Fitzgerald",
+  "genre": "Classic Fiction",
+  "readingLevel": "Medium",
+  "publicationYear": 1925,
+  "cover": "/covers/gatsby.jpg" // Or file upload logic
+}
+Purpose: Allows the frontend's "Add New Book" button to create a new book in the database.
+
+3. Edit a Book
+Endpoint: PUT /books/:id
+
+Payload: Same as POST /books, but only for the fields being updated.
+
+Purpose: Update the book details when the user clicks the "Edit" icon.
+
+
+4. Delete a Book
+Endpoint: DELETE /books/:id
+
+Purpose: Triggered when the user clicks the "Delete" icon.
+
+
+5. Book Cover Handling
+If we're uploading cover images: (we may or may not, we may use a library if such exists)
+
+Use S3 (or equivalent) to store images.
+
+Return a coverUrl that the frontend can use.
+
+You’d need a signed URL upload endpoint if uploading from the frontend.

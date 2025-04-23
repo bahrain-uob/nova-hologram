@@ -10,6 +10,8 @@ export class lambdastack extends cdk.Stack {
     public readonly getFilesLambda: lambda.Function;
     public readonly deleteFilesLambda: lambda.Function;
     public readonly BedRockFunction: lambda.Function; 
+    public readonly getBookInfoLambda: lambda.Function;
+
   constructor(scope: cdk.App, id: string, dbStack: DBStack,StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -73,6 +75,16 @@ export class lambdastack extends cdk.Stack {
           VIDEO_BUCKET: StorageStack.genVideos.bucketName,  // Used in Python code
         }
       });
+
+      // Lambda to get book info using ISBN or DOI
+      const getBookInfoLambda = new lambda.Function(this, "GetBookInfoLambda", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset("lambda/getBookInfo"), // هذا هو فولدر الكود اللي كتبناه
+      });
+      this.getBookInfoLambda = getBookInfoLambda;
+
+
       
   
   }
