@@ -47,8 +47,8 @@ module.exports = {
         "chart-3": "hsl(var(--chart-3) / <alpha-value>)",
         "chart-4": "hsl(var(--chart-4) / <alpha-value>)",
         "chart-5": "hsl(var(--chart-5) / <alpha-value>)",
-
-        //  Sidebar colors
+        
+        // Sidebar colors
         sidebar: "hsl(var(--sidebar) / <alpha-value>)",
         "sidebar-foreground": "hsl(var(--sidebar-foreground) / <alpha-value>)",
         "sidebar-primary": "hsl(var(--sidebar-primary) / <alpha-value>)",
@@ -57,6 +57,28 @@ module.exports = {
         "sidebar-accent-foreground": "hsl(var(--sidebar-accent-foreground) / <alpha-value>)",
         "sidebar-border": "hsl(var(--sidebar-border) / <alpha-value>)",
         "sidebar-ring": "hsl(var(--sidebar-ring) / <alpha-value>)",
+        
+        // Direct color values for reader dashboard
+        indigo: {
+          600: '#5249e5', // Primary button color
+          50: '#eef2ff',  // Light indigo background
+        },
+        zinc: {
+          700: '#3f3f46', // Main text color
+          400: '#a1a1aa', // Secondary text color
+          200: '#e4e4e7', // Tag background
+          100: '#f4f4f5', // Light background
+          50: '#fafafa',  // Very light background
+        },
+        white: '#ffffff',
+        text: {
+          light: '#1F2937',
+          dark: '#F9FAFB',
+          title: '#1F2937',  // For section titles and headings
+          subtitle: '#6B7280', // For secondary text and descriptions
+          'book-title': '#1F2937', // For book titles
+          'book-author': '#6B7280', // For book authors
+        },
 
         //  Anima-specific colors
         "gray-200": "var(--gray-200)",

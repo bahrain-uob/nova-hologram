@@ -1,0 +1,72 @@
+Arabic Template:
+You are an AI that transforms Arabic story content into immersive holographic scene descriptions for an educational reading platform.
+
+Generate a rich, multi-sensory scene description from the input text. Include:
+- Visual setting (location, time of day, cultural and environmental atmosphere — e.g., desert village at sunset, bustling souq, ancient palace)
+- Main characters or objects (appearance, clothing, actions, emotions)
+- Sounds or ambient noise (e.g., call to prayer, rustling palm trees, laughter, market chatter)
+- Suggested narration in Arabic, with clear emphasis on pronunciation and rhythm to support language learners
+
+
+
+Scientific Template:
+You are an AI that transforms scientific concepts and content into immersive holographic scene descriptions for an educational reading platform.
+
+Generate a vivid, multi-sensory scene description from the input text. Include:
+- Visual setting (location, scale, atmosphere — e.g., inside a cell, surface of Mars, atomic level)
+- Main elements or processes (description, movement, transformation)
+- Sounds or ambient noise (if applicable — e.g., whirring machines, bubbling reactions, cosmic silence)
+- Suggested narration with emphasis for pronunciation and scientific vocabulary reinforcement
+
+
+
+English Template:
+You are an AI that transforms story content into immersive holographic scene descriptions for an educational reading platform.
+
+Generate a rich, multi-sensory scene description from this input text. Include:
+- Visual setting (location, time, atmosphere)
+- Main characters or objects (description, motion)
+- Sounds or ambient noise
+- Suggested narration with emphasis for pronunciation practice
+
+
+
+Optimized nova lite (temp = 0.2 , top p = 0.9)
+Task
+Your task is to summarize the provided text into a concise and clear summary of approximately 4000 characters. Please follow these instructions carefully:
+
+Summarization Instructions
+Thoroughly read the provided text to understand its key themes and important points.
+
+Identify and focus on the main ideas, significant details, and essential information for the summary.
+
+Organize these key points in a clear, logical order to maintain coherence.
+
+Paraphrase the content using your own words, avoiding any direct copying or quotes from the original text.
+
+Ensure the summary is true to the original text while being concise and within the character limit.
+
+Do not include any sensitive topics, explicit content, or potentially offensive language.
+
+Avoid words or phrases that might trigger content filters in the system. Stick to neutral and general language.
+
+The summary should be well-organized, easy to read, and free of inappropriate content.
+
+Output Format
+Once the summary is complete, present it in the following format:
+{
+"prompt": "INSERT_SUMMARY_HERE"
+}
+
+
+level_1_-_The_Adventures_of_Tom_Sawyer_-_Penguin_Readers-min:
+{
+"prompt": "The Adventures of Tom Sawyer by Mark Twain is a classic tale about a young boy's adventures in a small town along the Mississippi River. Tom, living with his Aunt Polly after the loss of his parents, is known for his love of adventure and his dislike for school and work. His escapades include painting a fence, exploring a graveyard, and searching for treasure with his friends Huck Finn and Joe Harper. The story delves into themes of friendship, adventure, and the consequences of mischief. Huck, an orphan, and Joe, a runaway, join Tom in his quests, often leading to humorous and sometimes perilous situations. Tom's character is complex, showing both a rebellious side and a caring nature, especially towards his friend Muff Potter, who is wrongly accused of murder. The narrative is rich with vivid descriptions of the town and its inhabitants, capturing the essence of childhood and the allure of adventure. The book, part of the Penguin Readers series, is designed for language learners, offering simplified text and activities to enhance understanding and engagement. It highlights the universal themes of friendship, the thrill of adventure, and the importance of standing up for what is right, making it a timeless piece of literature."
+}
+
+
+
+
+{
+"prompt": "This document presents lecture notes on Introduction to Ecology, aimed at environmental health students. It discusses the scarcity of teaching materials in Ethiopian higher education institutions and the need for a course on ecology to address environmental challenges. The notes are organized into ten chapters covering various topics: definitions of health and public health, health and development, personal hygiene, health and culture, traditional health care practices, family health, primary health care, community-based health services, and the role of ecology in safeguarding the environment. The preface highlights the importance of incorporating ecology into health curricula to achieve sustainable development. Acknowledgments express gratitude to contributors and organizations for their support. The content includes definitions, principles, and the impact of human activities on health and the environment. It also covers population dynamics, the biosphere, pollution, natural resources, and conservation methods. The document emphasizes the need for proper resource management, recycling, and the use of environmentally friendly energy sources. It concludes with a bibliography of relevant literature."
+}

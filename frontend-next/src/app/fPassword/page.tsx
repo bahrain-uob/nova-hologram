@@ -8,7 +8,7 @@ import Image from "next/image";
 export default function PasswordRetrieve() {
   const [emailAddress, setEmailAddress] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Forgot password from email:", emailAddress);
     // Forgot Password logic here

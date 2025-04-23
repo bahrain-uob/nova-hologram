@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, BookOpen, Library, Search } from 'lucide-react';
+import withRoleProtection from "@/components/auth/withRoleProtection";
 
 // Import UI components
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ import { GenreChart } from "@/components/dashboard/GenreChart";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { TopBooks } from "@/components/dashboard/TopBooks";
 
-function Dashboard() {
+const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -209,10 +210,5 @@ function Dashboard() {
   );
 };
 
-export default Dashboard;
-
-
-
-
-
-
+// Protect this route - only librarians can access it
+export default withRoleProtection(Dashboard, ['librarian']);
