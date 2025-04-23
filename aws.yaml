@@ -1,125 +1,532 @@
+# Nova Hologram Architecture Diagram
+#
+# Architecture Components:
+# - Authentication: Cognito Authentication for user management
+# - API Gateway: Routes requests to appropriate Lambda functions
+# - S3 Buckets: 
+#   - Reading Materials Bucket: Stores uploaded reading materials
+#   - Nova Generated Content: Stores generated content
+# - Lambda Functions:
+#   - Upload Reading Materials: Handles file uploads
+#   - Get Reading Materials: Retrieves reading materials
+#   - Delete Reading Materials: Removes reading materials
+#   - Text Extraction: Extracts text from uploaded materials
+#   - Save Extracted Text: Stores extracted text
+#   - InvokeNova: Triggers Nova processing
+# - AWS Services:
+#   - Amazon Textract: For text extraction from documents
+#   - Amazon Bedrock: For AI processing
+# - DynamoDB: For storing metadata
+#
+# User Flow:
+# 1. Librarian authenticates via Cognito
+# 2. Uploads reading materials through API Gateway to S3
+# 3. Text extraction processes documents
+# 4. Extracted text is saved and processed
+# 5. Nova generates content based on extracted text
+# 6. Generated content is stored and made available
+
+ArchitectureDiagram:
+  Components:
+    Authentication:
+      Service: Cognito
+      Description: User authentication and management
+      Connections:
+        - Target: APIGateway
+          Description: Authenticates API requests
+
+    APIGateway:
+      Service: APIGateway
+      Description: REST API for file operations
+      Endpoints:
+        - Path: /files
+          Methods:
+            - GET
+            - POST
+            - DELETE
+      Connections:
+        - Target: UploadLambda
+          Method: POST
+        - Target: GetFilesLambda
+          Method: GET
+        - Target: DeleteFilesLambda
+          Method: DELETE
+
+    ReadingMaterialsBucket:
+      Service: S3
+      Description: Stores uploaded reading materials
+      Connections:
+        - Target: TextExtractionLambda
+          Description: Triggers text extraction on upload
+
+    NovaGeneratedContent:
+      Service: S3
+      Description: Stores AI-generated content
+
+    LambdaFunctions:
+      UploadLambda:
+        Handler: index.handler
+        Description: Handles file uploads
+        Connections:
+          - Target: ReadingMaterialsBucket
+            Action: PutObject
+
+      GetFilesLambda:
+        Handler: index.handler
+        Description: Retrieves reading materials
+        Connections:
+          - Target: ReadingMaterialsBucket
+            Action: GetObject
+
+      DeleteFilesLambda:
+        Handler: index.handler
+        Description: Removes reading materials
+        Connections:
+          - Target: ReadingMaterialsBucket
+            Action: DeleteObject
+
+      TextExtractionLambda:
+        Handler: index.handler
+        Description: Extracts text from documents
+        Connections:
+          - Target: AmazonTextract
+            Action: DetectDocumentText
+          - Target: SaveExtractedTextLambda
+            Action: Invoke
+
+      SaveExtractedTextLambda:
+        Handler: index.handler
+        Description: Stores extracted text
+        Connections:
+          - Target: DynamoDB
+            Action: PutItem
+
+      InvokeNovaLambda:
+        Handler: index.handler
+        Description: Triggers Nova processing
+        Connections:
+          - Target: AmazonBedrock
+            Action: InvokeModel
+
+    AWSServices:
+      AmazonTextract:
+        Description: Text extraction from documents
+
+      AmazonBedrock:
+        Description: AI processing and content generation
+
+    Database:
+      DynamoDB:
+        Description: Stores metadata and extracted text
+
+  UserFlows:
+    LibrarianFlow:
+      Steps:
+        - Actor: Librarian
+          Action: Authenticate
+          Service: Cognito
+        - Actor: Librarian
+          Action: Upload materials
+          Service: APIGateway
+        - Service: UploadLambda
+          Action: Store file
+          Target: ReadingMaterialsBucket
+        - Service: TextExtractionLambda
+          Action: Extract text
+          Target: AmazonTextract
+        - Service: SaveExtractedTextLambda
+          Action: Save text
+          Target: DynamoDB
+        - Service: InvokeNovaLambda
+          Action: Generate content
+          Target: AmazonBedrock
+        - Service: InvokeNovaLambda
+          Action: Store generated content
+          Target: NovaGeneratedContent
+
 Resources:
+  # Authentication
   CognitoAuth:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: LibraryUserPool
+      UserPoolId: us-east-1_U0iB4Rowp
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: userType
+          AttributeDataType: String
+          Mutable: true
+          Required: true
 
-  WebAppHosting:
-    Type: AWS::S3::Bucket
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
     Properties:
-      BucketName: HostedWebAppBucket
+      ClientName: NovaHologramClient
+      ClientId: 509b3p7mb73l7rfi2h16mef65v
+      UserPoolId: !Ref CognitoAuth
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
 
-  CloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        Origins:
-          - DomainName: HostedWebAppBucket.s3.amazonaws.com
-            Id: S3Origin
-
+  # Lambda Functions
   UploadLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: UploadReadingMaterial
       Handler: index.handler
-      Role: <IAM Role>
+      Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: <Bucket Name>
-        S3Key: <Key>
-      Runtime: nodejs14.x
+        ZipFile: |
+          exports.handler = async (event) => {
+            // Upload reading material implementation
+            return { statusCode: 200, body: JSON.stringify({ message: 'File uploaded successfully' }) };
+          };
+      Runtime: nodejs18.x
+      Timeout: 30
+      MemorySize: 256
 
   GetFilesLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: GetReadingMaterials
       Handler: index.handler
-      Role: <IAM Role>
+      Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: <Bucket Name>
-        S3Key: <Key>
-      Runtime: nodejs14.x
+        ZipFile: |
+          exports.handler = async (event) => {
+            // Get reading materials implementation
+            return { statusCode: 200, body: JSON.stringify({ files: [] }) };
+          };
+      Runtime: nodejs18.x
+      Timeout: 30
+      MemorySize: 256
 
   DeleteFilesLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: DeleteReadingMaterials
       Handler: index.handler
-      Role: <IAM Role>
+      Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: <Bucket Name>
-        S3Key: <Key>
-      Runtime: nodejs14.x
+        ZipFile: |
+          exports.handler = async (event) => {
+            // Delete reading materials implementation
+            return { statusCode: 200, body: JSON.stringify({ message: 'File deleted successfully' }) };
+          };
+      Runtime: nodejs18.x
+      Timeout: 30
+      MemorySize: 256
 
+  # S3 Buckets
   ReadingMaterialsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: ReadingMaterialsBucket
+      BucketName: !Sub reading-materials-${AWS::AccountId}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt TextExtractionLambda.Arn
 
-  ReadingMaterialsQueue:
-    Type: AWS::SQS::Queue
+  WebAppDashboardBucket:
+    Type: AWS::S3::Bucket
     Properties:
-      QueueName: ReadingMaterialsQueue
+      BucketName: !Sub nova-hologram-dashboard-${AWS::AccountId}
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+
+  NovaGeneratedContentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub nova-generated-content-${AWS::AccountId}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
 
   TextExtractionLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: TextExtractionLambda
       Handler: index.handler
-      Role: <IAM Role>
+      Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: <Bucket Name>
-        S3Key: <Key>
-      Runtime: nodejs14.x
-
-  ExtractedTextQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: ExtractedTextQueue
+        ZipFile: |
+          exports.handler = async (event) => {
+            // Text extraction implementation using Amazon Textract
+            // Trigger SaveExtractedTextLambda after extraction
+            return { statusCode: 200, body: JSON.stringify({ message: 'Text extracted successfully' }) };
+          };
+      Runtime: nodejs18.x
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          SAVE_LAMBDA_ARN: !GetAtt SaveExtractedTextLambda.Arn
 
   SaveExtractedTextLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: SaveExtractedText
       Handler: index.handler
-      Role: <IAM Role>
+      Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: <Bucket Name>
-        S3Key: <Key>
-      Runtime: nodejs14.x
-
-  DynamoDBTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ExtractedTextData
-      AttributeDefinitions:
-        - AttributeName: Id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: Id
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-
-  NovaGeneratedContentBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: NovaGeneratedContent
+        ZipFile: |
+          exports.handler = async (event) => {
+            // Save extracted text to DynamoDB
+            return { statusCode: 200, body: JSON.stringify({ message: 'Text saved successfully' }) };
+          };
+      Runtime: nodejs18.x
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref ExtractedTextTable
 
   InvokeNovaLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: InvokeNova
       Handler: index.handler
-      Role: <IAM Role>
+      Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: <Bucket Name>
-        S3Key: <Key>
-      Runtime: nodejs14.x
+        ZipFile: |
+          exports.handler = async (event) => {
+            // Invoke Amazon Bedrock for AI processing
+            // Save generated content to S3
+            return { statusCode: 200, body: JSON.stringify({ message: 'Nova processing complete' }) };
+          };
+      Runtime: nodejs18.x
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref NovaGeneratedContentBucket
 
-  BedrockAccess:
+  # DynamoDB Tables
+  ExtractedTextTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ExtractedText
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # CloudFront Distribution for Web Application
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt NovaGeneratedContentBucket.DomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+
+  # API Gateway
+  APIGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: LibraryContentAPI
+      Description: API for managing library content including file uploads
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      BinaryMediaTypes:
+        - '*/*'
+
+  # API Gateway Resources
+  FilesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref APIGateway
+      ParentId: !GetAtt APIGateway.RootResourceId
+      PathPart: files
+
+  # GET Method - List/Get Files
+  GetFilesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref FilesResource
+      HttpMethod: GET
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayCognitoAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFilesLambda.Arn}/invocations
+
+  # POST Method - Upload Files
+  PostFilesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref FilesResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayCognitoAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UploadLambda.Arn}/invocations
+
+  # DELETE Method - Delete Files
+  DeleteFilesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref APIGateway
+      ResourceId: !Ref FilesResource
+      HttpMethod: DELETE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiGatewayCognitoAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteFilesLambda.Arn}/invocations
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GetFilesMethod
+      - PostFilesMethod
+      - DeleteFilesMethod
+    Properties:
+      RestApiId: !Ref APIGateway
+      StageName: prod
+
+  # Cognito User Pool Authorizer
+  ApiGatewayCognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: CognitoUserPoolAuthorizer
+      RestApiId: !Ref APIGateway
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      ProviderARNs:
+        - !GetAtt CognitoAuth.Arn
+
+  # Lambda Execution Role with S3 permissions
+  LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: AmazonBedrockRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonTextractFullAccess
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                  - s3:HeadObject
+                Resource:
+                  - !GetAtt ReadingMaterialsBucket.Arn
+                  - !Sub ${ReadingMaterialsBucket.Arn}/*
+                  - !GetAtt NovaGeneratedContentBucket.Arn
+                  - !Sub ${NovaGeneratedContentBucket.Arn}/*
+        - PolicyName: DynamoDBAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt ExtractedTextTable.Arn
+
+  # AWS AI Services
+  AmazonTextract:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: textract.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonTextractFullAccess
+      Description: Role for Amazon Textract text extraction services
+
+  AmazonBedrock:
+    Type: AWS::IAM::Role
+    Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -127,30 +534,6 @@ Resources:
             Principal:
               Service: bedrock.amazonaws.com
             Action: sts:AssumeRole
-
-  APIGateway:
-    Type: AWS::ApiGateway::RestApi
-    Properties:
-      Name: LibraryContentAPI
-
-  IAMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-            Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
-      Path: /
-      RoleName: EC2ReadOnlyRole
-      Tags:
-        - Key: Environment
-          Value: Production
-  Api:
-    Type: AWS::ApiGatewayV2::Api
-    Properties: {}
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+      Description: Role for Amazon Bedrock AI services
