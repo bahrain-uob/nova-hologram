@@ -144,11 +144,14 @@ const ManageBooks: React.FC = () => {
                   key={book.id}
                   className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex gap-6"
                 >
-                  <Image
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-24 h-32 object-cover rounded-lg"
-                  />
+                <Image
+                  src={book.cover}
+                  alt={book.title}
+                  width={96}   // Tailwind w-24 = 96px
+                  height={128} // Tailwind h-32 = 128px
+                  className="object-cover rounded-lg"
+                />
+
                   <div className="flex flex-col justify-between ml-2">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">{book.title}</h3>
