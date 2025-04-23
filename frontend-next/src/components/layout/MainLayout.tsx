@@ -50,21 +50,28 @@ export default function MainLayout({
         {/* Sidebar BELOW header */}
         <aside className="w-64 fixed top-16 left-0 bottom-0 bg-white border-r border-[#E4E4E7] p-4 flex flex-col justify-between">
         <nav className="space-y-1">
-            {navItems.map((item, i) => (
-              <a
-                href="#"
-                key={i}
-                className={`flex items-center gap-2 p-2 rounded-md ${
-                  item.label === activePage
-                    ? "bg-indigo-600 text-white"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {item.icon}
-                <span className="text-sm font-medium">{item.label}</span>
-              </a>
-            ))}
-          </nav>
+  {navItems.map((item, i) => {
+    const isActive = item.label === activePage;
+    return (
+      <a
+        href="#"
+        key={i}
+        className={`flex items-center gap-2 p-2 rounded-md ${
+          isActive
+            ? "bg-[#F0F1F3] text-[#4F46E5] font-medium"
+            : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        {React.cloneElement(item.icon, {
+          className: "h-5 w-5",
+          color: isActive ? "#4F46E5" : undefined,
+        })}
+        <span className="text-sm">{item.label}</span>
+      </a>
+    );
+  })}
+</nav>
+
 
           <div className="mt-auto space-y-1">
             {footerNav.map((item, i) => (
