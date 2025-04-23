@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Edit as EditIcon, Trash2 as DeleteIcon, Filter as FilterIcon } from "lucide-react";
 import { ReadersSidebar } from "@/components/dashboard/ReadersSidebar";
 import { Top } from "@/components/dashboard/Top";
+import Image from "next/image";
 
 interface Book {
   id: number;
@@ -143,7 +144,7 @@ const ManageBooks: React.FC = () => {
                   key={book.id}
                   className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex gap-6"
                 >
-                  <img
+                  <Image
                     src={book.cover}
                     alt={book.title}
                     className="w-24 h-32 object-cover rounded-lg"
