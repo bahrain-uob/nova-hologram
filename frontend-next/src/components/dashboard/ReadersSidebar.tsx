@@ -61,7 +61,7 @@ export const ReadersSidebar: React.FC<ReadersSidebarProps> = ({
         <div
           className={`absolute inset-x-0 bottom-0 h-16 flex items-center w-40 p-2 rounded-lg m-12 ${divClassName}`}
         >
-          <SignOutButton variant="unstyled" className="text-base font-medium" />
+          <SignOutButton className="text-base font-medium" />
         </div>
       </div>
     </div>
