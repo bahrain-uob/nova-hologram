@@ -44,3 +44,4 @@ coverage
 
 # ignore the test files
 __tests__
+venv/

@@ -14,6 +14,8 @@ export class lambdastack extends cdk.Stack {
     public readonly getFilesLambda: lambda.Function;
     public readonly deleteFilesLambda: lambda.Function;
     public readonly BedRockFunction: lambda.Function; 
+    public readonly getBookInfoLambda: lambda.Function;
+
     public readonly messageProcessing: lambda.Function; 
     public readonly invokeBedrock: lambda.Function; 
     public readonly invokeBedrockLib: lambda.Function; 
