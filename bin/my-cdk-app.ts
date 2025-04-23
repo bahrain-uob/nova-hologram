@@ -14,7 +14,5 @@ const sharedResourcesStack = new SharedResourcesStack(app, "SharedResourcesStack
 const storageStack = new StorageStack(app, "StorageStack", sharedResourcesStack);
 const lambdaStack = new lambdastack(app, "LambdaStack", dbStack, storageStack, sharedResourcesStack);
 const Bedrock = new BedrockStack(app, "BedrockStack", lambdaStack, storageStack);
-const apiStack = new APIStack(app, "APIStack", dbStack, lambdaStack);
+const apiStack = new APIStack(app, "APIStack", dbStack, lambdaStack, storageStack);
 const frontendStack = new FrontendStack(app, "FrontendStack");
-
-

@@ -44,7 +44,7 @@ export class FrontendStack extends cdk.Stack {
       });
   
       new s3deploy.BucketDeployment(this, "DeployWebsite", {
-        sources: [s3deploy.Source.asset("./frontend/build")], //the place where the static files are located.
+        sources: [s3deploy.Source.asset("./frontend-next/.next")], //the place where the static files are located.
         destinationBucket: this.websiteBucket,
         distribution: cloudfrontDistribution,
         distributionPaths: ['/*'], // This invalidates CloudFront cache
