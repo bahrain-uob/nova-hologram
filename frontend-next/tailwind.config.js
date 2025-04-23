@@ -5,6 +5,7 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    "./src/**/*.{html,js,ts,jsx,tsx}",
   ],
   theme: {
     container: {
@@ -35,8 +36,12 @@ module.exports = {
         border: "hsl(var(--border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
-        
-        // Chart colors
+        "gray-e4": "#E4E4E7",
+        "cool-gray900": "var(--cool-gray900)",
+
+
+
+        //  Chart colors
         "chart-1": "hsl(var(--chart-1) / <alpha-value>)",
         "chart-2": "hsl(var(--chart-2) / <alpha-value>)",
         "chart-3": "hsl(var(--chart-3) / <alpha-value>)",
@@ -74,23 +79,64 @@ module.exports = {
           'book-title': '#1F2937', // For book titles
           'book-author': '#6B7280', // For book authors
         },
+
+        //  Anima-specific colors
+        "gray-200": "var(--gray-200)",
+        "gray-400": "var(--gray-400)",
+        "gray-700": "var(--gray-700)",
+        "indigo-600": "var(--indigo-600)",
+        "primary-100": "var(--primary-100)",
+        "white-100": "var(--white-100)",
+        "baseblack": "var(--baseblack)",
+        "basewhite": "var(--basewhite)",
+        "color-2": "var(--color-2)",
+        ffffff: "var(--ffffff)",
+        "x-4": "var(--x-4)",
+
       },
+
+      fontFamily: {
+        "bold-11px": "var(--bold-11px-font-family)",
+        "semi-bold-11px": "var(--semi-bold-11px-font-family)",
+        "semi-bold-13px": "var(--semi-bold-13px-font-family)",
+        "semi-bold-16px": "var(--semi-bold-16px-font-family)",
+        sans: [
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+          '"Apple Color Emoji"',
+          '"Segoe UI Emoji"',
+          '"Segoe UI Symbol"',
+          '"Noto Color Emoji"',
+        ],
+      },
+
+      
+      boxShadow: {
+        "6": "var(--6)",
+      },
+
       borderRadius: {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
+
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
-          to: { height: 'var(--radix-accordionx-content-height)' },
+          to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
       },
+
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
