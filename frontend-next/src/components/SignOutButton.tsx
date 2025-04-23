@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { userPool } from "@/app/aws-config";
 
 export function SignOutButton({
-  variant = "ghost",
   className = "",
 }: {
   variant?: string;
@@ -40,7 +39,6 @@ export function SignOutButton({
 
   return (
     <Button
-      variant={variant as any}
       className={`w-full justify-start hover:bg-primary/5 ${className}`}
       onClick={handleSignOut}
       disabled={isLoading}
