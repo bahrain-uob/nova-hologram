@@ -54,6 +54,8 @@ export class StorageStack extends cdk.Stack {
             autoDeleteObjects: true,
           });
 
+          // NOTE: Event notifications for these buckets are now handled in EventNotificationsStack
+          // to avoid circular dependencies
           
 
   }

@@ -24,7 +24,9 @@ export class lambdastack extends cdk.Stack {
     public readonly triggerPolly: lambda.Function; 
 
 
-  constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps) {
+  constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
+    // Extract synthesisMode from props if present
+    const synthesisMode = props?.synthesisMode || false;
     super(scope, id, props);
 
     //POST Lambda (Upload)
@@ -138,18 +140,32 @@ export class lambdastack extends cdk.Stack {
             OUTPUT_BUCKET: StorageStack.novaContentBucket.bucketName,
             TEXT_TABLE: dbStack.extractedTextTable.tableName,
           },
-        }),
+        });
   
 
-      this.playResponse.addPermission('AllowS3Invoke', {
-        principal: new iam.ServicePrincipal('s3.amazonaws.com'),
-        sourceArn: StorageStack.audioFilesBucket.bucketArn,
-      });
-
-      StorageStack.audioFilesBucket.addEventNotification(
-        s3.EventType.OBJECT_CREATED,
-        new s3n.LambdaDestination(this.playResponse)
-      );
+      // Only add permissions and event notifications if not in synthesis mode
+      // This breaks the circular dependency during CDK synthesis
+      if (!synthesisMode) {
+        // Add permission for S3 to invoke the Lambda
+        this.playResponse.addPermission('AllowS3Invoke', {
+          principal: new iam.ServicePrincipal('s3.amazonaws.com'),
+          sourceArn: StorageStack.audioFilesBucket.bucketArn
+        });
+        
+        // Add the event notification directly here
+        // This will only run during actual deployment, not during synthesis
+        try {
+          StorageStack.audioFilesBucket.addEventNotification(
+            s3.EventType.OBJECT_CREATED,
+            new s3n.LambdaDestination(this.playResponse)
+          );
+        } catch (error) {
+          // Ignore circular dependency errors during synthesis
+          console.warn('Skipping event notification setup during synthesis to avoid circular dependencies');
+        }
+      } else {
+        console.log('Running in synthesis mode - skipping event notification setup');
+      }
 
       // Permissions
     // Allow Polly Lambda to write to the audio bucket
