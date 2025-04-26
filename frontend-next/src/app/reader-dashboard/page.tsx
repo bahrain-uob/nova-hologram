@@ -7,7 +7,7 @@ import { ReadersSidebar } from "@/components/dashboard/ReadersSidebar";
 import { Top } from "@/components/dashboard/Top";
 import withRoleProtection from "@/components/auth/withRoleProtection";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+//import Image from "next/image";
 
 const ReaderDashboard: React.FC = () => {
   const [userName, setUserName] = useState("Reader");
@@ -92,7 +92,7 @@ const ReaderDashboard: React.FC = () => {
                 {/* Book 1 */}
                 <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
                   <div className="aspect-[3/4] w-full relative">
-                    <Image
+                    <img
                       src="/img.png"
                       alt="The Silent Echo"
                       className="w-full h-full object-cover"
@@ -122,7 +122,7 @@ const ReaderDashboard: React.FC = () => {
                 {/* Book 2 */}
                 <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
                   <div className="aspect-[3/4] w-full relative">
-                    <Image
+                    <img
                       src="/image.png"
                       alt="Winds of the Desert"
                       className="w-full h-full object-cover"
@@ -153,7 +153,7 @@ const ReaderDashboard: React.FC = () => {
 
                   <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
                     <div className="aspect-[3/4] w-full relative">
-                      <Image src="/image.png" alt="Winds of the Desert" className="w-full h-full object-cover" />
+                      <img src="/image.png" alt="Winds of the Desert" className="w-full h-full object-cover" />
                     </div>
 
                   <div className="p-2 flex flex-col flex-grow">
@@ -178,7 +178,7 @@ const ReaderDashboard: React.FC = () => {
 
                   <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
                     <div className="aspect-[3/4] w-full relative">
-                      <Image src="/img-2.png" alt="Beyond the Horizon" className="w-full h-full object-cover" />
+                      <img src="/img-2.png" alt="Beyond the Horizon" className="w-full h-full object-cover" />
                     </div>
 
                   <div className="p-2 flex flex-col flex-grow">
@@ -203,7 +203,7 @@ const ReaderDashboard: React.FC = () => {
 
                   <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
                     <div className="aspect-[3/4] w-full relative">
-                      <Image src="/img-3.png" alt="Tales of the Future" className="w-full h-full object-cover" />
+                      <img src="/img-3.png" alt="Tales of the Future" className="w-full h-full object-cover" />
                     </div>
 
                   <div className="p-2 flex flex-col flex-grow">
@@ -255,7 +255,7 @@ const ReaderDashboard: React.FC = () => {
                 <div className="space-y-3">
                   <div className="bg-gray-50 rounded p-2 flex items-start">
                     <div className="w-10 h-14 rounded bg-red-500 flex-shrink-0 overflow-hidden">
-                      <Image src="/img-4.png" alt="The Red Pathways" className="w-full h-full object-cover" />
+                      <img src="/img-4.png" alt="The Red Pathways" className="w-full h-full object-cover" />
                     </div>
                     <div className="ml-2 flex-grow">
                       <h3 className="text-book-title text-xs font-medium mb-1">
@@ -273,7 +273,7 @@ const ReaderDashboard: React.FC = () => {
 
                   <div className="bg-gray-50 rounded p-2 flex items-start">
                     <div className="w-10 h-14 rounded bg-gray-500 flex-shrink-0 overflow-hidden">
-                      <Image src="/img-5.png" alt="Hidden Truths" className="w-full h-full object-cover" />
+                      <img src="/img-5.png" alt="Hidden Truths" className="w-full h-full object-cover" />
                     </div>
                     <div className="ml-2 flex-grow">
                       <h3 className="text-book-title text-xs font-medium mb-1">

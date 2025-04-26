@@ -68,6 +68,10 @@ export class APIStack extends cdk.Stack {
     librarianApi.root.addResource('generate')
       .addMethod('POST', new apigateway.LambdaIntegration(lambdastack.invokeBedrockLib));
 
+    // Get Book Info Lambda (API: /get-book-info)
+    librarianApi.root.addResource('get-book-info')
+  .addMethod('POST', new apigateway.LambdaIntegration(lambdastack.getBookInfoLambda));
+  
     // CloudFormation Outputs
     new cdk.CfnOutput(this, 'ReaderAPIURL', { value: readerApi.url! });
     new cdk.CfnOutput(this, 'LibrarianAPIURL', { value: librarianApi.url! });
@@ -75,5 +79,6 @@ export class APIStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ExtractedTextTableName', { value: dbStack.extractedTextTable.tableName });
     new cdk.CfnOutput(this, 'AudioFilesBucketOutput', { value: StorageStack.audioFilesBucket.bucketName });
     new cdk.CfnOutput(this, 'NovaGeneratedContentBucket', { value: StorageStack.novaContentBucket.bucketName });
+    new cdk.CfnOutput(this, 'GetBookInfoAPIURL', {value: `${librarianApi.url}get-book-info`,});
   }
 }

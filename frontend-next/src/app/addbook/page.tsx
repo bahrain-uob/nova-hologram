@@ -23,17 +23,8 @@ import {
   SelectValue,
 } from "../../components/addbook/select";
 import { Textarea } from "../../components/addbook/textarea";
-type BookData = {
-  title?: string;
-  authors?: string[]; 
-  publisher?: string;
-  publishedDate?: string; 
-  description?: string;
-  maturityRating?: string; 
-  imageLinks?: {
-    thumbnail?: string;
-  };
-};
+import { BookData } from "@/lib/book"; 
+
 export default function AddBookPage() {
   const [objectives, setObjectives] = React.useState([
     { id: 1, text: "" },
@@ -88,7 +79,7 @@ const fetchBookData = async () => {
   setLoading(true);
   try {
     const response = await fetch(
-      "https://778wwf05pa.execute-api.us-east-1.amazonaws.com/default/LambdaStack-GetBookInfoLambda83EE58F2-lcXSwzrnIGks",
+      "https://778wwf05pa.execute-api.us-east-1.amazonaws.com/default/LambdaStack-GetBookInfoLambda83EE58F2-ClOJW7A7mpib",
       {
         method: "POST",
         headers: {

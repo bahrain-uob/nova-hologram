@@ -24,18 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/addbook/select";
+import { BookData } from "@/lib/book"; 
 
-type BookData = {
-  title?: string;
-  authors?: string[];
-  publisher?: string;
-  publishedDate?: string;
-  description?: string;
-  maturityRating?: string;
-  imageLinks?: {
-    thumbnail?: string;
-  };
-};
+
 
 const mockBook: BookData = {
   title: "Harry Potter and the Philosopher’s Stone",
