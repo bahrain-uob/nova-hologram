@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   images: {
-    domains: ["books.google.com"],
+    domains: ["covers.openlibrary.org"],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
