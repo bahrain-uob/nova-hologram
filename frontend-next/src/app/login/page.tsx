@@ -39,10 +39,10 @@ export default function Login() {
   const handleLoginSuccess = (userData: UserData) => {
     // Store in localStorage for client-side access
     localStorage.setItem("userSession", JSON.stringify(userData));
-    
+
     // Store in cookies for middleware access
     document.cookie = `userSession=${JSON.stringify(userData)}; path=/; max-age=86400; SameSite=Strict`;
-    
+
     // Redirect based on user type
     if (userData.userType === "reader") {
       router.push("/reader-dashboard");
@@ -72,14 +72,14 @@ export default function Login() {
       cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: (result) => {
           console.log("Login successful:", result);
-          
+
           // Get user attributes to determine user type
           cognitoUser.getUserAttributes((err, attributes) => {
             if (err) {
               console.error("Error getting user attributes:", err);
               return;
             }
-            
+
             // Find userType from attributes
             let userType = "reader"; // Default to reader
             if (attributes) {
@@ -90,7 +90,7 @@ export default function Login() {
                 }
               }
             }
-            
+
             handleLoginSuccess({
               email,
               userType,
