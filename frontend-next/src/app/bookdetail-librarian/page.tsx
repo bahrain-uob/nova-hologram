@@ -1,7 +1,7 @@
 /* EditBookPage.tsx */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSearchParams } from "next/navigation";
 import withRoleProtection from "@/components/auth/withRoleProtection";
 import Image from "next/image";
@@ -112,7 +112,7 @@ function TextAreaWithLabel({
 
 
 
-function EditBookPage() {
+const EditBookPage: React.FC = () => {
   const searchParams = useSearchParams();
   const bookId = searchParams.get('id');
 
@@ -154,10 +154,10 @@ function EditBookPage() {
       mockBook.maturityRating === "MATURE"
         ? "Adults"
         : mockBook.maturityRating === "NOT_MATURE"
-          ? "Kids"
-          : ""
+        ? "Kids"
+        : ""
     );
-  }, []);
+  }, [bookId]);
 
   const handleSaveChanges = () => {
     const updatedBook = {

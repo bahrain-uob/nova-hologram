@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import MainLayout from "@/components/layout/readerLayout";
 import withRoleProtection from "@/components/auth/withRoleProtection";
@@ -16,13 +16,12 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { PlayIcon, StarIcon } from "lucide-react";
 
-function BookDetailPageReader() {
+const BookDetailPageReader: React.FC = () => {
   const searchParams = useSearchParams();
   const bookId = searchParams.get('id');
   
   // In a real app, you would fetch book details based on bookId
   // For now, we'll use mock data
-  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
     if (bookId) {
