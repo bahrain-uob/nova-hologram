@@ -157,13 +157,13 @@ export default function VideosGeneratedPage() {
 
           {/* Bottom Buttons */}
           <div className="flex justify-end gap-3 pt-4">
-          <Button
-  variant="outline"
-  className="rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors"
-  onClick={() => router.push("/addbook")}
->
-  Back
-</Button>
+            <Button
+              variant="outline"
+              className="rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors"
+              onClick={() => router.push("/addbook")}
+            >
+              Back
+            </Button>
 
 
             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">

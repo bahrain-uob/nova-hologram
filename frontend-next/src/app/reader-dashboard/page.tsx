@@ -96,6 +96,8 @@ const ReaderDashboard: React.FC = () => {
                       src="/img.png"
                       alt="The Silent Echo"
                       className="w-full h-full object-cover"
+                      width={300}
+                      height={400}
                     />
                   </div>
 
@@ -112,8 +114,11 @@ const ReaderDashboard: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-auto">
-                      <button className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200">
-                        Start Reading
+                      <button 
+                        className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
+                        onClick={() => router.push(`/bookdetail-reader?id=book1`)}
+                      >
+                        Read
                       </button>
                     </div>
                   </div>
@@ -126,7 +131,7 @@ const ReaderDashboard: React.FC = () => {
                       src="/image.png"
                       alt="Winds of the Desert"
                       className="w-full h-full object-cover"
-                      width={300} 
+                      width={300}
                       height={400}
                     />
                   </div>
@@ -144,17 +149,26 @@ const ReaderDashboard: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-auto">
-                      <button className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200">
-                        Start Reading
+                      <button 
+                        className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
+                        onClick={() => router.push(`/bookdetail-reader?id=book1`)}
+                      >
+                        Read
                       </button>
                     </div>
                   </div>
                 </div>
 
-                  <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
-                    <div className="aspect-[3/4] w-full relative">
-                      <Image src="/image.png" alt="Winds of the Desert" className="w-full h-full object-cover" />
-                    </div>
+                <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
+                  <div className="aspect-[3/4] w-full relative">
+                    <Image 
+                      src="/image.png" 
+                      alt="Winds of the Desert" 
+                      className="w-full h-full object-cover"
+                      width={300}
+                      height={400}
+                    />
+                  </div>
 
                   <div className="p-2 flex flex-col flex-grow">
                     <h3 className="text-book-title font-medium text-xs mb-0.5 line-clamp-1">
@@ -169,17 +183,26 @@ const ReaderDashboard: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-auto">
-                      <button className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200">
-                        Start Reading
+                      <button 
+                        className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
+                        onClick={() => router.push(`/bookdetail-reader?id=book1`)}
+                      >
+                        Read
                       </button>
                     </div>
                   </div>
                 </div>
 
-                  <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
-                    <div className="aspect-[3/4] w-full relative">
-                      <Image src="/img-2.png" alt="Beyond the Horizon" className="w-full h-full object-cover" />
-                    </div>
+                <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
+                  <div className="aspect-[3/4] w-full relative">
+                    <Image 
+                      src="/img-2.png" 
+                      alt="Beyond the Horizon" 
+                      className="w-full h-full object-cover"
+                      width={300}
+                      height={400}
+                    />
+                  </div>
 
                   <div className="p-2 flex flex-col flex-grow">
                     <h3 className="text-book-title font-medium text-xs mb-0.5 line-clamp-1">
@@ -194,17 +217,26 @@ const ReaderDashboard: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-auto">
-                      <button className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200">
-                        Start Reading
+                      <button 
+                        className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
+                        onClick={() => router.push(`/bookdetail-reader?id=book1`)}
+                      >
+                        Read
                       </button>
                     </div>
                   </div>
                 </div>
 
-                  <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
-                    <div className="aspect-[3/4] w-full relative">
-                      <Image src="/img-3.png" alt="Tales of the Future" className="w-full h-full object-cover" />
-                    </div>
+                <div className="bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full">
+                  <div className="aspect-[3/4] w-full relative">
+                    <Image 
+                      src="/img-3.png" 
+                      alt="Tales of the Future" 
+                      className="w-full h-full object-cover"
+                      width={300}
+                      height={400}
+                    />
+                  </div>
 
                   <div className="p-2 flex flex-col flex-grow">
                     <h3 className="text-book-title font-medium text-xs mb-0.5 line-clamp-1">
@@ -219,8 +251,11 @@ const ReaderDashboard: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-auto">
-                      <button className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200">
-                        Start Reading
+                      <button 
+                        className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
+                        onClick={() => router.push(`/bookdetail-reader?id=book1`)}
+                      >
+                        Read
                       </button>
                     </div>
                   </div>
@@ -255,7 +290,13 @@ const ReaderDashboard: React.FC = () => {
                 <div className="space-y-3">
                   <div className="bg-gray-50 rounded p-2 flex items-start">
                     <div className="w-10 h-14 rounded bg-red-500 flex-shrink-0 overflow-hidden">
-                      <Image src="/img-4.png" alt="The Red Pathways" className="w-full h-full object-cover" />
+                      <Image 
+                        src="/img-4.png" 
+                        alt="The Red Pathways" 
+                        className="w-full h-full object-cover"
+                        width={300}
+                        height={400}
+                      />
                     </div>
                     <div className="ml-2 flex-grow">
                       <h3 className="text-book-title text-xs font-medium mb-1">
@@ -273,7 +314,13 @@ const ReaderDashboard: React.FC = () => {
 
                   <div className="bg-gray-50 rounded p-2 flex items-start">
                     <div className="w-10 h-14 rounded bg-gray-500 flex-shrink-0 overflow-hidden">
-                      <Image src="/img-5.png" alt="Hidden Truths" className="w-full h-full object-cover" />
+                      <Image 
+                        src="/img-5.png" 
+                        alt="Hidden Truths" 
+                        className="w-full h-full object-cover"
+                        width={300}
+                        height={400}
+                      />
                     </div>
                     <div className="ml-2 flex-grow">
                       <h3 className="text-book-title text-xs font-medium mb-1">
