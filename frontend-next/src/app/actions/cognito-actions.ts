@@ -6,14 +6,14 @@ import { AdminAddUserToGroupCommand, CognitoIdentityProviderClient } from "@aws-
 const cognitoClient = new CognitoIdentityProviderClient({
   region: "us-east-1",
   credentials: {
-    // Access key and secret access key needed to add groups
-    accessKeyId: "",
-    secretAccessKey: "", 
+    // Access key and secret access key loaded from environment variables
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "", 
   },
 })
 
 // Get the User Pool ID from environment variables
-const userPoolId = "us-east-1_6IShYXxsJ"
+const userPoolId = process.env.COGNITO_USER_POOL_ID || "us-east-1_6IShYXxsJ";
 
 /**
  * Add a user to a Cognito group
