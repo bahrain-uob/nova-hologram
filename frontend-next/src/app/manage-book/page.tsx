@@ -6,8 +6,6 @@ import {
   Trash2 as DeleteIcon,
   Filter as FilterIcon,
 } from "lucide-react";
-import { ReadersSidebar } from "@/components/dashboard/ReadersSidebar";
-import { Top } from "@/components/dashboard/Top";
 import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";

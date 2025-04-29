@@ -6,8 +6,6 @@ import {
   Trash2 as DeleteIcon,
   Filter as FilterIcon,
 } from "lucide-react";
-import { ReadersSidebar } from "@/components/dashboard/ReadersSidebar";
-import { Top } from "@/components/dashboard/Top";
 import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 
@@ -24,25 +22,26 @@ const fetchReaders = async (): Promise<Reader[]> => [
   {
     id: 1,
     name: "Alice Johnson",
-    avatar: "/avatars/alice.jpg",
-    grade: "3rd Grade",
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    grade: "12th Grade",
     readingLevel: "Beginner",
   },
   {
     id: 2,
     name: "Bob Smith",
-    avatar: "/avatars/bob.jpg",
-    grade: "4th Grade",
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    grade: "11th Grade",
     readingLevel: "Intermediate",
   },
   {
     id: 3,
     name: "Charlie Brown",
-    avatar: "/avatars/charlie.jpg",
-    grade: "5th Grade",
+    avatar: "https://randomuser.me/api/portraits/men/15.jpg",
+    grade: "12th Grade",
     readingLevel: "Advanced",
   },
 ];
+
 
 const ManageReaders: React.FC = () => {
   const [readers, setReaders] = useState<Reader[]>([]);

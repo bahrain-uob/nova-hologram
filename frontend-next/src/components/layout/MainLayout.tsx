@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import {
   BookOpenIcon,
   LayoutDashboardIcon,
@@ -19,10 +20,10 @@ export default function MainLayout({
   activePage?: string;
 }) {
   const navItems = [
-    { label: "Dashboard", icon: <LayoutDashboardIcon className="h-5 w-5" /> },
-    { label: "Manage Books", icon: <BookOpenIcon className="h-5 w-5" /> },
-    { label: "Manage Collections", icon: <LibraryIcon className="h-5 w-5" /> },
-    { label: "Manage Readers", icon: <UsersIcon className="h-5 w-5" /> },
+    { label: "Dashboard", href: "/", icon: <LayoutDashboardIcon className="h-5 w-5" /> },
+    { label: "Manage Books", href: "/manage-book", icon: <BookOpenIcon className="h-5 w-5" /> },
+    { label: "Manage Collections", href: "/manage-collections", icon: <LibraryIcon className="h-5 w-5" /> },
+    { label: "Manage Readers", href: "/manage-reader", icon: <UsersIcon className="h-5 w-5" /> },
   ];
 
   const footerNav = [
@@ -49,29 +50,28 @@ export default function MainLayout({
       <div className="flex pt-16 min-h-screen">
         {/* Sidebar BELOW header */}
         <aside className="w-64 fixed top-16 left-0 bottom-0 bg-white border-r border-[#E4E4E7] p-4 flex flex-col justify-between">
-        <nav className="space-y-1">
-  {navItems.map((item, i) => {
-    const isActive = item.label === activePage;
-    return (
-      <a
-        href="#"
-        key={i}
-        className={`flex items-center gap-2 p-2 rounded-md ${
-          isActive
-            ? "bg-[#F0F1F3] text-[#4F46E5] font-medium"
-            : "text-gray-600 hover:text-gray-900"
-        }`}
-      >
-        {React.cloneElement(item.icon, {
-          className: "h-5 w-5",
-          color: isActive ? "#4F46E5" : undefined,
-        })}
-        <span className="text-sm">{item.label}</span>
-      </a>
-    );
-  })}
-</nav>
-
+          <nav className="space-y-1">
+            {navItems.map((item, i) => {
+              const isActive = item.label === activePage;
+              return (
+                <Link href={item.href} key={i}>
+                  <div
+                    className={`flex items-center gap-2 p-2 rounded-md cursor-pointer ${
+                      isActive
+                        ? "bg-[#F0F1F3] text-[#4F46E5] font-medium"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    {React.cloneElement(item.icon, {
+                      className: "h-5 w-5",
+                      color: isActive ? "#4F46E5" : undefined,
+                    })}
+                    <span className="text-sm">{item.label}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
 
           <div className="mt-auto space-y-1">
             {footerNav.map((item, i) => (
