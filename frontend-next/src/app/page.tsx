@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import path from "path";
 
 export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -30,10 +31,17 @@ export default function Home() {
       description: "Reader home page",
     },
     {
-      name: "Manage Readers(Librarian)",
-      path: "/manage-reader",
-      description: "Manage readers and their accounts",
+      name: "Manage books(Librarian)",
+      path: "/manage-book",
+      description: "Manage books",
     },
+    {
+      name: "manage reader (Librarian)",
+      path: "/manage-reader",
+      description: "manage readers",
+    },
+    
+
   ];
 
   return (
