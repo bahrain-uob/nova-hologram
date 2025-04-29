@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/addbook/select";
-import { BookData } from "@/lib/book"; 
+import { BookData } from "@/types/book"; 
 
 
 

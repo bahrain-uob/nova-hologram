@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "../../components/addbook/select";
 import { Textarea } from "../../components/addbook/textarea";
-import { BookData } from "@/lib/book"; 
+import { BookData } from "@/types/book"; 
 
 export default function AddBookPage() {
   const [objectives, setObjectives] = React.useState([
