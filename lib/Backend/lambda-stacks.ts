@@ -265,5 +265,12 @@ export class lambdastack extends cdk.Stack {
           resources: ['*']  // Use specific ARNs for tighter control
         }));
 
+         // Lambda to get book info using ISBN or DOI
+        const getBookInfoLambda = new lambda.Function(this, "GetBookInfoLambda", {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          handler: "index.handler",
+          code: lambda.Code.fromAsset("lambda/getBookInfo"), 
+          });
+          this.getBookInfoLambda = getBookInfoLambda;
   }
 }

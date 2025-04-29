@@ -69,7 +69,7 @@ const ManageReaders: React.FC = () => {
             <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-semibold text-gray-700">Manage Readers</h2>
               <button
-                onClick={() => {}}
+                onClick={() => { }}
                 className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg gap-2 hover:bg-indigo-700 transition-colors duration-200"
               >
                 <span>Add New Reader</span>
