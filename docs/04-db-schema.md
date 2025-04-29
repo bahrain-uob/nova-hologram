@@ -18,109 +18,241 @@ This comprehensive schema shows the relationships between various entities inclu
 - **Reading-related Tables**: Including reading_goal, page_export to track reading activities
 - **Progress Tracking Tables**: Such as user_progress, highlights to monitor user engagement
 
-Each table contains fields with primary keys (PK) and foreign keys (FK) to establish relationships between entities.
+The diagram illustrates the complex relationships between entities with primary keys (PK) and foreign keys (FK) clearly marked. Each table is designed to store specific data related to its domain, creating a normalized database structure that efficiently supports the application's functionality.
+
+### Key Database Relationships
+
+1. **User to Books**: Users can access multiple books, and books can be accessed by multiple users
+2. **Books to Chapters**: Books contain multiple chapters in a hierarchical structure
+3. **Books to Content**: Books are associated with various content elements like characters and typography settings
+4. **User Progress Tracking**: User activity is tracked across books, chapters, and reading sessions
+5. **Content Generation**: Generated content is linked to source materials and user interactions
 
 ## Tables
 
-### Users Table
+Based on the database schema diagram, the system includes the following key tables:
 
-Stores user information and preferences.
+### User Tables
 
-**Table Name**: `Users`
+#### User Table
 
-**Primary Key**: `userId` (String)
+**Table Name**: `user`
+
+**Primary Key**: `user_id` (PK)
 
 **Attributes**:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| userId | String | Unique identifier for the user (from Cognito) |
+| user_id | String | Primary key, unique identifier for the user |
+| full_name | String | User's full name |
 | email | String | User's email address |
-| name | String | User's full name |
-| userType | String | Type of user (reader or librarian) |
-| createdAt | Number | Timestamp of user creation |
-| lastLogin | Number | Timestamp of user's last login |
-| preferences | Map | User preferences (theme, language, etc.) |
+| password | String | Hashed password |
+| role | String | User role (e.g., reader, librarian) |
+| created_at | Timestamp | When the user account was created |
 
-### ReadingMaterials Table
+#### User Settings Table
 
-Stores metadata about uploaded reading materials.
+**Table Name**: `user_settings`
 
-**Table Name**: `ReadingMaterials`
+**Primary Key**: `user_settings_id` (PK)
 
-**Primary Key**: `materialId` (String)
-
-**Global Secondary Indexes**:
-- `uploaderIndex`: GSI on `uploaderId` to find materials by uploader
+**Foreign Keys**: `user_id` (FK)
 
 **Attributes**:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| materialId | String | Unique identifier for the reading material |
-| title | String | Title of the reading material |
-| authors | List | List of authors |
+| user_settings_id | String | Primary key |
+| user_id | String | Foreign key to user table |
+| narrator_id | String | Preferred narrator |
+| speed_of_reading | Float | Reading speed preference |
+| highlight_text | Boolean | Whether to highlight text |
+| font_section | String | Font preference |
+
+### Book-related Tables
+
+#### Book Table
+
+**Table Name**: `book`
+
+**Primary Key**: `book_id` (PK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| book_id | String | Primary key |
+| book_title | String | Title of the book |
+| type | String | Type of book |
+| genre_id | String | Genre identifier |
+| cover_image_id | String | Reference to cover image |
+| isbn | String | ISBN number |
+| author | String | Author name |
+| language_id | String | Language identifier |
 | publisher | String | Publisher name |
-| publishedDate | String | Publication date |
-| description | String | Description of the material |
-| uploaderId | String | ID of the user who uploaded the material |
-| uploadDate | Number | Timestamp of upload |
-| fileKey | String | S3 key for the file |
-| fileType | String | Type of file (PDF, EPUB, etc.) |
-| fileSize | Number | Size of the file in bytes |
-| maturityRating | String | Maturity rating of the content |
-| extractedText | String | Extracted text from the document (if available) |
-| status | String | Status of the material (active, deleted, etc.) |
+| publication_year | Integer | Year of publication |
+| reading_level | String | Reading level |
+| keywords | Array | Keywords for search |
+| learning_objective | String | Learning objectives |
 
-### GeneratedContent Table
+#### Book Chapter Table
 
-Stores metadata about AI-generated holographic content.
+**Table Name**: `book_chapter`
 
-**Table Name**: `GeneratedContent`
+**Primary Key**: `chapter_id` (PK)
 
-**Primary Key**: `contentId` (String)
-
-**Global Secondary Indexes**:
-- `materialIndex`: GSI on `sourceMaterialId` to find content by source material
+**Foreign Keys**: `book_id` (FK)
 
 **Attributes**:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| contentId | String | Unique identifier for the generated content |
-| title | String | Title of the generated content |
-| sourceMaterialId | String | ID of the source reading material |
-| generationDate | Number | Timestamp of generation |
-| generatedBy | String | ID of the user who generated the content |
-| prompt | String | Prompt used for generation |
-| fileKey | String | S3 key for the generated video |
-| duration | Number | Duration of the video in seconds |
-| status | String | Status of the content (processing, ready, error) |
-| errorMessage | String | Error message if generation failed |
+| chapter_id | String | Primary key |
+| book_id | String | Foreign key to book table |
+| chapter_no | Integer | Chapter number |
+| chapter_title | String | Chapter title |
+| start_page | Integer | Starting page number |
+| end_page | Integer | Ending page number |
 
-### UserActivity Table
+#### Book Mark Table
 
-Tracks user activity and engagement with reading materials and generated content.
+**Table Name**: `book_mark`
 
-**Table Name**: `UserActivity`
+**Primary Key**: `book_mark_id` (PK)
 
-**Primary Key**: Composite key of `userId` (Partition Key) and `timestamp` (Sort Key)
-
-**Global Secondary Indexes**:
-- `materialIndex`: GSI on `materialId` to find activity by material
-- `contentIndex`: GSI on `contentId` to find activity by content
+**Foreign Keys**: `user_id` (FK), `book_id` (FK)
 
 **Attributes**:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| userId | String | ID of the user |
-| timestamp | Number | Timestamp of the activity |
-| activityType | String | Type of activity (view, download, generate, etc.) |
-| materialId | String | ID of the reading material (if applicable) |
-| contentId | String | ID of the generated content (if applicable) |
-| duration | Number | Duration of engagement in seconds |
-| deviceInfo | Map | Information about the user's device |
+| book_mark_id | String | Primary key |
+| user_id | String | Foreign key to user table |
+| book_id | String | Foreign key to book table |
+| mark_page | Integer | Page number of the bookmark |
+
+### Content Tables
+
+#### Character Table
+
+**Table Name**: `character`
+
+**Primary Key**: `character_id` (PK)
+
+**Foreign Keys**: `book_id` (FK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| character_id | String | Primary key |
+| book_id | String | Foreign key to book table |
+| name | String | Character name |
+| description | String | Character description |
+| response | String | Character response patterns |
+| appearance | String | Character appearance details |
+
+#### Typography Table
+
+**Table Name**: `typography`
+
+**Primary Key**: `typo_id` (PK)
+
+**Foreign Keys**: `user_id` (FK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| typo_id | String | Primary key |
+| user_id | String | Foreign key to user table |
+| font_size | String | Font size preference |
+| font_weight | String | Font weight preference |
+| text_color | String | Text color preference |
+| text_family | String | Font family preference |
+
+### Reading and Progress Tables
+
+#### Reading Goal Table
+
+**Table Name**: `reading_goal`
+
+**Primary Key**: `goal_id` (PK)
+
+**Foreign Keys**: `user_id` (FK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| goal_id | String | Primary key |
+| user_id | String | Foreign key to user table |
+| target_books | Integer | Number of books to read |
+| target_words | Integer | Number of words to read |
+| target_pages | Integer | Number of pages to read |
+| start_date | Date | Goal start date |
+| end_date | Date | Goal end date |
+
+#### User Progress Table
+
+**Table Name**: `user_progress`
+
+**Primary Key**: `progress_id` (PK)
+
+**Foreign Keys**: `user_id` (FK), `book_id` (FK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| progress_id | String | Primary key |
+| user_id | String | Foreign key to user table |
+| book_id | String | Foreign key to book table |
+| pages_read | Integer | Number of pages read |
+| status | String | Reading status |
+| last_accessed | Timestamp | Last access timestamp |
+
+### AI Content Generation Tables
+
+#### AI Cover Image Table
+
+**Table Name**: `ai_cover_image`
+
+**Primary Key**: `cover_id` (PK)
+
+**Foreign Keys**: `book_id` (FK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| cover_id | String | Primary key |
+| book_id | String | Foreign key to book table |
+| prompt_text | String | Prompt used for generation |
+| cover_path | String | Path to the generated cover image |
+| ai_model | String | AI model used for generation |
+| resolution | String | Image resolution |
+| created_at | Timestamp | Creation timestamp |
+
+#### Book Trailers Table
+
+**Table Name**: `book_trailers`
+
+**Primary Key**: `trailer_id` (PK)
+
+**Foreign Keys**: `book_id` (FK)
+
+**Attributes**:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| trailer_id | String | Primary key |
+| book_id | String | Foreign key to book table |
+| prompt_text | String | Prompt used for generation |
+| video_path | String | Path to the generated video |
+| duration | Integer | Video duration in seconds |
+| created_at | Timestamp | Creation timestamp |
 
 ## Data Access Patterns
 
