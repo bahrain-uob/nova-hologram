@@ -62,7 +62,7 @@ Nova-Hologram/
 │   ├── 00-project-overview.md    # Project overview
 │   ├── 01-context.md             # Project context
 │   ├── 02-deployment-architecture.md # AWS architecture
-│   ├── 03-api-defenition.md      # API definitions
+│   ├── 03-api-xww.md      # API definitions
 │   ├── 04-db-schema.md           # Database schema
 │   ├── 05-authentication-system.md # Authentication details
 │   ├── 06-frontend-components.md # Frontend component guide
