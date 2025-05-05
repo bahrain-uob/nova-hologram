@@ -13,6 +13,7 @@ import {
 import { Input } from "../addbook/input";
 import { userPool } from "@/app/aws-config";
 import { useRouter } from "next/navigation";
+import { ChatbotButton } from "@/components/chatbot/ChatbotButton";
 
 export default function MainLayout({
   children,
@@ -161,6 +162,9 @@ export default function MainLayout({
         {/* Main Page Content */}
         <main className="flex-1 p-6 bg-[#FAFAFB] ml-64">{children}</main>
       </div>
+      
+      {/* Chatbot Button */}
+      <ChatbotButton />
     </div>
   );
 }
