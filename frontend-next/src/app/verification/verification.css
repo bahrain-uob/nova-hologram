@@ -129,3 +129,13 @@ input::placeholder {
 .back-to-signup:hover {
   color: #2563eb;
 }
+
+.success-message {
+  background-color: #f0f9eb;
+  color: #67c23a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}

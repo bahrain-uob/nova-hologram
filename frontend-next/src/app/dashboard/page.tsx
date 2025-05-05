@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Users, BookOpen, Library, Search } from "lucide-react";
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Users, BookOpen, Library } from "lucide-react";
 import withRoleProtection from "@/components/auth/withRoleProtection";
-
-// Import UI components
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -122,118 +119,46 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="flex h-16 items-center px-6">
-          <div className="flex items-center gap-2">
-            <div className="text-primary">
-              <Library className="h-6 w-6" />
-            </div>
-            <span className="font-semibold">ClarityUI</span>
-          </div>
+    <MainLayout activePage="Dashboard">
+      <div className="bg-white p-6 rounded-lg shadow">
+        {/* Welcome section */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-medium mb-1">Dashboard Overview</h1>
+          <p className="text-sm text-gray-600">Welcome back, {userName}!</p>
+        </div>
 
-          {/* Search */}
-          <div className="flex items-center ml-4 md:ml-10 lg:ml-16 space-x-4 flex-1">
-            <form className="flex-1 max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Type to search"
-                  className="pl-8 bg-background w-full"
-                />
-              </div>
-            </form>
-          </div>
+        {/* Stats */}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-8">
+          <StatsCard title="Readers" value="245" icon={Users} />
+          <StatsCard title="Books" value="180" icon={BookOpen} />
+          <StatsCard title="Collections" value="23" icon={Library} />
+        </div>
 
-          {/* Profile */}
-          <div className="ml-auto">
-            <Avatar>
-              <AvatarImage src="/avatars/user.png" alt="User" />
-              <AvatarFallback>S</AvatarFallback>
-            </Avatar>
+        {/* Charts */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 mb-8">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
+            <h3 className="text-base font-medium mb-4">Reading Activity</h3>
+            <ActivityChart />
+          </div>
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
+            <h3 className="text-base font-medium mb-4">Popular Genre</h3>
+            <GenreChart />
           </div>
         </div>
-      </header>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 border-r min-h-[calc(100vh-4rem)] bg-white">
-          <nav className="space-y-2 py-4">
-            <div className="px-3">
-              <Button
-                variant="secondary"
-                className="w-full justify-start bg-primary/10 text-primary hover:bg-primary/20"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Dashboard
-              </Button>
-            </div>
-            <div className="px-3">
-              <Button
-                variant="ghost"
-                className="w-full justify-start hover:bg-primary/5"
-              >
-                <BookOpen className="mr-2 h-4 w-4" />
-                Manage Books
-              </Button>
-            </div>
-            <div className="px-3">
-              <Button
-                variant="ghost"
-                className="w-full justify-start hover:bg-primary/5"
-              >
-                <Library className="mr-2 h-4 w-4" />
-                Manage Collections
-              </Button>
-            </div>
-            <div className="px-3">
-              <Button
-                variant="ghost"
-                className="w-full justify-start hover:bg-primary/5"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Manage Readers
-              </Button>
-            </div>
-          </nav>
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 p-8 bg-gray-50">
-          <div className="flex flex-col gap-2 mb-6">
-            <h1 className="text-2xl font-semibold">Dashboard Overview</h1>
-            <p className="text-muted-foreground">Welcome back, {userName}!</p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid gap-6 grid-cols-3 mb-8">
-            <StatsCard title="Readers" value="245" icon={Users} />
-            <StatsCard title="Books" value="180" icon={BookOpen} />
-            <StatsCard title="Collections" value="23" icon={Library} />
-          </div>
-
-          {/* Charts */}
-          <div className="grid gap-6 grid-cols-2 mb-8">
-            <div className="col-span-1 bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-base font-medium mb-4">Reading Activity</h3>
-              <ActivityChart />
-            </div>
-            <div className="col-span-1 bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-base font-medium mb-4">Popular Genre</h3>
-              <GenreChart />
-            </div>
-          </div>
-
-          {/* Activity and Books */}
-          <div className="grid gap-6 grid-cols-2">
+        {/* Activity and Books */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
+            <h3 className="text-base font-medium mb-4">Recent Activity</h3>
             <RecentActivity />
+          </div>
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
+            <h3 className="text-base font-medium">Top Books</h3>
             <TopBooks />
           </div>
-        </main>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
