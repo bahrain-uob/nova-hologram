@@ -148,7 +148,7 @@ export default function RecommendationsPage() {
                 <h2 className="text-base font-medium mb-1">
                   Because You Liked
                 </h2>
-                <p className="text-sm text-gray-500 mb-3">"The Red Pathways"</p>
+                <p className="text-sm text-gray-500 mb-3">&quot;The Red Pathways&quot;</p>
 
                 <SimilarBookCard
                   book={similarBooks[0]}
