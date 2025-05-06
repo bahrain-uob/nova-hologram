@@ -2,14 +2,13 @@
 
 import type React from "react";
 import { useEffect, useState } from "react";
-import { CircularDeterminateProgressIndicator } from "@/components/dashboard/CircularDeterminateProgressIndicator";
 import { ReadersSidebar } from "@/components/dashboard/ReadersSidebar";
 import { Top } from "@/components/dashboard/Top";
 import withRoleProtection from "@/components/auth/withRoleProtection";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-const ReaderDashboard: React.FC = () => {
+const CollectionReader: React.FC = () => {
   const [userName, setUserName] = useState("Reader");
   const router = useRouter();
 
@@ -97,4 +96,4 @@ const ReaderDashboard: React.FC = () => {
   );
 };
 
-export default withRoleProtection(ReaderDashboard, ["reader"]);
+export default withRoleProtection(CollectionReader, ["reader"]);
