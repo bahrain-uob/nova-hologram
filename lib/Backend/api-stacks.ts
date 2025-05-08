@@ -23,11 +23,15 @@ export class APIStack extends cdk.Stack {
     super(scope, id, props);
 
     // Access environment variables from .env
-    const readerApiUrl = process.env.READER_API_URL!;
-    const librarianApiUrl = process.env.LIBRARIAN_API_URL!;
-    const getBookInfoApiUrl = process.env.GET_BOOK_INFO_API_URL!;
-    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN!;
-    const corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS!.split(',');
+    const readerApiUrl = process.env.READER_API_URL|| '';
+    const librarianApiUrl = process.env.LIBRARIAN_API_URL|| '';
+    const getBookInfoApiUrl = process.env.GET_BOOK_INFO_API_URL|| '';
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN|| '';
+    const corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
+    : ['*'];
+
+    const allowCredentials = corsAllowedOrigins.includes('*') ? false : true;
 
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
       apiName: "WebAppHttpApi",
@@ -38,8 +42,8 @@ export class APIStack extends cdk.Stack {
           apigatewayv2.CorsHttpMethod.POST,
           apigatewayv2.CorsHttpMethod.DELETE,
         ],
-        allowCredentials: true,
-        allowOrigins: corsAllowedOrigins, 
+        allowCredentials: allowCredentials,
+        allowOrigins: corsAllowedOrigins,
       },
     });
 
