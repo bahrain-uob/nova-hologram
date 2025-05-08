@@ -26,11 +26,12 @@ const storageStack = new StorageStack(app, "StorageStack", sharedResourcesStack)
 
 // Step 3: Create the lambda stack with a special flag to avoid circular dependencies
 // We'll pass a special parameter to indicate we're in CDK synthesis mode
+
 const lambdaStack = new lambdastack(
   app, 
   "LambdaStack", 
   dbStack, 
-  storageStack, 
+  storageStack,  
   sharedResourcesStack,
   {
     // This special property tells the stack to avoid creating circular references
@@ -44,10 +45,13 @@ const Bedrock = new BedrockStack(app, "BedrockStack", lambdaStack, storageStack)
 const apiStack = new APIStack(app, "APIStack", dbStack, lambdaStack, storageStack);
 const frontendStack = new FrontendStack(app, "FrontendStack");
 
+
 // Add explicit dependencies to ensure the correct deployment order
 lambdaStack.addDependency(storageStack);
 lambdaStack.addDependency(dbStack);
+
 Bedrock.addDependency(lambdaStack);
 apiStack.addDependency(lambdaStack);
 apiStack.addDependency(storageStack);
 apiStack.addDependency(dbStack);
+

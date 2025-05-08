@@ -9,6 +9,7 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 
 
+
 export class lambdastack extends cdk.Stack {
     public readonly postUploadLambda: lambda.Function;
     public readonly getFilesLambda: lambda.Function;
@@ -22,6 +23,7 @@ export class lambdastack extends cdk.Stack {
     public readonly playResponse: lambda.Function; 
     public readonly transcribe: lambda.Function; 
     public readonly triggerPolly: lambda.Function; 
+    public readonly qrLambda: lambda.Function;
 
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
@@ -272,5 +274,16 @@ export class lambdastack extends cdk.Stack {
           code: lambda.Code.fromAsset("lambda/getBookInfo"), 
           });
           this.getBookInfoLambda = getBookInfoLambda;
+          //this is the qr code generator lambda function
+        this.qrLambda = new lambda.Function(this, 'QrCodeFunction', {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: 'qr-code-generator.handler',
+            code: lambda.Code.fromAsset('lambda/interactivity/qrcode'), // location of the folder that should have the qr code generator code
+        });
+        StorageStack.qrCodeBucket.grantWrite(this.qrLambda); //to save the qr code in the s3 bucket
+
+
+
+        
   }
 }

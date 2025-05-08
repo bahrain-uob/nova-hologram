@@ -25,6 +25,8 @@ const cognitoConfig = {
 const s3Config = {
   readingMaterialsBucket: process.env.S3_READING_MATERIALS_BUCKET || 'nova-hologram-reading-materials',
   generatedContentBucket: process.env.S3_GENERATED_CONTENT_BUCKET || 'nova-hologram-generated-content',
+  qrCodeBucket: process.env.S3_QR_CODE_BUCKET || 'nova-hologram-qrcode',
+  uploadPath: process.env.S3_UPLOAD_PATH || 'upload/',
 };
 
 // DynamoDB Configuration

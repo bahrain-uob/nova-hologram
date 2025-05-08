@@ -10,6 +10,7 @@ export class StorageStack extends cdk.Stack {
   public readonly genVideos: s3.Bucket;
   public readonly audioFilesBucket: s3.Bucket;
   public readonly novaContentBucket: s3.Bucket;
+  public readonly qrCodeBucket: s3.Bucket;
   public readonly readingMaterialsQueue: sqs.Queue; ;
   public readonly extractedTextQueue: sqs.Queue;
   constructor(scope: Construct, id: string, shared:SharedResourcesStack, props?: cdk.StackProps) {
@@ -53,6 +54,11 @@ export class StorageStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
           });
+          this.qrCodeBucket = new s3.Bucket(this, 'QrCodeBucket', {
+            removalPolicy: cdk.RemovalPolicy.DESTROY, // Only for dev environments
+          });
+          
+          
 
           // NOTE: Event notifications for these buckets are now handled in EventNotificationsStack
           // to avoid circular dependencies

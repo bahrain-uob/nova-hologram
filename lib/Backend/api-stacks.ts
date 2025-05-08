@@ -7,8 +7,9 @@ import { lambdastack } from "./lambda-stacks";
 import { StorageStack } from "../Storage/storage-stack"; // Import StorageStack
 
 
+
 export class APIStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, dbStack: DBStack, lambdastack: lambdastack, StorageStack:StorageStack, props?: cdk.StackProps) {
+  constructor(scope: cdk.App, id: string, dbStack: DBStack, lambdastack: lambdastack, StorageStack:StorageStack,props?: cdk.StackProps) {
     super(scope, id, props);
 
     const PostGetDelete = new apigatewayv2.HttpApi(this, 'HttpApi', {
@@ -71,6 +72,21 @@ export class APIStack extends cdk.Stack {
     // Get Book Info Lambda (API: /get-book-info)
     librarianApi.root.addResource('get-book-info')
   .addMethod('POST', new apigateway.LambdaIntegration(lambdastack.getBookInfoLambda));
+
+    const restApi = new apigateway.RestApi(this, 'QrApi', {
+      restApiName: 'QR Code API',
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+      },
+    });
+    const qrResource = restApi.root.addResource('qrcode');
+    qrResource.addMethod('GET', new apigateway.LambdaIntegration(lambdastack.qrLambda));
+
+
+    
+    
+
   
     // CloudFormation Outputs
     new cdk.CfnOutput(this, 'ReaderAPIURL', { value: readerApi.url! });
@@ -80,5 +96,8 @@ export class APIStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'AudioFilesBucketOutput', { value: StorageStack.audioFilesBucket.bucketName });
     new cdk.CfnOutput(this, 'NovaGeneratedContentBucket', { value: StorageStack.novaContentBucket.bucketName });
     new cdk.CfnOutput(this, 'GetBookInfoAPIURL', {value: `${librarianApi.url}get-book-info`,});
+    new cdk.CfnOutput(this, 'QrCodeApiEndpoint', {value: `${restApi.url}qrcode`,});
+    
+    
   }
 }

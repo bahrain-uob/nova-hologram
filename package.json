@@ -11,6 +11,7 @@
     "cdk": "cdk"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/jest": "^29.5.14",
     "@types/node": "22.7.9",
     "aws-cdk": "2.177.0",
@@ -33,7 +34,27 @@
     "clsx": "^2.1.1",
     "constructs": "^10.4.2",
     "crypto-js": "^4.2.0",
+    "dotenv": "^16.5.0",
+    "qrcode": "^1.5.4",
     "react-icons": "^5.5.0",
     "tailwind-merge": "^3.2.0"
-  }
+  },
+  "description": "```\r Nova-Hologram/\r │── frontend-next/                # Next.js application\r │   ├── public/                   # Static assets\r │   ├── src/                      # Source code\r │   │   ├── app/                  # Next.js App Router pages\r │   │   │   ├── actions/          # Server actions\r │   │   │   ├── addbook/          # Add book page\r │   │   │   ├── bookdetail-librarian/ # Book detail for librarians\r │   │   │   ├── bookdetail-reader/    # Book detail for readers\r │   │   │   ├── dashboard/        # Librarian dashboard\r │   │   │   ├── login/            # Login page\r │   │   │   ├── reader-dashboard/ # Reader dashboard\r │   │   │   ├── signup/           # Signup page\r │   │   │   └── videosGenerated/  # Generated videos page\r │   │   ├── components/           # Reusable UI components\r │   │   │   ├── addbook/          # Book addition components\r │   │   │   ├── auth/             # Authentication components\r │   │   │   ├── dashboard/        # Dashboard components\r │   │   │   ├── layout/           # Layout components\r │   │   │   └── ui/               # UI primitives\r │   │   ├── context/              # React context providers\r │   │   │   └── auth-context.tsx  # Authentication context\r │   │   ├── lib/                  # Utility functions\r │   │   │   ├── api-service.ts    # API service functions\r │   │   │   ├── auth.ts           # Authentication utilities\r │   │   │   ├── s3-service.ts     # S3 interaction utilities\r │   │   │   └── utils.ts          # General utilities\r │   │   ├── types/                # TypeScript type definitions\r │   │   │   └── book.ts           # Book-related types\r │   │   └── config/               # Configuration\r │   │       └── aws-config.ts     # AWS configuration\r │   ├── package.json              # Dependencies and scripts\r │   └── tsconfig.json             # TypeScript configuration\r │\r │── lambda/                       # Lambda functions\r │   ├── Bedrock/                  # Video generation with Bedrock\r │   │   ├── index.py              # Lambda handler\r │   │   ├── Template Prompts      # Prompt templates\r │   │   └── requirements.txt      # Python dependencies\r │   ├── GetBookInfo/              # Book metadata retrieval\r │   │   └── index.js              # Lambda handler\r │   ├── GetFiles/                 # File retrieval from S3\r │   ├── SaveExtractedText/        # Save extracted text\r │   ├── Student/                  # Student-specific functions\r │   ├── TextExtraction/           # Text extraction with Textract\r │   │   └── textex.py             # Text extraction implementation\r │   ├── deleteFiles/              # File deletion from S3\r │   ├── postUpload/               # Post-upload processing\r │   └── utils/                    # Shared utilities\r │\r │── bin/                          # CDK entry points\r │\r │── lib/                          # CDK infrastructure\r │   └── Nova-Hologram-Page-6.drawio.png # Architecture diagram\r │\r │── docs/                         # Documentation\r │   ├── 00-project-overview.md    # Project overview\r │   ├── 01-context.md             # Project context\r │   ├── 02-deployment-architecture.md # AWS architecture\r │   ├── 03-api-defenition.md      # API definitions\r │   ├── 04-db-schema.md           # Database schema\r │   ├── 05-authentication-system.md # Authentication details\r │   ├── 06-frontend-components.md # Frontend component guide\r │   ├── 07-lambda-functions.md    # Lambda function guide\r │   ├── 08-api-services.md        # API services guide\r │   ├── 09-page-routing.md        # Page routing guide\r │   ├── 10-environment-setup.md   # Environment setup guide\r │   ├── 11-ai-features.md         # AI features documentation\r │   ├── assets/                   # Documentation assets\r │   ├── diagrams/                 # Architecture diagrams\r │   └── Wireframes/               # UI wireframes\r │\r │── test/                         # Test files\r │\r │── cdk.json                      # CDK configuration\r │── package.json                  # Project dependencies\r └── README.md                     # Project README\r ```",
+  "main": "jest.config.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bahrain-uob/nova-hologram.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bahrain-uob/nova-hologram/issues"
+  },
+  "homepage": "https://github.com/bahrain-uob/nova-hologram#readme"
 }
