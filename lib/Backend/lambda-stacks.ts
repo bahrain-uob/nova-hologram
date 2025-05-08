@@ -63,6 +63,34 @@ export class lambdastack extends cdk.Stack {
         },
       });
 
+      // Lambda to start Textract job
+      const startTextractJobLambda = new lambda.Function(this, 'StartTextractJobLambda', {
+        runtime: lambda.Runtime.NODEJS_18_X,  
+        handler: 'index.handler',  
+        code: lambda.Code.fromAsset('lambda/StartTextractJob'), 
+        environment: {
+          BUCKET_NAME: StorageStack.readingMaterials.bucketName,  
+        },
+      });
+      const splitChaptersLambda = new lambda.Function(this, 'SplitChaptersLambda', {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset('lambda/GetTextAndSplitChapters'),
+        timeout: cdk.Duration.minutes(2), // ⬅️ extend to 2 minutes
+    });
+    
+    splitChaptersLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+          'textract:GetDocumentTextDetection',
+          'logs:CreateLogGroup',
+          'logs:CreateLogStream',
+          'logs:PutLogEvents',
+      ],
+      resources: ['*'],
+  }));
+  
+
+
       // Permissions
       StorageStack.readingMaterialsQueue.grantConsumeMessages(textExtractionLambda);
       StorageStack.readingMaterials.grantRead(textExtractionLambda);
@@ -264,6 +292,18 @@ export class lambdastack extends cdk.Stack {
           ],
           resources: ['*']  // Use specific ARNs for tighter control
         }));
+        // Grant permissions
+        StorageStack.readingMaterials.grantRead(startTextractJobLambda);
+        startTextractJobLambda.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'textract:StartDocumentTextDetection',
+            'textract:GetDocumentTextDetection',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+          ],
+          resources: ['*'],  
+        }));
 
          // Lambda to get book info using ISBN or DOI
         const getBookInfoLambda = new lambda.Function(this, "GetBookInfoLambda", {
@@ -273,4 +313,5 @@ export class lambdastack extends cdk.Stack {
           });
           this.getBookInfoLambda = getBookInfoLambda;
   }
+  
 }
