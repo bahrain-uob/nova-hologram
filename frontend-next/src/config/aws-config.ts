@@ -9,15 +9,15 @@ export const awsConfig = {
   
   // Cognito Configuration
   cognito: {
-    userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || 'us-east-1_U0iB4Rowp',
-    clientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '509b3p7mb73l7rfi2h16mef65v',
+    userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || '',
+    clientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '',
     region: process.env.NEXT_PUBLIC_COGNITO_REGION || 'us-east-1',
   },
   
   // S3 Configuration
   s3: {
-    readingMaterialsBucket: process.env.NEXT_PUBLIC_S3_READING_MATERIALS_BUCKET || 'nova-hologram-reading-materials',
-    generatedContentBucket: process.env.NEXT_PUBLIC_S3_GENERATED_CONTENT_BUCKET || 'nova-hologram-generated-content',
+    readingMaterialsBucket: process.env.NEXT_PUBLIC_S3_READING_MATERIALS_BUCKET || '',
+    generatedContentBucket: process.env.NEXT_PUBLIC_S3_GENERATED_CONTENT_BUCKET || '',
   },
   
   // API Gateway
