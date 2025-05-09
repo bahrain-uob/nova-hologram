@@ -44,3 +44,7 @@ coverage
 
 # ignore the test files
 __tests__
+venv/
+
+# lib .js files
+lib/*/*.js

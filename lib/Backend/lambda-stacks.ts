@@ -4,13 +4,29 @@ import { DBStack } from "../DB/db-stack"; // Import DBStack
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources"; // Import lambda event sources
 import { StorageStack } from "../Storage/storage-stack"; // Import StorageStack
 import { SharedResourcesStack } from "../sharedresources/SharedResourcesStack";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3n from "aws-cdk-lib/aws-s3-notifications";
+
 
 export class lambdastack extends cdk.Stack {
     public readonly postUploadLambda: lambda.Function;
     public readonly getFilesLambda: lambda.Function;
     public readonly deleteFilesLambda: lambda.Function;
     public readonly BedRockFunction: lambda.Function; 
-  constructor(scope: cdk.App, id: string, dbStack: DBStack,StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps) {
+    public readonly getBookInfoLambda: lambda.Function;
+
+    public readonly messageProcessing: lambda.Function; 
+    public readonly invokeBedrock: lambda.Function; 
+    public readonly invokeBedrockLib: lambda.Function; 
+    public readonly playResponse: lambda.Function; 
+    public readonly transcribe: lambda.Function; 
+    public readonly triggerPolly: lambda.Function; 
+
+
+  constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
+    // Extract synthesisMode from props if present
+    const synthesisMode = props?.synthesisMode || false;
     super(scope, id, props);
 
     //POST Lambda (Upload)
@@ -74,6 +90,187 @@ export class lambdastack extends cdk.Stack {
         }
       });
       
+  //Student
+
   
+          // Lambda function for processing audio files
+        this.messageProcessing = new lambda.Function(this, 'MessageProcessingLambda', {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          code: lambda.Code.fromAsset('lambda/Student/MessageProcessing'),
+          handler: 'messageProcessing.handler',
+        }),
+          // Lambda function for transcribing audio files
+        this.transcribe = new lambda.Function(this, 'TranscribeLambda', {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          code: lambda.Code.fromAsset('lambda/Student/Transcribe'),//remove, one lambda needed
+          handler: 'transcribe.handler',
+        }), 
+        // Lambda function: // Calls Bedrock with the transcribed text and saves Q&A to DynamoDB
+        this.invokeBedrock = new lambda.Function(this, 'InvokeBedrockLambda', {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          code: lambda.Code.fromAsset('lambda/Student/InvokeBedrock'),
+          handler: 'invokeBedrock.handler',
+          environment: {
+            QATABLE_NAME: dbStack.qaTable.tableName,
+          },
+        }),
+        // Lambda function for triggering Polly and saving audio in S3
+        this.triggerPolly = new lambda.Function(this, 'TriggerPollyLambda', {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          code: lambda.Code.fromAsset('lambda/Student/TriggerPolly'),
+          handler: 'triggerPolly.handler',
+          environment: {
+            BUCKET_NAME: StorageStack.audioFilesBucket.bucketName,
+          },
+        }),
+        
+          // Lambda function for playing the response
+        this.playResponse = new lambda.Function(this, 'PlayResponseLambda', {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          code: lambda.Code.fromAsset('lambda/Student/PlayResponse'),
+          handler: 'playResponse.handler',
+        }),
+      
+          // Lambda function for invoking Bedrock (Librarian) and stores Nova content in S3
+        this.invokeBedrockLib = new lambda.Function(this, 'InvokeBedrockLibrarianLambda', {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          code: lambda.Code.fromAsset('lambda/Student/LibInvokeBedrock'),
+          handler: 'invokeBedrockLibrarian.handler',
+          environment: {
+            OUTPUT_BUCKET: StorageStack.novaContentBucket.bucketName,
+            TEXT_TABLE: dbStack.extractedTextTable.tableName,
+          },
+        });
+  
+
+      // Only add permissions and event notifications if not in synthesis mode
+      // This breaks the circular dependency during CDK synthesis
+      if (!synthesisMode) {
+        // Add permission for S3 to invoke the Lambda
+        this.playResponse.addPermission('AllowS3Invoke', {
+          principal: new iam.ServicePrincipal('s3.amazonaws.com'),
+          sourceArn: StorageStack.audioFilesBucket.bucketArn
+        });
+        
+        // Add the event notification directly here
+        // This will only run during actual deployment, not during synthesis
+        try {
+          StorageStack.audioFilesBucket.addEventNotification(
+            s3.EventType.OBJECT_CREATED,
+            new s3n.LambdaDestination(this.playResponse)
+          );
+        } catch (error) {
+          // Ignore circular dependency errors during synthesis
+          console.warn('Skipping event notification setup during synthesis to avoid circular dependencies');
+        }
+      } else {
+        console.log('Running in synthesis mode - skipping event notification setup');
+      }
+
+      // Permissions
+    // Allow Polly Lambda to write to the audio bucket
+    StorageStack.audioFilesBucket.grantWrite(this.triggerPolly);
+    // Allow librarian Bedrock Lambda to write Nova content to Nova bucket
+    StorageStack.novaContentBucket.grantWrite(this.invokeBedrockLib);
+    // Allow Student Bedrock Lambda to write to Q&A table
+    dbStack.qaTable.grantReadWriteData(this.invokeBedrock);
+    // Allow librarian Bedrock Lambda to read from text table
+    dbStack.extractedTextTable.grantReadData(this.invokeBedrockLib);
+
+    // Permissions for lamdas to call Transcribe, Polly, and Bedrock
+        this.invokeBedrock.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'bedrock:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'dynamodb:*',
+            's3:PutObject',
+            's3:GetObject',
+            's3:ListBucket'
+          ],
+          resources: ['*']  // Use specific ARNs for tighter control
+        }));
+
+        this.invokeBedrockLib.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'bedrock:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'dynamodb:*',
+            's3:PutObject',
+            's3:GetObject',
+            's3:ListBucket'
+          ],
+          resources: ['*']  // Use specific ARNs for tighter control
+        }));
+
+        this.messageProcessing.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'bedrock:*',
+            'transcribe:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'dynamodb:*',
+            's3:PutObject',
+            's3:GetObject',
+            's3:ListBucket'
+          ],
+          resources: ['*']  // Use specific ARNs for tighter control
+        }));
+
+        this.playResponse.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'bedrock:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'dynamodb:*',
+            's3:PutObject',
+            's3:GetObject',
+            's3:ListBucket'
+          ],
+          resources: ['*']  // Use specific ARNs for tighter control
+        }));
+
+        this.transcribe.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'bedrock:*',
+            'transcribe:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'dynamodb:*',
+            's3:PutObject',
+            's3:GetObject',
+            's3:ListBucket'
+          ],
+          resources: ['*']  // Use specific ARNs for tighter control
+        }));
+
+        this.triggerPolly.addToRolePolicy(new iam.PolicyStatement({
+          actions: [
+            'bedrock:*',
+            'polly:*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'dynamodb:*',
+            's3:PutObject',
+            's3:GetObject',
+            's3:ListBucket'
+          ],
+          resources: ['*']  // Use specific ARNs for tighter control
+        }));
+
+         // Lambda to get book info using ISBN or DOI
+        const getBookInfoLambda = new lambda.Function(this, "GetBookInfoLambda", {
+          runtime: lambda.Runtime.NODEJS_18_X,
+          handler: "index.handler",
+          code: lambda.Code.fromAsset("lambda/getBookInfo"), 
+          });
+          this.getBookInfoLambda = getBookInfoLambda;
   }
 }

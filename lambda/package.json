@@ -1,1 +1,16 @@
-{}
+{
+  "name": "file-upload-lambda-functions",
+  "version": "1.0.0",
+  "description": "Lambda functions for file upload, retrieval, and deletion",
+  "main": "index.js",
+  "dependencies": {
+    "aws-sdk": "^2.1174.0",
+    "dotenv": "^16.4.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://function.zip"
+  },
+  "author": "",
+  "license": "ISC"
+}

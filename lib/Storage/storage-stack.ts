@@ -8,6 +8,8 @@ import * as sqs from "aws-cdk-lib/aws-sqs";
 export class StorageStack extends cdk.Stack {
   public readonly readingMaterials: s3.Bucket;
   public readonly genVideos: s3.Bucket;
+  public readonly audioFilesBucket: s3.Bucket;
+  public readonly novaContentBucket: s3.Bucket;
   public readonly readingMaterialsQueue: sqs.Queue; ;
   public readonly extractedTextQueue: sqs.Queue;
   constructor(scope: Construct, id: string, shared:SharedResourcesStack, props?: cdk.StackProps) {
@@ -38,6 +40,23 @@ export class StorageStack extends cdk.Stack {
         s3.EventType.OBJECT_CREATED,
         new s3n.SqsDestination(this.readingMaterialsQueue)
       );
+
+      //Student
+       // Bucket for audio files
+          this.audioFilesBucket = new s3.Bucket(this, 'AudioFilesBucket', {
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            autoDeleteObjects: true,
+          });
+      
+          // Bucket for Nova-generated content
+          this.novaContentBucket = new s3.Bucket(this, 'NovaGeneratedContentBucket', {
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            autoDeleteObjects: true,
+          });
+
+          // NOTE: Event notifications for these buckets are now handled in EventNotificationsStack
+          // to avoid circular dependencies
+          
 
   }
 }

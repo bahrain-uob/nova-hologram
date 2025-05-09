@@ -3,6 +3,8 @@ import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
+import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 
 
@@ -27,24 +29,39 @@ export class FrontendStack extends cdk.Stack {
   
   
       // CloudFront Distribution for S3 bucket
-      const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, "OriginAccessIdentity"); //It is needed to access the PRIVATE S3 bucket from CloudFront
-  
-      this.websiteBucket.grantRead(cloudfrontOAI); // Grant CloudFront access to the S3 bucket
-  
-      const cloudfrontDistribution = new cloudfront.CloudFrontWebDistribution(this, "CloudFrontDistribution", {
-        originConfigs: [
+      // Create an Origin Access Control for CloudFront (modern replacement for OAI)
+      const cloudfrontOAC = new cloudfront.CfnOriginAccessControl(this, 'CloudFrontOAC', {
+        originAccessControlConfig: {
+          name: 'OAC for Website Bucket',
+          originAccessControlOriginType: 's3',
+          signingBehavior: 'always',
+          signingProtocol: 'sigv4',
+        }
+      });
+      
+      // Grant CloudFront access to the S3 bucket
+      this.websiteBucket.grantRead(new iam.ServicePrincipal('cloudfront.amazonaws.com'));
+      
+      // Create the CloudFront distribution using the modern Distribution class
+      const cloudfrontDistribution = new cloudfront.Distribution(this, 'CloudFrontDistribution', {
+        defaultBehavior: {
+          origin: new origins.S3Origin(this.websiteBucket),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        },
+        defaultRootObject: 'index.html',
+        errorResponses: [
           {
-            s3OriginSource: {
-              s3BucketSource: this.websiteBucket,
-              originAccessIdentity: cloudfrontOAI,  // Associate OAI with the CloudFront distribution
-            },
-            behaviors: [{ isDefaultBehavior: true }],
-          },
+            httpStatus: 404,
+            responseHttpStatus: 200,
+            responsePagePath: '/index.html', // SPA support - redirect 404s to index.html
+          }
         ],
       });
   
       new s3deploy.BucketDeployment(this, "DeployWebsite", {
-        sources: [s3deploy.Source.asset("./frontend/build")], //the place where the static files are located.
+        sources: [s3deploy.Source.asset("./frontend-next/.next")], //the place where the static files are located.
         destinationBucket: this.websiteBucket,
         distribution: cloudfrontDistribution,
         distributionPaths: ['/*'], // This invalidates CloudFront cache

@@ -175,3 +175,26 @@ input::placeholder {
 .login-link:hover {
   color: #2563eb;
 }
+
+.success-message {
+  background-color: #f0f9eb;
+  color: #67c23a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+  border-left: 4px solid #dc2626;
+  font-weight: 500;
+}
