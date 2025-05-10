@@ -40,6 +40,12 @@ export default function Home() {
       path: "/manage-reader",
       description: "manage readers",
     },
+
+    {
+      name: "Recommendation (Librarian)",
+      path: "/recomndation-librarian",
+      description: "recommendation books",
+    },
     
 
   ];
