@@ -79,7 +79,7 @@ export default function AddBookPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://778wwf05pa.execute-api.us-east-1.amazonaws.com/default/LambdaStack-GetBookInfoLambda83EE58F2-ClOJW7A7mpib",
+        "https://778wwf05pa.execute-api.us-east-1.amazonaws.com/default/LambdaStack-GetBookInfoLambda83EE58F2-tWw8R4eM9loD",
         {
           method: "POST",
           headers: {

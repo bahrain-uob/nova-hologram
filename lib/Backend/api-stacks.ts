@@ -1,84 +1,120 @@
 import * as cdk from "aws-cdk-lib";
 import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
-import { DBStack } from "../DB/db-stack"; // Import DBStack
-import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations"; // Import integrations
+import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { DBStack } from "../DB/db-stack";
 import { lambdastack } from "./lambda-stacks";
-import { StorageStack } from "../Storage/storage-stack"; // Import StorageStack
+import { StorageStack } from "../Storage/storage-stack";
 
+// Import dotenv to load environment variables
+import * as dotenv from "dotenv";
+dotenv.config(); // Load .env file
 
+// Define APIStack without cloudfrontDomain in props
 export class APIStack extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, dbStack: DBStack, lambdastack: lambdastack, StorageStack:StorageStack, props?: cdk.StackProps) {
+  constructor(
+    scope: cdk.App,
+    id: string,
+    dbStack: DBStack,
+    lambdaStack: lambdastack,
+    storageStack: StorageStack,
+    props?: cdk.StackProps 
+  ) {
     super(scope, id, props);
 
-    const PostGetDelete = new apigatewayv2.HttpApi(this, 'HttpApi', {
-        apiName: 'WebAppHttpApi',
-        corsPreflight: {
-          allowHeaders: ['Content-Type', 'Authorization'],
-          allowMethods: [apigatewayv2.CorsHttpMethod.GET, apigatewayv2.CorsHttpMethod.POST, apigatewayv2.CorsHttpMethod.DELETE],
-          allowCredentials: true,
-          allowOrigins: ['https://d3b5ch7wjgk3ht.cloudfront.net'] // ✅ valid
-,
-        }
-      });   
+    // Access environment variables from .env
+    const readerApiUrl = process.env.READER_API_URL|| '';
+    const librarianApiUrl = process.env.LIBRARIAN_API_URL|| '';
+    const getBookInfoApiUrl = process.env.GET_BOOK_INFO_API_URL|| '';
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN|| '';
+    const corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS
+    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
+    : ['*'];
 
-    // Add route for upload 
-    PostGetDelete.addRoutes({
-        path: '/upload', //path of the api gateway url for example https://api-id.execute-api.region.amazonaws.com/upload
-        methods: [apigatewayv2.HttpMethod.POST],
-        integration: new integrations.HttpLambdaIntegration('PostIntegration', lambdastack.postUploadLambda),
-      });
-      //Add route for get 
-      PostGetDelete.addRoutes({
-        path: '/upload',
-        methods: [apigatewayv2.HttpMethod.GET],
-        integration: new integrations.HttpLambdaIntegration('GetIntegration', lambdastack.getFilesLambda),
-      });
-      // Add route for delete
-      PostGetDelete.addRoutes({
-        path: '/upload',
-        methods: [apigatewayv2.HttpMethod.DELETE],
-        integration: new integrations.HttpLambdaIntegration('DeleteIntegration', lambdastack.deleteFilesLambda),
-      });
+    const allowCredentials = corsAllowedOrigins.includes('*') ? false : true;
 
-
-    new cdk.CfnOutput(this, 'HttpApiEndpoint', {
-        value: PostGetDelete.apiEndpoint,
-      });
-
-      //Student
-
-    // Reader API for audio files
-    const readerApi = new apigateway.RestApi(this, 'ReaderApi', {
-      restApiName: 'Reader API',
-      deployOptions: { stageName: 'dev' },
+    const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
+      apiName: "WebAppHttpApi",
+      corsPreflight: {
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowMethods: [
+          apigatewayv2.CorsHttpMethod.GET,
+          apigatewayv2.CorsHttpMethod.POST,
+          apigatewayv2.CorsHttpMethod.DELETE,
+        ],
+        allowCredentials: allowCredentials,
+        allowOrigins: corsAllowedOrigins,
+      },
     });
 
-    // Librarian API for Bedrock
-    const librarianApi = new apigateway.RestApi(this, 'LibrarianApi', {
-      restApiName: 'Librarian API',
-      deployOptions: { stageName: 'dev' },
+    httpApi.addRoutes({
+      path: "/upload",
+      methods: [apigatewayv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        "PostIntegration",
+        lambdaStack.postUploadLambda
+      ),
     });
 
-    // API Integrations
-    // Reader API: POST request triggers messageProcessing Lambda (student side)
-    readerApi.root.addResource('audio')
-      .addMethod('POST', new apigateway.LambdaIntegration(lambdastack.messageProcessing));
-    //Librarian: POST request triggers librarian Lambda
-    librarianApi.root.addResource('generate')
-      .addMethod('POST', new apigateway.LambdaIntegration(lambdastack.invokeBedrockLib));
+    httpApi.addRoutes({
+      path: "/upload",
+      methods: [apigatewayv2.HttpMethod.GET],
+      integration: new integrations.HttpLambdaIntegration(
+        "GetIntegration",
+        lambdaStack.getFilesLambda
+      ),
+    });
 
-    // Get Book Info Lambda (API: /get-book-info)
-    librarianApi.root.addResource('get-book-info')
-  .addMethod('POST', new apigateway.LambdaIntegration(lambdastack.getBookInfoLambda));
-  
-    // CloudFormation Outputs
-    new cdk.CfnOutput(this, 'ReaderAPIURL', { value: readerApi.url! });
-    new cdk.CfnOutput(this, 'LibrarianAPIURL', { value: librarianApi.url! });
-    new cdk.CfnOutput(this, 'QATableName', { value: dbStack.qaTable.tableName });
-    new cdk.CfnOutput(this, 'ExtractedTextTableName', { value: dbStack.extractedTextTable.tableName });
-    new cdk.CfnOutput(this, 'AudioFilesBucketOutput', { value: StorageStack.audioFilesBucket.bucketName });
-    new cdk.CfnOutput(this, 'NovaGeneratedContentBucket', { value: StorageStack.novaContentBucket.bucketName });
-    new cdk.CfnOutput(this, 'GetBookInfoAPIURL', {value: `${librarianApi.url}get-book-info`,});
+    httpApi.addRoutes({
+      path: "/upload",
+      methods: [apigatewayv2.HttpMethod.DELETE],
+      integration: new integrations.HttpLambdaIntegration(
+        "DeleteIntegration",
+        lambdaStack.deleteFilesLambda
+      ),
+    });
+
+    new cdk.CfnOutput(this, "HttpApiEndpoint", {
+      value: httpApi.apiEndpoint,
+    });
+
+    // Reader and Librarian APIs
+    const readerApi = new apigateway.RestApi(this, "ReaderApi", {
+      restApiName: "Reader API",
+      deployOptions: { stageName: "dev" },
+    });
+
+    const librarianApi = new apigateway.RestApi(this, "LibrarianApi", {
+      restApiName: "Librarian API",
+      deployOptions: { stageName: "dev" },
+    });
+
+    readerApi.root
+      .addResource("audio")
+      .addMethod("POST", new apigateway.LambdaIntegration(lambdaStack.messageProcessing));
+
+    librarianApi.root
+      .addResource("generate")
+      .addMethod("POST", new apigateway.LambdaIntegration(lambdaStack.invokeBedrockLib));
+
+    librarianApi.root
+      .addResource("get-book-info")
+      .addMethod("POST", new apigateway.LambdaIntegration(lambdaStack.getBookInfoLambda));
+
+    new cdk.CfnOutput(this, "ReaderAPIURL", { value: readerApiUrl });
+    new cdk.CfnOutput(this, "LibrarianAPIURL", { value: librarianApiUrl });
+    new cdk.CfnOutput(this, "QATableName", { value: dbStack.qaTable.tableName });
+    new cdk.CfnOutput(this, "ExtractedTextTableName", {
+      value: dbStack.extractedTextTable.tableName,
+    });
+    new cdk.CfnOutput(this, "AudioFilesBucketOutput", {
+      value: storageStack.audioFilesBucket.bucketName,
+    });
+    new cdk.CfnOutput(this, "NovaGeneratedContentBucket", {
+      value: storageStack.novaContentBucket.bucketName,
+    });
+    new cdk.CfnOutput(this, "GetBookInfoAPIURL", {
+      value: `${librarianApi.url}get-book-info`,
+    });
   }
 }
