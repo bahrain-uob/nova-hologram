@@ -130,16 +130,16 @@ const InteractivePage: React.FC = () => {
 
           <div className="flex flex-col gap-4">
             <div className="relative mb-6">
+              {/* Video Source Path Updated */}
               <video
                 width="100%"
                 controls
                 className="rounded-lg shadow-lg"
               >
-                <source src="video.mp4" type="video/mp4" />
+                <source src="/output.mp4" type="video/mp4" /> {/* Corrected Path */}
                 Your browser does not support the video tag.
               </video>
             </div>
-
           </div>
         </div>
 
