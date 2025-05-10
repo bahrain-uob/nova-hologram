@@ -14,7 +14,6 @@ export interface BaseEntity {
 
 // Authentication types based on AWS Cognito configuration
 export interface AuthUser {
-  username: string;
   email: string;
   name?: string;
   userType?: 'reader' | 'librarian';
