@@ -74,7 +74,13 @@ const CollectionReader: React.FC = () => {
                   <Image src="/fiction2.jpg" alt="Fiction 2" width={60} height={90} className="rounded" />
                   <Image src="/fiction3.jpg" alt="Fiction 3" width={60} height={90} className="rounded" />
                 </div>
-                <div className="mt-4 text-indigo-600 text-sm cursor-pointer">View All</div>
+                {/*click view all*/} 
+                <div
+                  onClick={() => router.push("/inside-collection-reader")}
+                  className="mt-4 text-indigo-600 text-sm cursor-pointer hover:underline"
+                >
+                  View All
+                </div>
               </div>
 
               {/*collection 1*/}
@@ -86,7 +92,13 @@ const CollectionReader: React.FC = () => {
                   <Image src="/science2.jpg" alt="Science 2" width={60} height={90} className="rounded" />
                   <Image src="/science3.jpg" alt="Science 3" width={60} height={90} className="rounded" />
                 </div>
-                <div className="mt-4 text-indigo-600 text-sm cursor-pointer">View All</div>
+                 {/*click view all*/} 
+                 <div
+                  onClick={() => router.push("/inside-collection-reader")}
+                  className="mt-4 text-indigo-600 text-sm cursor-pointer hover:underline"
+                >
+                  View All
+                </div>
               </div>
             </div>
           </div>
