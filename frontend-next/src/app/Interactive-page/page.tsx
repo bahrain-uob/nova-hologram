@@ -20,7 +20,6 @@ interface Book {
   publicationYear: number;
 }
 
-// Simulated fetch function for fetching books
 const fetchBooks = async (): Promise<Book[]> => [
   {
     id: 1,
@@ -78,12 +77,19 @@ const fetchBooks = async (): Promise<Book[]> => [
   },
 ];
 
+const chapters = [
+  { id: 1, title: "Chapter 1: The Beginning", video: "/output.mp4" },
+  { id: 2, title: "Chapter 2: Into the Forest", video: "/chapter2.mp4" },
+  { id: 3, title: "Chapter 3: The Hidden Village", video: "/chapter3.mp4" },
+];
+
 const InteractivePage: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [genre, setGenre] = useState("");
   const [readingLevel, setReadingLevel] = useState("");
   const [publicationYear, setPublicationYear] = useState("");
+  const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
   const router = useRouter();
 
   useEffect(() => {
@@ -124,19 +130,42 @@ const InteractivePage: React.FC = () => {
   return (
     <MainLayout activePage="Manage Books">
       <main className="flex flex-row bg-gray-50 min-h-screen">
-        {/* Left Column - Book Details */}
+        {/* Left Column - Chapter Video */}
         <div className="flex-1 p-8">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Chapter 1: The Beginning</h2>
+          {/* Chapter Selector */}
+          <div className="mb-4">
+            <label
+              htmlFor="chapter-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Select Chapter:
+            </label>
+            <select
+              id="chapter-select"
+              value={selectedChapter.id}
+              onChange={(e) =>
+                setSelectedChapter(
+                  chapters.find((ch) => ch.id === Number(e.target.value))!
+                )
+              }
+              className="w-full md:w-64 p-2 border border-gray-300 rounded-lg shadow-sm text-sm"
+            >
+              {chapters.map((chapter) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {chapter.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+            {selectedChapter.title}
+          </h2>
 
           <div className="flex flex-col gap-4">
             <div className="relative mb-6">
-              {/* Video Source Path Updated */}
-              <video
-                width="100%"
-                controls
-                className="rounded-lg shadow-lg"
-              >
-                <source src="/output.mp4" type="video/mp4" /> {/* Corrected Path */}
+              <video width="100%" controls className="rounded-lg shadow-lg">
+                <source src={selectedChapter.video} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
@@ -145,32 +174,43 @@ const InteractivePage: React.FC = () => {
 
         {/* Right Column - Chat Panel */}
         <div className="w-96 bg-white shadow-lg p-6 flex flex-col justify-between">
-          {/* Princess Elena's greeting message */}
+          {/* Greeting */}
           <div className="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
-            <h3 className="text-lg font-semibold text-gray-700">Princess Elena</h3>
+            <h3 className="text-lg font-semibold text-gray-700">
+              Princess Elena
+            </h3>
             <div className="text-sm text-gray-500">
-              <p>Greetings, brave reader! I am Princess Elena. What would you like to know about my quest?</p>
+              <p>
+                Greetings, brave reader! I am Princess Elena. What would you
+                like to know about my quest?
+              </p>
             </div>
           </div>
 
           {/* Chat messages */}
           <div className="flex flex-col gap-6 overflow-y-auto flex-1">
             <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Talk to Character</h3>
+              <h3 className="text-lg font-semibold text-gray-700">
+                Talk to Character
+              </h3>
               <div className="text-sm text-gray-500">
                 <p>What's your mission in this story?</p>
               </div>
             </div>
 
             <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Talk to Character</h3>
+              <h3 className="text-lg font-semibold text-gray-700">
+                Talk to Character
+              </h3>
               <div className="text-sm text-gray-500">
                 <p>What's the forest's secret?</p>
               </div>
             </div>
 
             <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Talk to Character</h3>
+              <h3 className="text-lg font-semibold text-gray-700">
+                Talk to Character
+              </h3>
               <div className="text-sm text-gray-500">
                 <p>Who is your biggest enemy?</p>
               </div>
