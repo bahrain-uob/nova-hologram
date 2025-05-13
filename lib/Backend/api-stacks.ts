@@ -89,6 +89,62 @@ export class APIStack extends cdk.Stack {
       deployOptions: { stageName: "dev" },
     });
 
+    // Create /get-upload-urls resource
+const getUploadUrlsResource = librarianApi.root.addResource("get-upload-urls");
+
+// POST method for generating pre-signed S3 URLs
+getUploadUrlsResource.addMethod(
+  "POST",
+  new apigateway.LambdaIntegration(lambdaStack.getUploadUrlsLambda),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
+// OPTIONAL: Add OPTIONS method to support CORS preflight
+getUploadUrlsResource.addMethod(
+  "OPTIONS",
+  new apigateway.MockIntegration({
+    integrationResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers":
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          "method.response.header.Access-Control-Allow-Origin": "'*'",
+          "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
+        },
+        responseTemplates: {
+          "application/json": "",
+        },
+      },
+    ],
+    passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+    requestTemplates: {
+      "application/json": '{"statusCode": 200}',
+    },
+  }),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers": true,
+          "method.response.header.Access-Control-Allow-Methods": true,
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
     readerApi.root
       .addResource("audio")
       .addMethod("POST", new apigateway.LambdaIntegration(lambdaStack.messageProcessing));
@@ -100,6 +156,67 @@ export class APIStack extends cdk.Stack {
     librarianApi.root
       .addResource("get-book-info")
       .addMethod("POST", new apigateway.LambdaIntegration(lambdaStack.getBookInfoLambda));
+
+      
+      // Create /upload-book resource
+const uploadBookResource = librarianApi.root.addResource("upload-book");
+
+// POST method for uploading the book
+uploadBookResource.addMethod(
+  "POST",
+  new apigateway.LambdaIntegration(lambdaStack.bookHandlerLambda, {
+    proxy: true, // <-- make sure this is set
+  }),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
+
+// OPTIONS method to support CORS preflight
+uploadBookResource.addMethod(
+  "OPTIONS",
+  new apigateway.MockIntegration({
+    integrationResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers":
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          "method.response.header.Access-Control-Allow-Origin": "'*'",
+          "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
+        },
+        responseTemplates: {
+          "application/json": "",
+        },
+      },
+    ],
+    passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+    requestTemplates: {
+      "application/json": '{"statusCode": 200}',
+    },
+  }),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers": true,
+          "method.response.header.Access-Control-Allow-Methods": true,
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
 
     new cdk.CfnOutput(this, "ReaderAPIURL", { value: readerApiUrl });
     new cdk.CfnOutput(this, "LibrarianAPIURL", { value: librarianApiUrl });

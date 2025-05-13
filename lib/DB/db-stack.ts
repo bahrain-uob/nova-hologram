@@ -75,7 +75,7 @@ export class DBStack extends cdk.Stack {
     // table for the books with PK:user_id, SK:book_id 
     this.book = new dynamodb.Table(this, 'book', {
       partitionKey: { name: 'user_id', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
+     sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -86,6 +86,13 @@ export class DBStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+    this.book.addGlobalSecondaryIndex({
+      indexName: 'GSI_by_book_id',
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    
     // table for the chapters with PK: chapter_id, SK: book_id 
     this.chapter = new dynamodb.Table(this, 'chapter', {
       partitionKey: { name: 'chapter_id', type: dynamodb.AttributeType.STRING },
@@ -126,11 +133,11 @@ export class DBStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
     // added to reviews table, global index with PK:book_id
-    this.reviews.addGlobalSecondaryIndex({
-      indexName: 'Global_reviews',
-      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.NUMBER },
+   /* this.reviews.addGlobalSecondaryIndex({
+      indexName: 'Global_reviews_v2',
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
-    });
+    });*/
 
     // table for the readers books with PK: user_id, SK: book_id 
     this.reader_books = new dynamodb.Table(this, 'reader_books', {
@@ -142,7 +149,7 @@ export class DBStack extends cdk.Stack {
     // added to reader books table, global index with PK:book_id (this to query easily)
     this.reader_books.addGlobalSecondaryIndex({
       indexName: 'Global_reader_books',
-      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
@@ -155,8 +162,8 @@ export class DBStack extends cdk.Stack {
     });
     // added to book mark table, global index with PK:book_id
     this.book_mark.addGlobalSecondaryIndex({
-      indexName: 'Global_book_mark',
-      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.NUMBER },
+      indexName: 'Global_book_mark_v2',
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 

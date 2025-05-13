@@ -7,7 +7,9 @@ import { SharedResourcesStack } from "../sharedresources/SharedResourcesStack";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
-
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as sns_subs from "aws-cdk-lib/aws-sns-subscriptions";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 
 export class lambdastack extends cdk.Stack {
     public readonly postUploadLambda: lambda.Function;
@@ -22,6 +24,9 @@ export class lambdastack extends cdk.Stack {
     public readonly playResponse: lambda.Function; 
     public readonly transcribe: lambda.Function; 
     public readonly triggerPolly: lambda.Function; 
+
+    public readonly bookHandlerLambda: lambda.Function;
+    public readonly getUploadUrlsLambda: lambda.Function;
 
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
@@ -63,6 +68,15 @@ export class lambdastack extends cdk.Stack {
         },
       });
 
+      // Create SNS Topic for Textract job completion
+      const textractNotificationTopic = new sns.Topic(this, 'TextractJobCompleteTopic', {
+        topicName: 'TextractJobComplete',
+      });
+      //  Output the topic ARN (can be seen in CloudFormation outputs)
+      new cdk.CfnOutput(this, 'TextractTopicARN', {
+        value: textractNotificationTopic.topicArn,
+      });
+      
       // Lambda to start Textract job
       const startTextractJobLambda = new lambda.Function(this, 'StartTextractJobLambda', {
         runtime: lambda.Runtime.NODEJS_18_X,  
@@ -70,13 +84,28 @@ export class lambdastack extends cdk.Stack {
         code: lambda.Code.fromAsset('lambda/StartTextractJob'), 
         environment: {
           BUCKET_NAME: StorageStack.readingMaterials.bucketName,  
+          SNS_TOPIC_ARN: textractNotificationTopic.topicArn,
         },
       });
+      
+      textractNotificationTopic.grantPublish(startTextractJobLambda);
+
+      const textractServiceRole = new iam.Role(this, 'TextractServiceRole', {
+        assumedBy: new iam.ServicePrincipal('textract.amazonaws.com'),
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSNSFullAccess'),
+        ],
+      });
+      
+      textractNotificationTopic.grantPublish(textractServiceRole); // grant topic publish access
+      startTextractJobLambda.addEnvironment('TEXTRACT_SERVICE_ROLE_ARN', textractServiceRole.roleArn);
+      
+      // Subscribe the SNS topic to the SQS queue
       const splitChaptersLambda = new lambda.Function(this, 'SplitChaptersLambda', {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset('lambda/GetTextAndSplitChapters'),
-        timeout: cdk.Duration.minutes(2), // ⬅️ extend to 2 minutes
+        timeout: cdk.Duration.minutes(5), 
     });
     
     splitChaptersLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -85,12 +114,121 @@ export class lambdastack extends cdk.Stack {
           'logs:CreateLogGroup',
           'logs:CreateLogStream',
           'logs:PutLogEvents',
+          'bedrock:InvokeModel',
       ],
       resources: ['*'],
   }));
+  textractNotificationTopic.addSubscription(
+    new sns_subs.LambdaSubscription(splitChaptersLambda)
+  );
+  textractNotificationTopic.grantPublish(splitChaptersLambda);
+  StorageStack.readingMaterials.grantWrite(splitChaptersLambda);
+  splitChaptersLambda.addEnvironment("CHAPTERS_TABLE", dbStack.chapter.tableName);
+  dbStack.chapter.grantWriteData(splitChaptersLambda);
+  splitChaptersLambda.addEnvironment("READING_MATERIALS_BUCKET", StorageStack.readingMaterials.bucketName);
+
+  //generate sammury
+  const summaryQueue = new sqs.Queue(this, "SummaryQueue", {
+    queueName: "SummaryQueue",
+    visibilityTimeout: cdk.Duration.seconds(180),
+  });
   
+  const scriptQueue = new sqs.Queue(this, "ScriptQueue", {
+    queueName: "ScriptQueue",
+    visibilityTimeout: cdk.Duration.seconds(300),
+  });
+  
+  const generateSummaryLambda = new lambda.Function(this, 'GenerateSummaryLambda', {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: 'index.handler',
+    code: lambda.Code.fromAsset('lambda/GenerateSummary'),
+    environment: {
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+    },
+    timeout: cdk.Duration.minutes(2),
+  });
+  generateSummaryLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ['bedrock:*', 'logs:*', 'dynamodb:*'],
+    resources: ['*'],
+  }));
+  generateSummaryLambda.addEnvironment("BOOKS_TABLE", dbStack.book.tableName);
+  dbStack.book.grantWriteData(generateSummaryLambda);
+  dbStack.book.grantReadData(generateSummaryLambda);
+  generateSummaryLambda.addEventSource(new lambdaEventSources.SqsEventSource(summaryQueue));
+  summaryQueue.grantConsumeMessages(generateSummaryLambda);
+  dbStack.chapter.grantReadWriteData(generateSummaryLambda);
+  summaryQueue.grantSendMessages(splitChaptersLambda);
+  splitChaptersLambda.addEnvironment("SUMMARY_QUEUE_URL", summaryQueue.queueUrl);
+  new cdk.CfnOutput(this, 'SummaryQueueURL', {
+    value: summaryQueue.queueUrl,
+  });
+  generateSummaryLambda.addEnvironment("SCRIPT_QUEUE_URL", scriptQueue.queueUrl);
+  scriptQueue.grantSendMessages(generateSummaryLambda);
+
+  //generate script
+  const videoScriptQueue = new sqs.Queue(this, "VideoScriptQueue", {
+    queueName: "VideoScriptQueue",
+    visibilityTimeout: cdk.Duration.seconds(910),
+  });
+
+  const generateScriptLambda = new lambda.Function(this, "GenerateScriptLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/GenerateScript"),
+    timeout: cdk.Duration.minutes(2),
+    environment: {
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+      BOOKS_TABLE: dbStack.book.tableName,
+      VIDEO_QUEUE_URL: videoScriptQueue.queueUrl,
+    },
+  });
+
+  generateScriptLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ["bedrock:*", "logs:*", "dynamodb:*", "sqs:SendMessage"],
+    resources: ["*"], // You can narrow it down to specific ARNs if needed
+  }));
+
+  dbStack.book.grantReadWriteData(generateScriptLambda);
+  dbStack.chapter.grantReadWriteData(generateScriptLambda);
+
+  scriptQueue.grantConsumeMessages(generateScriptLambda);
+  generateScriptLambda.addEventSource(new lambdaEventSources.SqsEventSource(scriptQueue));
+
+  videoScriptQueue.grantSendMessages(generateScriptLambda);
+
+  new cdk.CfnOutput(this, "VideoScriptQueueURL", {
+    value: videoScriptQueue.queueUrl,
+  });
 
 
+  //////////////////////////////////////
+  const bookHandlerLambda = new lambda.Function(this, 'BookHandlerLambda', {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: 'index.handler',
+    code: lambda.Code.fromAsset('lambda/bookHandler'),
+    environment: {
+      S3_BUCKET: StorageStack.readingMaterials.bucketName,  
+      TABLE_NAME: dbStack.book.tableName,                  
+    },
+    timeout: cdk.Duration.minutes(5),
+    memorySize: 1024,
+  });
+  dbStack.book.grantWriteData(bookHandlerLambda);
+  StorageStack.readingMaterials.grantPut(bookHandlerLambda);
+  this.bookHandlerLambda = bookHandlerLambda;
+
+  this.getUploadUrlsLambda = new lambda.Function(this, "GetUploadUrlsLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/GeneratePresignedUrl"),
+    environment: {
+      S3_BUCKET: StorageStack.readingMaterials.bucketName,
+    },
+  });
+  StorageStack.readingMaterials.grantPut(this.getUploadUrlsLambda);
+  ////////////////////////////////////
+  
+  
       // Permissions
       StorageStack.readingMaterialsQueue.grantConsumeMessages(textExtractionLambda);
       StorageStack.readingMaterials.grantRead(textExtractionLambda);
@@ -106,7 +244,11 @@ export class lambdastack extends cdk.Stack {
       StorageStack.extractedTextQueue.grantConsumeMessages(saveExtractedTextLambda);//this permission will allow lambda function to consume the messages from the extractedTextQueue
       dbStack.extractedTextTable.grantWriteData(saveExtractedTextLambda); //this permission will allow lambda function to write the extracted text to the DynamoDB table
       saveExtractedTextLambda.addEventSource(new lambdaEventSources.SqsEventSource(StorageStack.extractedTextQueue)); //
+      new cdk.CfnOutput(this, 'BookHandlerLambdaArn', {
+        value: bookHandlerLambda.functionArn,
+      });
 
+      
       this.BedRockFunction = new lambda.Function(this, 'MyBedrockFunction', {
         runtime: lambda.Runtime.PYTHON_3_12,
         handler: 'index.lambda_handler',  // Match the Python handler
@@ -115,8 +257,23 @@ export class lambdastack extends cdk.Stack {
         memorySize: 2048,
         environment: {
           VIDEO_BUCKET: StorageStack.genVideos.bucketName,  // Used in Python code
+          VIDEO_OUTPUT_S3_URI: StorageStack.genVideos.bucketArn,   // ✅ required by the code
+          BOOKS_TABLE: dbStack.book.tableName,
+          CHAPTERS_TABLE: dbStack.chapter.tableName,
         }
       });
+
+      dbStack.book.grantReadWriteData(this.BedRockFunction);
+      dbStack.chapter.grantReadWriteData(this.BedRockFunction);
+      StorageStack.genVideos.grantWrite(this.BedRockFunction);
+      videoScriptQueue.grantConsumeMessages(this.BedRockFunction);
+      this.BedRockFunction.addEventSource(new lambdaEventSources.SqsEventSource(videoScriptQueue));
+      
+      this.BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
+        actions: ['bedrock:*', 'dynamodb:*', 's3:*', 'logs:*'],
+        resources: ['*'], // You can restrict it later if needed
+      }));
+      
       
   //Student
 
