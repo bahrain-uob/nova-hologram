@@ -126,6 +126,19 @@ return (
         <h2 className="text-2xl font-semibold text-gray-800 mb-6">
         Recommendations for <span className="font-bold">James Escobar</span>
         </h2>
+       {/* Filters */}
+        <div className="relative flex-1 mb-4">
+            <input
+            type="text"
+            placeholder="Search books, authors, or categories"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-12 py-2 border border-zinc-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div className="absolute top-2 right-4">
+            <FilterIcon className="w-5 h-5 text-gray-500 cursor-pointer" />
+            </div>
+        </div>
 
         <div className="flex flex-col-reverse lg:flex-row gap-6">
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

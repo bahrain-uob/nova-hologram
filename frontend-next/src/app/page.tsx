@@ -46,6 +46,12 @@ export default function Home() {
       path: "/recomndation-librarian",
       description: "recommendation books",
     },
+
+    {
+      name: "Interactive-page (Reader)",
+      path: "/Interactive-page",
+      description: "Interact with the story",
+    },
     
 
   ];
