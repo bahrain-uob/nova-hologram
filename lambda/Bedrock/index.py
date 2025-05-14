@@ -6,7 +6,11 @@ import os
 
 dynamodb = boto3.client("dynamodb")
 bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
+
 s3_output_uri = os.environ["VIDEO_OUTPUT_S3_URI"]
+if not s3_output_uri.startswith("s3://"):
+    s3_output_uri = f"s3://{s3_output_uri}"
+
 book_table = os.environ["BOOKS_TABLE"]
 chapter_table = os.environ["CHAPTERS_TABLE"]
 
@@ -55,7 +59,7 @@ def lambda_handler(event, context):
         script_text = body["scriptText"]
         is_book_summary = body.get("isBookSummary", False)
 
-        # 1. Fetch user_id and prompt from book table
+        # Get user_id only (no prompt used)
         book_response = dynamodb.query(
             TableName=book_table,
             IndexName="GSI_by_book_id",
@@ -64,25 +68,25 @@ def lambda_handler(event, context):
         )
         item = book_response["Items"][0]
         user_id = item["user_id"]["S"]
-        base_prompt = item.get("prompt", {}).get("S", "")
 
-        # 2. Build final Nova Reel prompt
+        # Build the Nova Reel final prompt
         final_prompt = f"""
 Generate a 1-minute cinematic educational video using the following scene descriptions.
 
 Each scene has already been described in rich visual detail. Use each one as a separate static shot. Do not add extra movement or transitions.
 
-Make sure:
-- Characters look the same across scenes
-- Use smooth light camera effects when specified
-- Maintain the mood and lighting described in each scene
-- The final video must feel coherent and cinematic
-
 Scene descriptions:
 {script_text}
 """.strip()
 
-        # 3. Update trailer status to 'processing'
+        # ✅ Log to help detect blocked prompts or chapter failures
+        print("——— Nova Reel Prompt Submission ———")
+        print("Chapter:", chapter_no)
+        print("Book ID:", book_id)
+        print("Prompt:\n", final_prompt)
+        print("———————————————————————————————")
+
+        # Set initial status
         if is_book_summary:
             key = {"user_id": {"S": user_id}, "book_id": {"S": book_id}}
             dynamodb.update_item(
@@ -102,11 +106,10 @@ Scene descriptions:
             )
 
         try:
-            # 4. Start and poll Nova Reel job
             invocation_arn = start_video_job(final_prompt)
             video_url = poll_video_job(invocation_arn)
 
-            # 5. Save trailer URL and mark as 'completed'
+            # Save video result
             if is_book_summary:
                 dynamodb.update_item(
                     TableName=book_table,
@@ -117,7 +120,6 @@ Scene descriptions:
                         ":status": {"S": "completed"},
                     },
                 )
-                print(f" Book trailer saved to book {book_id}")
             else:
                 dynamodb.update_item(
                     TableName=chapter_table,
@@ -128,12 +130,11 @@ Scene descriptions:
                         ":status": {"S": "completed"},
                     },
                 )
-                print(f" Chapter trailer saved for chapter {chapter_no}")
 
-            print(f" Video available at: {video_url}")
+            print(f"✅ Video available at: {video_url}")
 
         except Exception as e:
-            print(f" Video generation failed: {str(e)}")
+            print(f"❌ Video generation failed: {str(e)}")
             fail_status = {"S": "failed"}
             if is_book_summary:
                 dynamodb.update_item(

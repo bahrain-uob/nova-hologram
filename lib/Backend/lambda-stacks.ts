@@ -27,6 +27,7 @@ export class lambdastack extends cdk.Stack {
 
     public readonly bookHandlerLambda: lambda.Function;
     public readonly getUploadUrlsLambda: lambda.Function;
+    public readonly getBookLambda: lambda.Function;
 
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
@@ -201,14 +202,56 @@ export class lambdastack extends cdk.Stack {
   });
 
 
+  //get book
+  const getBookLambda = new lambda.Function(this, "GetBookLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/GetBook"),
+    timeout: cdk.Duration.seconds(30),
+    environment: {
+      BOOKS_TABLE: dbStack.book.tableName,
+      CHAPTER_SUMMARY_TABLE: dbStack.chapter_summary.tableName,
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+    },
+  });
+  
+  // Permissions
+  dbStack.book.grantReadData(getBookLambda);
+  dbStack.chapter_summary.grantReadData(getBookLambda);
+  dbStack.chapter.grantReadData(getBookLambda);
+  StorageStack.genVideos.grantRead(getBookLambda);
+
+  getBookLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ["dynamodb:Query"],
+    resources: [
+      // GSI on book table
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.book.tableName}/index/GSI_by_book_id`,
+      // GSI on chapter table
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.chapter.tableName}/index/GSI_by_book_id`
+    ]
+  }));
+  
+  // Save reference to use later if needed
+  this.getBookLambda = getBookLambda;
+  
+  
+
   //////////////////////////////////////
+  const textractTriggerTopic = new sns.Topic(this, 'TextractTriggerTopic', {
+    topicName: 'TriggerTextractStart',
+  });
+  new cdk.CfnOutput(this, 'TextractTriggerTopicArn', {
+    value: textractTriggerTopic.topicArn,
+  });
+
   const bookHandlerLambda = new lambda.Function(this, 'BookHandlerLambda', {
     runtime: lambda.Runtime.NODEJS_18_X,
     handler: 'index.handler',
     code: lambda.Code.fromAsset('lambda/bookHandler'),
     environment: {
       S3_BUCKET: StorageStack.readingMaterials.bucketName,  
-      TABLE_NAME: dbStack.book.tableName,                  
+      TABLE_NAME: dbStack.book.tableName,  
+      TEXTRACT_TRIGGER_TOPIC_ARN: textractTriggerTopic.topicArn,                
     },
     timeout: cdk.Duration.minutes(5),
     memorySize: 1024,
@@ -217,6 +260,12 @@ export class lambdastack extends cdk.Stack {
   StorageStack.readingMaterials.grantPut(bookHandlerLambda);
   this.bookHandlerLambda = bookHandlerLambda;
 
+  textractTriggerTopic.grantPublish(bookHandlerLambda);
+  textractTriggerTopic.addSubscription(
+    new sns_subs.LambdaSubscription(startTextractJobLambda)
+  );
+  textractTriggerTopic.grantPublish(startTextractJobLambda);
+  
   this.getUploadUrlsLambda = new lambda.Function(this, "GetUploadUrlsLambda", {
     runtime: lambda.Runtime.NODEJS_18_X,
     handler: "index.handler",
@@ -257,17 +306,20 @@ export class lambdastack extends cdk.Stack {
         memorySize: 2048,
         environment: {
           VIDEO_BUCKET: StorageStack.genVideos.bucketName,  // Used in Python code
-          VIDEO_OUTPUT_S3_URI: StorageStack.genVideos.bucketArn,   // ✅ required by the code
+          VIDEO_OUTPUT_S3_URI: `s3://${StorageStack.genVideos.bucketName}/upload/`,
           BOOKS_TABLE: dbStack.book.tableName,
           CHAPTERS_TABLE: dbStack.chapter.tableName,
         }
       });
-
+      this.BedRockFunction.addEventSource(new lambdaEventSources.SqsEventSource(videoScriptQueue, {
+        batchSize: 1,
+        maxConcurrency: 2, // Add this line if your CDK version supports it
+      }));
+      
       dbStack.book.grantReadWriteData(this.BedRockFunction);
       dbStack.chapter.grantReadWriteData(this.BedRockFunction);
       StorageStack.genVideos.grantWrite(this.BedRockFunction);
       videoScriptQueue.grantConsumeMessages(this.BedRockFunction);
-      this.BedRockFunction.addEventSource(new lambdaEventSources.SqsEventSource(videoScriptQueue));
       
       this.BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
         actions: ['bedrock:*', 'dynamodb:*', 's3:*', 'logs:*'],

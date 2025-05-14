@@ -104,15 +104,7 @@ export const handler = async (event) => {
           script: "",
         });
       }
-    } else {
-      chapters.push({
-        chapterTitle: "Full Text",
-        chapterText: fullText,
-        chapterNo: 1,
-        summary: "",
-        script: "",
-      });
-    }
+    } 
 
     console.log(`📘 Final number of chapters: ${chapters.length}`);
 

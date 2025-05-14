@@ -217,6 +217,75 @@ uploadBookResource.addMethod(
   }
 );
 
+// Create /get-book/{bookId} resource
+const getBookResource = librarianApi.root.addResource("get-book");
+const getBookByIdResource = getBookResource.addResource("{bookId}");
+
+// GET method to fetch book by ID
+getBookByIdResource.addMethod(
+  "GET",
+  new apigateway.LambdaIntegration(lambdaStack.getBookLambda),
+  {
+    requestParameters: {
+      "method.request.path.bookId": true,
+    },
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+      {
+        statusCode: "400",
+      },
+      {
+        statusCode: "404",
+      },
+      {
+        statusCode: "500",
+      },
+    ],
+  }
+);
+
+// OPTIONS method for CORS
+getBookByIdResource.addMethod(
+  "OPTIONS",
+  new apigateway.MockIntegration({
+    integrationResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers":
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          "method.response.header.Access-Control-Allow-Origin": "'*'",
+          "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+        },
+        responseTemplates: {
+          "application/json": "",
+        },
+      },
+    ],
+    passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+    requestTemplates: {
+      "application/json": '{"statusCode": 200}',
+    },
+  }),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers": true,
+          "method.response.header.Access-Control-Allow-Origin": true,
+          "method.response.header.Access-Control-Allow-Methods": true,
+        },
+      },
+    ],
+  }
+);
+
 
     new cdk.CfnOutput(this, "ReaderAPIURL", { value: readerApiUrl });
     new cdk.CfnOutput(this, "LibrarianAPIURL", { value: librarianApiUrl });
@@ -233,5 +302,9 @@ uploadBookResource.addMethod(
     new cdk.CfnOutput(this, "GetBookInfoAPIURL", {
       value: `${librarianApi.url}get-book-info`,
     });
+    new cdk.CfnOutput(this, "GetBookByIdAPIURL", {
+      value: `${librarianApi.url}get-book/{bookId}`,
+    });
+    
   }
 }

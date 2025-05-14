@@ -92,6 +92,7 @@ export class DBStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+
     
     // table for the chapters with PK: chapter_id, SK: book_id 
     this.chapter = new dynamodb.Table(this, 'chapter', {
@@ -100,6 +101,14 @@ export class DBStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+
+    this.chapter.addGlobalSecondaryIndex({
+      indexName: 'Global_chapter_summary',
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'chapter_id', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+    
 
     // table for the books trailers with PK: trailer_id, SK: book_id 
     this.book_trailer = new dynamodb.Table(this, 'book_trailer', {

@@ -2,13 +2,15 @@ const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
+const sns = new AWS.SNS();
+
 const TABLE_NAME = process.env.TABLE_NAME;
+const SNS_TOPIC_ARN = process.env.TEXTRACT_TRIGGER_TOPIC_ARN;
 
 exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
-
-    const bookId = body.book_id ;
+    const bookId = body.book_id;
     const timestamp = new Date().toISOString();
 
     const item = {
@@ -24,8 +26,8 @@ exports.handler = async (event) => {
       publisher: body.publisher || {},
       publication_year: body.publication_year,
       reading_level: body.reading_level,
-      book_cover: body.book_cover || "", // Already uploaded to S3
-      book_file: body.book_file || "",   // Already uploaded to S3
+      book_cover: body.book_cover || "",
+      book_file: body.book_file || "",
       book_summary: "",
       book_trailer: "",
       prompt: body.prompt || "",
@@ -42,9 +44,20 @@ exports.handler = async (event) => {
       Item: item
     }).promise();
 
+    // ✅ Publish to SNS to trigger Textract
+    await sns.publish({
+      TopicArn: SNS_TOPIC_ARN,
+      Message: JSON.stringify({
+        book_id: bookId,
+        file_key: body.book_file
+      }),
+    }).promise();
+
+    console.log("✅ Published to SNS to start Textract");
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Book metadata saved successfully", book_id: bookId })
+      body: JSON.stringify({ message: "Book metadata saved and Textract triggered", book_id: bookId })
     };
 
   } catch (err) {

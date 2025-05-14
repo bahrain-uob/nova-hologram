@@ -271,7 +271,7 @@ export default function AddBookPage() {
       if (!saveResponse.ok) throw new Error("Metadata save failed.");
       const result = await saveResponse.json();
       console.log(' Upload complete:', result);
-      router.push('/videosGenerated');
+      router.push(`/videosGenerated?bookId=${bookId}`);
     } catch (err) {
       console.error(' Upload failed:', err);
       alert('Upload failed. Please try again.');
@@ -318,7 +318,6 @@ export default function AddBookPage() {
                     <SelectContent>
                       <SelectItem value="fiction">Book</SelectItem>
                       <SelectItem value="non-fiction">Journal</SelectItem>
-                      <SelectItem value="textbook">Textbook</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.type && (

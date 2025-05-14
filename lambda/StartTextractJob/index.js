@@ -3,8 +3,9 @@ const { TextractClient, StartDocumentTextDetectionCommand } = require("@aws-sdk/
 const textractClient = new TextractClient();
 
 exports.handler = async (event) => {
-  const bookId = event.bookId; // passed from frontend 
-  const fileKey = `books/${bookId}/book.pdf`; // path in S3
+    const snsMessage = JSON.parse(event.Records[0].Sns.Message);
+    const bookId = snsMessage.book_id;
+    const fileKey = `books/${bookId}/book.pdf`; // path in S3
 
   const params = {
     DocumentLocation: {

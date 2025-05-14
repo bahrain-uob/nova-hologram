@@ -5,28 +5,34 @@ const {
   QueryCommand,
 } = require("@aws-sdk/client-dynamodb");
 
+const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+
 const dynamo = new DynamoDBClient();
 const bedrock = new BedrockRuntimeClient({ region: "us-east-1" });
-const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const sqs = new SQSClient();
 
 const summaryPrompt = `
 Summarize the following children’s story into a short, simple, and friendly paragraph. The summary should be easy to read for young readers and clearly describe the main events of the story. Avoid unnecessary details, complicated words, or difficult language.
 `;
 
-async function getUserIdFromBookId(bookId) {
+async function getBookInfo(bookId) {
   const command = new QueryCommand({
     TableName: process.env.BOOKS_TABLE,
-    IndexName: "GSI_by_book_id", // Make sure this GSI exists
+    IndexName: "GSI_by_book_id",
     KeyConditionExpression: "book_id = :bookId",
     ExpressionAttributeValues: {
-      ":bookId": { S: bookId }, // CHANGE TO .S if book_id is a string!
+      ":bookId": { S: bookId },
     },
   });
 
   const result = await dynamo.send(command);
   const item = result.Items?.[0];
-  return item?.user_id?.S;
+  if (!item) return {};
+
+  return {
+    userId: item.user_id?.S,
+    prompt: item.prompt?.S || "", // fallback if prompt is missing
+  };
 }
 
 exports.handler = async (event) => {
@@ -37,22 +43,30 @@ exports.handler = async (event) => {
 
       console.log(`📘 Generating summary for ${isBookSummary ? "Book" : "Chapter"} ${bookId}${chapterNo ? ` - Chapter ${chapterNo}` : ""}`);
 
-      const fullPrompt = `${summaryPrompt}\n\n${chapterText}`;
+      // Get userId and custom prompt from book table
+      const { userId, prompt } = await getBookInfo(bookId);
+      if (!userId && isBookSummary) {
+        console.error(`❌ Could not find userId for bookId ${bookId}`);
+        continue;
+      }
+
+      const fullPrompt = `${summaryPrompt}${prompt ? `\n\n[Book Context Prompt]: ${prompt}` : ""}\n\n${chapterText}`;
+
       const bedrockInput = {
         inferenceConfig: { max_new_tokens: 500 },
         messages: [
           {
             role: "user",
-            content: [{ text: fullPrompt }]
-          }
-        ]
+            content: [{ text: fullPrompt }],
+          },
+        ],
       };
 
       const command = new InvokeModelCommand({
         modelId: "amazon.nova-lite-v1:0",
         contentType: "application/json",
         accept: "application/json",
-        body: JSON.stringify(bedrockInput)
+        body: JSON.stringify(bedrockInput),
       });
 
       const response = await bedrock.send(command);
@@ -63,53 +77,34 @@ exports.handler = async (event) => {
 
       const tableName = isBookSummary ? process.env.BOOKS_TABLE : process.env.CHAPTERS_TABLE;
 
-      let key;
-      if (isBookSummary) {
-        const userId = await getUserIdFromBookId(bookId);
-        if (!userId) {
-          console.error(`❌ Could not find userId for bookId ${bookId}`);
-          continue;
-        }
-        key = {
-          user_id: { S: userId },
-          book_id: { S: bookId },
-        };
-      } else {
-        key = {
-          chapter_id: { S: `${bookId}#${chapterNo}` },
-          book_id: { S: bookId }, // ✅ Fix here
-        };
-      }
-      
+      const key = isBookSummary
+        ? { user_id: { S: userId }, book_id: { S: bookId } }
+        : { chapter_id: { S: `${bookId}#${chapterNo}` }, book_id: { S: bookId } };
 
-      const update = new UpdateItemCommand({
+      await dynamo.send(new UpdateItemCommand({
         TableName: tableName,
         Key: key,
         UpdateExpression: "SET summary = :summary",
         ExpressionAttributeValues: {
           ":summary": { S: summaryText },
         },
-      });
+      }));
 
-      await dynamo.send(update);
       console.log(`🗃️ Summary saved to ${isBookSummary ? "BOOKS_TABLE" : "CHAPTERS_TABLE"}`);
 
-      // Send to script queue for next Lambda
-        const scriptQueueUrl = process.env.SCRIPT_QUEUE_URL;
-
-        const sendScriptMessage = new SendMessageCommand({
-        QueueUrl: scriptQueueUrl,
+      // Send to Script Queue
+      await sqs.send(new SendMessageCommand({
+        QueueUrl: process.env.SCRIPT_QUEUE_URL,
         MessageBody: JSON.stringify({
-            chapterId: `${bookId}#${chapterNo}`,
-            summaryText,
-            bookId,
-            chapterNo,
-            isBookSummary,
+          chapterId: `${bookId}#${chapterNo}`,
+          summaryText,
+          bookId,
+          chapterNo,
+          isBookSummary,
         }),
-        });
+      }));
 
-        await sqs.send(sendScriptMessage);
-        console.log("📤 Summary sent to ScriptQueue");
+      console.log("📤 Summary sent to ScriptQueue");
 
     } catch (error) {
       console.error("❌ Error in GenerateSummaryLambda:", error);
