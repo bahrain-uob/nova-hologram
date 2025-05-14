@@ -1,14 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Edit as EditIcon,
-  Trash2 as DeleteIcon,
-  Filter as FilterIcon,
-} from "lucide-react";
-import Image from "next/image";
-import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
+import ReaderLayout from "@/components/layout/readerLayout"; // ✅ import the layout
 
 interface Book {
   id: number;
@@ -21,60 +15,7 @@ interface Book {
 }
 
 const fetchBooks = async (): Promise<Book[]> => [
-  {
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    cover: "/covers/gatsby.jpg",
-    genre: "Classic Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1925,
-  },
-  {
-    id: 2,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    cover: "/covers/mockingbird.jpg",
-    genre: "Literary Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1960,
-  },
-  {
-    id: 3,
-    title: "1984",
-    author: "George Orwell",
-    cover: "/covers/1984.jpg",
-    genre: "Science Fiction",
-    readingLevel: "Hard",
-    publicationYear: 1949,
-  },
-  {
-    id: 4,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    cover: "/covers/pride.jpg",
-    genre: "Romance",
-    readingLevel: "Medium",
-    publicationYear: 1813,
-  },
-  {
-    id: 5,
-    title: "Atomic Habits",
-    author: "James Clear",
-    cover: "/covers/atomichabits.jpg",
-    genre: "Self Help",
-    readingLevel: "Easy",
-    publicationYear: 2018,
-  },
-  {
-    id: 6,
-    title: "The Catcher in the Rye",
-    author: "J.D. Salinger",
-    cover: "/covers/catcher.jpg",
-    genre: "Coming-of-Age",
-    readingLevel: "Medium",
-    publicationYear: 1951,
-  },
+  // your book data here...
 ];
 
 const chapters = [
@@ -102,39 +43,11 @@ const InteractivePage: React.FC = () => {
     loadBooks();
   }, []);
 
-  const handleEditBook = (bookId: number) => {
-    router.push(`/bookdetail-librarian`);
-    console.log(`Editing book with id: ${bookId}`);
-  };
-
-  const handleDeleteBook = (bookId: number) => {
-    console.log(`Deleting book with id: ${bookId}`);
-  };
-
-  const filteredBooks = books.filter((book) => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesGenre = genre
-      ? book.genre.toLowerCase().includes(genre.toLowerCase())
-      : true;
-    const matchesLevel = readingLevel
-      ? book.readingLevel === readingLevel
-      : true;
-    const matchesYear = publicationYear
-      ? book.publicationYear.toString() === publicationYear
-      : true;
-
-    return matchesSearch && matchesGenre && matchesLevel && matchesYear;
-  });
-
   return (
-    <MainLayout activePage="Manage Books">
-      <main className="flex flex-row bg-gray-50 min-h-screen">
+    <ReaderLayout activePage="Browse Books">
+      <main className="flex flex-row bg-gray-50 min-h-screen w-full">
         {/* Left Column - Chapter Video */}
         <div className="flex-1 p-8">
-          {/* Chapter Selector */}
           <div className="mb-4">
             <label
               htmlFor="chapter-select"
@@ -179,7 +92,6 @@ const InteractivePage: React.FC = () => {
 
         {/* Right Column - Chat Panel */}
         <div className="w-96 bg-white shadow-lg p-6 flex flex-col justify-between">
-          {/* Greeting */}
           <div className="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
             <h3 className="text-lg font-semibold text-gray-700">
               Princess Elena
@@ -192,7 +104,6 @@ const InteractivePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Chat messages */}
           <div className="flex flex-col gap-6 overflow-y-auto flex-1">
             <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold text-gray-700">
@@ -202,7 +113,6 @@ const InteractivePage: React.FC = () => {
                 <p>What's your mission in this story?</p>
               </div>
             </div>
-
             <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold text-gray-700">
                 Talk to Character
@@ -211,7 +121,6 @@ const InteractivePage: React.FC = () => {
                 <p>What's the forest's secret?</p>
               </div>
             </div>
-
             <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold text-gray-700">
                 Talk to Character
@@ -222,7 +131,6 @@ const InteractivePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Chat Input */}
           <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
             <textarea
               className="w-full p-2 text-sm text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -237,7 +145,7 @@ const InteractivePage: React.FC = () => {
           </div>
         </div>
       </main>
-    </MainLayout>
+    </ReaderLayout>
   );
 };
 
