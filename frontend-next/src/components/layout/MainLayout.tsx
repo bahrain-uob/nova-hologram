@@ -51,8 +51,16 @@ export default function MainLayout({
       icon: <LayoutDashboardIcon className="h-5 w-5" />,
       path: "/dashboard",
     },
-    { label: "Manage Books", icon: <BookOpenIcon className="h-5 w-5" /> },
-    { label: "Manage Collections", icon: <LibraryIcon className="h-5 w-5" /> },
+    {
+      label: "Manage Books",
+      icon: <BookOpenIcon className="h-5 w-5" />,
+      path: "/manage-book",
+    },
+    {
+      label: "Manage Collections",
+      icon: <LibraryIcon className="h-5 w-5" />,
+      path: "/manage-collection",
+    },
     {
       label: "Manage Readers",
       icon: <UsersIcon className="h-5 w-5" />,
@@ -96,11 +104,10 @@ export default function MainLayout({
                 <button
                   key={i}
                   onClick={() => router.push(item.path!)}
-                  className={`flex items-center gap-2 p-2 rounded-md w-full text-left ${
-                    isActive
-                      ? "bg-[#F0F1F3] text-[#4F46E5] font-medium"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`flex items-center gap-2 p-2 rounded-md w-full text-left ${isActive
+                    ? "bg-[#F0F1F3] text-[#4F46E5] font-medium"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   {React.cloneElement(item.icon, {
                     className: "h-5 w-5",
