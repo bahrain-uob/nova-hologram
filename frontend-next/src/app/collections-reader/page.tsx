@@ -72,6 +72,12 @@ const BrowseBooks: React.FC = () => {
           ))}
         </div>
       </div>
+       {/* Pagination */}
+        <div className="flex justify-center mt-8">
+          <button className="border px-4 py-2 rounded-l-lg">←</button>
+          <button className="border px-4 py-2 bg-indigo-600 text-white">1</button>
+          <button className="border px-4 py-2 rounded-r-lg">→</button>
+        </div>
     </MainLayout>
   );
 };

@@ -68,7 +68,7 @@ const InsideCollection: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full max-w-md"
           />
-          <Button variant="outline">Filter</Button>
+        
           <Button
             className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded transition-colors duration-200"
             onClick={() => router.push("/my-list")}
