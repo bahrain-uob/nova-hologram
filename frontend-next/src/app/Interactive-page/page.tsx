@@ -78,9 +78,9 @@ const fetchBooks = async (): Promise<Book[]> => [
 ];
 
 const chapters = [
-  { id: 1, title: "Chapter 1: The Beginning", video: "/output.mp4" },
-  { id: 2, title: "Chapter 2: Into the Forest", video: "/chapter2.mp4" },
-  { id: 3, title: "Chapter 3: The Hidden Village", video: "/chapter3.mp4" },
+  { id: 1, title: "Chapter 1: The Beginning" },
+  { id: 2, title: "Chapter 2: Into the Forest" },
+  { id: 3, title: "Chapter 3: The Hidden Village" },
 ];
 
 const InteractivePage: React.FC = () => {
@@ -90,6 +90,7 @@ const InteractivePage: React.FC = () => {
   const [readingLevel, setReadingLevel] = useState("");
   const [publicationYear, setPublicationYear] = useState("");
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -97,6 +98,7 @@ const InteractivePage: React.FC = () => {
       const booksData = await fetchBooks();
       setBooks(booksData);
     };
+
     loadBooks();
   }, []);
 
@@ -165,7 +167,10 @@ const InteractivePage: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div className="relative mb-6">
               <video width="100%" controls className="rounded-lg shadow-lg">
-                <source src={selectedChapter.video} type="video/mp4" />
+                <source
+                  src="https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4"
+                  type="video/mp4"
+                />
                 Your browser does not support the video tag.
               </video>
             </div>
