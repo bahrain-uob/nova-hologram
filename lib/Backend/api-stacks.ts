@@ -23,13 +23,13 @@ export class APIStack extends cdk.Stack {
     super(scope, id, props);
 
     // Access environment variables from .env
-    const readerApiUrl = process.env.READER_API_URL|| '';
-    const librarianApiUrl = process.env.LIBRARIAN_API_URL|| '';
-    const getBookInfoApiUrl = process.env.GET_BOOK_INFO_API_URL|| '';
-    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN|| '';
+    const readerApiUrl = process.env.READER_API_URL || '';
+    const librarianApiUrl = process.env.LIBRARIAN_API_URL || '';
+    const getBookInfoApiUrl = process.env.GET_BOOK_INFO_API_URL || '';
+    const cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN || '';
     const corsAllowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-    ? process.env.CORS_ALLOWED_ORIGINS.split(',')
-    : ['*'];
+      ? process.env.CORS_ALLOWED_ORIGINS.split(',')
+      : ['*'];
 
     const allowCredentials = corsAllowedOrigins.includes('*') ? false : true;
 
@@ -65,12 +65,23 @@ export class APIStack extends cdk.Stack {
       ),
     });
 
+    // GET /books (only define this route once)
     httpApi.addRoutes({
-      path: "/upload",
+      path: "/books", // GET /books
+      methods: [apigatewayv2.HttpMethod.GET],
+      integration: new integrations.HttpLambdaIntegration(
+        "GetBooksIntegration",
+        lambdaStack.getBooksLambda
+      ),
+    });
+
+    // DELETE /books/{id}
+    httpApi.addRoutes({
+      path: "/books/{id}", // DELETE /books/:id
       methods: [apigatewayv2.HttpMethod.DELETE],
       integration: new integrations.HttpLambdaIntegration(
-        "DeleteIntegration",
-        lambdaStack.deleteFilesLambda
+        "DeleteBookIntegration",
+        lambdaStack.deleteBookLambda
       ),
     });
 
@@ -115,6 +126,16 @@ export class APIStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "GetBookInfoAPIURL", {
       value: `${librarianApi.url}get-book-info`,
+    });
+    new cdk.CfnOutput(this, "HttpApiUrl", {
+      value: httpApi.url!,
+      description: "The URL of the HTTP API Gateway",
+      exportName: "HttpApiUrl",
+    });
+    new cdk.CfnOutput(this, "DeleteBookApiUrl", {
+      value: `${httpApi.url!}books/{id}`,
+      description: "DELETE endpoint to delete a book by ID",
+      exportName: "DeleteBookApiUrl",
     });
   }
 }

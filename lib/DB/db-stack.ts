@@ -44,27 +44,24 @@ export class DBStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    this.extractedTextTable = new dynamodb.Table(this, "ExtractedTextTable", {
+this.extractedTextTable = new dynamodb.Table(this, "ExtractedTextTable", {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Table for storing Q&A data
     this.qaTable = new dynamodb.Table(this, 'QATable', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // table for collections with PK:collection_id, attributes:col_name, created_at
     this.collection = new dynamodb.Table(this, 'collection', {
       partitionKey: { name: 'collection_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // table for the describtion of each book file with PK:book_file_id, SK:book_id
     this.book_file_description = new dynamodb.Table(this, 'book_file_description', {
       partitionKey: { name: 'book_file_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
@@ -72,29 +69,27 @@ export class DBStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // table for the books with PK:user_id, SK:book_id 
     this.book = new dynamodb.Table(this, 'book', {
       partitionKey: { name: 'user_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
-    // added to book table, global index with PK:collection_id
+
     this.book.addGlobalSecondaryIndex({
       indexName: 'Global_book1',
-      partitionKey: { name: 'collection_id', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'collection_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
-    // table for the chapters with PK: chapter_id, SK: book_id 
     this.chapter = new dynamodb.Table(this, 'chapter', {
       partitionKey: { name: 'chapter_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+    
 
-    // table for the books trailers with PK: trailer_id, SK: book_id 
     this.book_trailer = new dynamodb.Table(this, 'book_trailer', {
       partitionKey: { name: 'trailer_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
@@ -102,7 +97,6 @@ export class DBStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // table for the chapters trailer with PK: trailer_id, SK: chapter_id 
     this.chapter_trailer = new dynamodb.Table(this, 'chapter_trailer', {
       partitionKey: { name: 'trailer_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'chapter_id', type: dynamodb.AttributeType.STRING },
@@ -110,7 +104,6 @@ export class DBStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // table for the characters with PK: character_id, SK: book_id 
     this.character = new dynamodb.Table(this, 'character', {
       partitionKey: { name: 'character_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
@@ -128,7 +121,7 @@ export class DBStack extends cdk.Stack {
     // added to reviews table, global index with PK:book_id
     this.reviews.addGlobalSecondaryIndex({
       indexName: 'Global_reviews',
-      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
@@ -142,7 +135,7 @@ export class DBStack extends cdk.Stack {
     // added to reader books table, global index with PK:book_id (this to query easily)
     this.reader_books.addGlobalSecondaryIndex({
       indexName: 'Global_reader_books',
-      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
@@ -156,7 +149,7 @@ export class DBStack extends cdk.Stack {
     // added to book mark table, global index with PK:book_id
     this.book_mark.addGlobalSecondaryIndex({
       indexName: 'Global_book_mark',
-      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'book_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
@@ -323,14 +316,13 @@ export class DBStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // table for pronunciation practice with PK: user_id, SK: practice_id
     this.pronunciation_practice = new dynamodb.Table(this, 'pronunciation_practice', {
       partitionKey: { name: 'user_id', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'practice_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
-    // added to pronunciation practice table, global index with PK:language_id
+
     this.pronunciation_practice.addGlobalSecondaryIndex({
       indexName: 'Global_pronunciation_practice',
       partitionKey: { name: 'language', type: dynamodb.AttributeType.STRING },

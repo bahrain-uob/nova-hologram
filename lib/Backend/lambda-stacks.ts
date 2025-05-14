@@ -22,6 +22,8 @@ export class lambdastack extends cdk.Stack {
     public readonly playResponse: lambda.Function; 
     public readonly transcribe: lambda.Function; 
     public readonly triggerPolly: lambda.Function; 
+    public readonly getBooksLambda: lambda.Function;
+    public readonly deleteBookLambda: lambda.Function;
 
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
@@ -312,6 +314,36 @@ export class lambdastack extends cdk.Stack {
           code: lambda.Code.fromAsset("lambda/getBookInfo"), 
           });
           this.getBookInfoLambda = getBookInfoLambda;
+
+
+
+// In your lambdastack constructor:
+this.getBooksLambda = new lambda.Function(this, "GetBooksLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "getBooks.handler",
+  code: lambda.Code.fromAsset("lambda/manage-books"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName
   }
+});
+
+// Add permissions for getBooksLambda to read from book table
+dbStack.book.grantReadData(this.getBooksLambda);
+
+this.deleteBookLambda = new lambda.Function(this, "DeleteBookLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "deleteBooks.handler",
+  code: lambda.Code.fromAsset("lambda/manage-books"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName
+  }
+});
+
+// Add permissions for deleteBookLambda to delete from book table
+dbStack.book.grantWriteData(this.deleteBookLambda);
+
+
+        }
+  
   
 }
