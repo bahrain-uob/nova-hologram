@@ -1,23 +1,22 @@
 import boto3
+import json
 import random
 import time
+import os
 
-# Replace with your own S3 bucket to store the generated video
-# Format: s3://your-bucket-name
-OUTPUT_S3_URI = "s3://storagestack-genvideosb3836295-cgsm7lv3g2uy/upload/" # the s3 bucket to store the generated video
+dynamodb = boto3.client("dynamodb")
+bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
 
-def start_text_to_video_generation_job(bedrock_runtime, prompt, output_s3_uri):
-    """
-    Starts an asynchronous text-to-video generation job using Amazon Nova Reel.
+s3_output_uri = os.environ["VIDEO_OUTPUT_S3_URI"]
+if not s3_output_uri.startswith("s3://"):
+    s3_output_uri = f"s3://{s3_output_uri}"
 
-    :param bedrock_runtime: The Bedrock runtime client
-    :param prompt: The text description of the video to generate
-    :param output_s3_uri: S3 URI where the generated video will be stored
+book_table = os.environ["BOOKS_TABLE"]
+chapter_table = os.environ["CHAPTERS_TABLE"]
 
-    :return: The invocation ARN of the async job
-    """
+def start_video_job(prompt):
     model_id = "amazon.nova-reel-v1:1"
-    seed = random.randint(0, 2147483646) #default seed range for Nova Reel is 42
+    seed = random.randint(0, 2147483646)
 
     model_input = {
         "taskType": "MULTI_SHOT_AUTOMATED",
@@ -32,72 +31,122 @@ def start_text_to_video_generation_job(bedrock_runtime, prompt, output_s3_uri):
         },
     }
 
-    output_config = {"s3OutputDataConfig": {"s3Uri": output_s3_uri}}
+    output_config = {"s3OutputDataConfig": {"s3Uri": s3_output_uri}}
 
     response = bedrock_runtime.start_async_invoke(
-        modelId=model_id, modelInput=model_input, outputDataConfig=output_config
+        modelId=model_id,
+        modelInput=model_input,
+        outputDataConfig=output_config
     )
-
     return response["invocationArn"]
 
-def query_job_status(bedrock_runtime, invocation_arn):
-    """
-    Queries the status of an asynchronous video generation job.
-
-    :param bedrock_runtime: The Bedrock runtime client
-    :param invocation_arn: The ARN of the async invocation to check
-
-    :return: The runtime response containing the job status and details
-    """
-    return bedrock_runtime.get_async_invoke(invocationArn=invocation_arn)
-
-def lambda_handler(event, context):
-    """
-    Lambda entry point function.
-    Starts the video generation job and polls for its status.
-    """
-    bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
-
-    # Base prompt template for educational holographic scenes
-    base_prompt = """
-You are an AI that transforms story content into immersive holographic scene descriptions for an educational reading platform.
-
-Generate a rich, multi-sensory scene description from this input text. Include:
-- Visual setting (location, time, atmosphere)
-- Main characters or objects (description, motion)
-- Sounds or ambient noise
-- Suggested narration with emphasis for pronunciation practice
-    """
-
-    # Story content provided by the user/event
-    input_text = event.get("prompt", "")
-    prompt = f"{base_prompt.strip()}\n\nInput Text:\n{input_text}"
-
-    # Start video generation job
-    invocation_arn = start_text_to_video_generation_job(
-        bedrock_runtime, prompt, OUTPUT_S3_URI
-    )
-    print(f"Job started with invocation ARN: {invocation_arn}")
-
-    # Poll job status until it completes or fails
+def poll_video_job(invocation_arn):
     while True:
-        print("\nPolling job status...")
-        job = query_job_status(bedrock_runtime, invocation_arn)
+        job = bedrock_runtime.get_async_invoke(invocationArn=invocation_arn)
         status = job["status"]
 
         if status == "Completed":
-            bucket_uri = job["outputDataConfig"]["s3OutputDataConfig"]["s3Uri"]
-            print(f"\nSuccess! The video is available at: {bucket_uri}/output.mp4")
-            return {
-                "status": "Success",
-                "videoUri": f"{bucket_uri}/output.mp4"
-            }
+            return f"{job['outputDataConfig']['s3OutputDataConfig']['s3Uri']}/output.mp4"
         elif status == "Failed":
-            print(f"\nVideo generation failed: {job.get('failureMessage', 'Unknown error')}")
-            return {
-                "status": "Failed",
-                "message": job.get("failureMessage", "Unknown error")
-            }
+            raise Exception(f"Video generation failed: {job.get('failureMessage', 'Unknown error')}")
+        time.sleep(15)
+
+def lambda_handler(event, context):
+    for record in event["Records"]:
+        body = json.loads(record["body"])
+        book_id = body["bookId"]
+        chapter_no = body.get("chapterNo")
+        script_text = body["scriptText"]
+        is_book_summary = body.get("isBookSummary", False)
+
+        # Get user_id only (no prompt used)
+        book_response = dynamodb.query(
+            TableName=book_table,
+            IndexName="GSI_by_book_id",
+            KeyConditionExpression="book_id = :bid",
+            ExpressionAttributeValues={":bid": {"S": book_id}},
+        )
+        item = book_response["Items"][0]
+        user_id = item["user_id"]["S"]
+
+        # Build the Nova Reel final prompt
+        final_prompt = f"""
+Generate a 1-minute cinematic educational video using the following scene descriptions.
+
+Each scene has already been described in rich visual detail. Use each one as a separate static shot. Do not add extra movement or transitions.
+
+Scene descriptions:
+{script_text}
+""".strip()
+
+        # ✅ Log to help detect blocked prompts or chapter failures
+        print("——— Nova Reel Prompt Submission ———")
+        print("Chapter:", chapter_no)
+        print("Book ID:", book_id)
+        print("Prompt:\n", final_prompt)
+        print("———————————————————————————————")
+
+        # Set initial status
+        if is_book_summary:
+            key = {"user_id": {"S": user_id}, "book_id": {"S": book_id}}
+            dynamodb.update_item(
+                TableName=book_table,
+                Key=key,
+                UpdateExpression="SET trailer_status = :status",
+                ExpressionAttributeValues={":status": {"S": "processing"}},
+            )
         else:
-            print("In progress. Waiting 15 seconds...")
-            time.sleep(15)
+            chapter_id = f"{book_id}#{chapter_no}"
+            key = {"chapter_id": {"S": chapter_id}, "book_id": {"S": book_id}}
+            dynamodb.update_item(
+                TableName=chapter_table,
+                Key=key,
+                UpdateExpression="SET trailer_status = :status",
+                ExpressionAttributeValues={":status": {"S": "processing"}},
+            )
+
+        try:
+            invocation_arn = start_video_job(final_prompt)
+            video_url = poll_video_job(invocation_arn)
+
+            # Save video result
+            if is_book_summary:
+                dynamodb.update_item(
+                    TableName=book_table,
+                    Key=key,
+                    UpdateExpression="SET book_trailer = :url, trailer_status = :status",
+                    ExpressionAttributeValues={
+                        ":url": {"S": video_url},
+                        ":status": {"S": "completed"},
+                    },
+                )
+            else:
+                dynamodb.update_item(
+                    TableName=chapter_table,
+                    Key=key,
+                    UpdateExpression="SET trailer = :url, trailer_status = :status",
+                    ExpressionAttributeValues={
+                        ":url": {"S": video_url},
+                        ":status": {"S": "completed"},
+                    },
+                )
+
+            print(f"✅ Video available at: {video_url}")
+
+        except Exception as e:
+            print(f"❌ Video generation failed: {str(e)}")
+            fail_status = {"S": "failed"}
+            if is_book_summary:
+                dynamodb.update_item(
+                    TableName=book_table,
+                    Key=key,
+                    UpdateExpression="SET trailer_status = :status",
+                    ExpressionAttributeValues={":status": fail_status},
+                )
+            else:
+                dynamodb.update_item(
+                    TableName=chapter_table,
+                    Key=key,
+                    UpdateExpression="SET trailer_status = :status",
+                    ExpressionAttributeValues={":status": fail_status},
+                )

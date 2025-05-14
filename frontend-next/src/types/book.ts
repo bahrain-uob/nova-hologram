@@ -23,10 +23,14 @@ export interface Book {
   publication_year: string;
   reading_level: string;
   book_cover?: string;
-  book_summary?: string;
+  summary?: string;
+  script?: string;
   book_trailer?: string;
   created_at?: Date;
   updated_at?: Date;
+  objectives?: { id: number; text: string }[]; 
+  prompt?: string;
+  trailer_status?: string;
 }
 export interface BookMark {
   book_mark_id: string;
@@ -40,9 +44,13 @@ export interface BookChapter {
   chapter_id: string;
   book_id: string;
   chapter_no: number;
-  chapter_title: string;
-  start_page: number;
-  end_page: number;
+  summary?: string;
+  script?: string;
+  trailer?: string;
+  trailer_status?: string;
+  //chapter_title: string;
+  //start_page: number;
+  //end_page: number;
 }
 export interface BookTrailer {
   trailer_id: string;
