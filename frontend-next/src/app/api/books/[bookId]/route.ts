@@ -6,32 +6,40 @@ export async function DELETE(
 ) {
   try {
     const bookId = params.bookId;
-
+    console.log("Next.js API route: DELETE request for book:", bookId);
+    
+    // Make the request to AWS API
     const response = await fetch(`https://e96357rata.execute-api.us-east-1.amazonaws.com/dev/books/${bookId}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: "c4180458-f091-70b8-58bd-9fc233dcf8bb"
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
-
+    
+    console.log("AWS response status:", response.status);
     const responseText = await response.text();
-
+    console.log("AWS response:", responseText);
+    
     if (!response.ok) {
       return NextResponse.json(
-        { error: `AWS API returned ${response.status}: ${responseText}` },
+        { error: `AWS API returned ${response.status}: ${responseText}` }, 
         { status: response.status }
       );
     }
-
+    
+    // Return success response
+    let data;
     try {
-      return NextResponse.json(JSON.parse(responseText));
-    } catch {
-      return NextResponse.json({ message: responseText });
+      data = JSON.parse(responseText);
+    } catch (e) {
+      data = { message: "Book deleted successfully" };
     }
+    
+    return NextResponse.json(data);
   } catch (error) {
+    console.error("Error in DELETE route:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: error instanceof Error ? error.message : 'Unknown error' }, 
       { status: 500 }
     );
   }

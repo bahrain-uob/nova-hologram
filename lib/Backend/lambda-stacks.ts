@@ -556,14 +556,15 @@ this.updateBookLambda = new lambda.Function(this, "UpdateBookLambda", {
   },
 });
 this.deleteBookLambda.addToRolePolicy(new iam.PolicyStatement({
-  actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem'],
-  resources: [dbStack.book.tableArn],
+  actions: ["dynamodb:*"],
+  resources: ["arn:aws:dynamodb:us-east-1:672461264983:table/DBStack-bookF0785129-1B9WR0J1EB4DN"]
 }));
 
 
 
+
 // Grant permissions to access the DynamoDB table
-dbStack.book.grantWriteData(this.deleteBookLambda);
+dbStack.book.grantFullAccess(this.deleteBookLambda);
 dbStack.book.grantReadWriteData(this.updateBookLambda);
 
   }
