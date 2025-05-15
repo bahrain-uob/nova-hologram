@@ -10,6 +10,7 @@ import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
 
+
 interface Book {
   id: number;
   title: string;
@@ -21,62 +22,15 @@ interface Book {
 }
 
 // Simulated fetch function for fetching books
-const fetchBooks = async (): Promise<Book[]> => [
-  {
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    cover: "/covers/gatsby.jpg",
-    genre: "Classic Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1925,
-  },
-  {
-    id: 2,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    cover: "/covers/mockingbird.jpg",
-    genre: "Literary Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1960,
-  },
-  {
-    id: 3,
-    title: "1984",
-    author: "George Orwell",
-    cover: "/covers/1984.jpg",
-    genre: "Science Fiction",
-    readingLevel: "Hard",
-    publicationYear: 1949,
-  },
-  {
-    id: 4,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    cover: "/covers/pride.jpg",
-    genre: "Romance",
-    readingLevel: "Medium",
-    publicationYear: 1813,
-  },
-  {
-    id: 5,
-    title: "Atomic Habits",
-    author: "James Clear",
-    cover: "/covers/atomichabits.jpg",
-    genre: "Self Help",
-    readingLevel: "Easy",
-    publicationYear: 2018,
-  },
-  {
-    id: 6,
-    title: "The Catcher in the Rye",
-    author: "J.D. Salinger",
-    cover: "/covers/catcher.jpg",
-    genre: "Coming-of-Age",
-    readingLevel: "Medium",
-    publicationYear: 1951,
-  },
+const fetchBooks = async (): => [
+  useEffect(() => {
+    fetch("https://api.example.com/books")
+      .then((response) => response.json())
+      .then((data) => setBooks(data))
+      .catch((error) => console.error("Error fetching books:", error));
+}, []),
 ];
+
 
 const ManageBooks: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -256,3 +210,7 @@ const ManageBooks: React.FC = () => {
 };
 
 export default ManageBooks;
+function setBooks(data: any): any {
+  throw new Error("Function not implemented.");
+}
+

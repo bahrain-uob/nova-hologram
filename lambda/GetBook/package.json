@@ -1,15 +1,9 @@
 {
-  "name": "getbook",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "type": "module",
   "dependencies": {
-    "aws-sdk": "^2.1692.0"
+    "@aws-sdk/client-dynamodb": "^3.810.0",
+    "@aws-sdk/client-s3": "^3.810.0",
+    "@aws-sdk/lib-dynamodb": "^3.810.0",
+    "@aws-sdk/s3-request-presigner": "^3.810.0"
   }
 }

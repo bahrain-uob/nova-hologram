@@ -1,16 +1,7 @@
 {
-  "name": "generatepresignedurl",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "type": "module",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.806.0",
-    "@aws-sdk/s3-request-presigner": "^3.806.0"
+    "@aws-sdk/client-s3": "^3.500.0",
+    "@aws-sdk/s3-request-presigner": "^3.500.0"
   }
 }
