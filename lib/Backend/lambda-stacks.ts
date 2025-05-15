@@ -210,14 +210,14 @@ export class lambdastack extends cdk.Stack {
     timeout: cdk.Duration.seconds(30),
     environment: {
       BOOKS_TABLE: dbStack.book.tableName,
-      CHAPTER_SUMMARY_TABLE: dbStack.chapter_summary.tableName,
+      //CHAPTER_SUMMARY_TABLE: dbStack.chapter_summary.tableName,
       CHAPTERS_TABLE: dbStack.chapter.tableName,
     },
   });
   
   // Permissions
   dbStack.book.grantReadData(getBookLambda);
-  dbStack.chapter_summary.grantReadData(getBookLambda);
+  //dbStack.chapter_summary.grantReadData(getBookLambda);
   dbStack.chapter.grantReadData(getBookLambda);
   StorageStack.genVideos.grantRead(getBookLambda);
 
@@ -227,7 +227,7 @@ export class lambdastack extends cdk.Stack {
       // GSI on book table
       `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.book.tableName}/index/GSI_by_book_id`,
       // GSI on chapter table
-      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.chapter.tableName}/index/GSI_by_book_id`
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.chapter.tableName}/index/Global_chapter_summary`
     ]
   }));
   

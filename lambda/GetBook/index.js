@@ -1,25 +1,42 @@
-const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const s3 = new AWS.S3();
+import {
+  DynamoDBClient
+} from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  QueryCommand
+} from "@aws-sdk/lib-dynamodb";
 
+import {
+  S3Client,
+  GetObjectCommand
+} from "@aws-sdk/client-s3";
+
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const REGION = process.env.AWS_REGION || "us-east-1";
 const BOOK_TABLE = process.env.BOOKS_TABLE;
 const CHAPTER_TABLE = process.env.CHAPTERS_TABLE;
 
-function getSignedUrl(s3Path) {
+const ddbClient = new DynamoDBClient({ region: REGION });
+const docClient = DynamoDBDocumentClient.from(ddbClient);
+const s3Client = new S3Client({ region: REGION });
+
+async function getPresignedUrl(s3Path) {
   if (!s3Path || !s3Path.startsWith("s3://")) return null;
 
   const parts = s3Path.replace("s3://", "").split("/");
   const bucket = parts.shift();
   const key = parts.join("/");
 
-  return s3.getSignedUrl("getObject", {
+  const command = new GetObjectCommand({
     Bucket: bucket,
     Key: key,
-    Expires: 60 * 60, // 1 hour
   });
+
+  return await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
     const bookId = event.pathParameters?.bookId;
 
@@ -31,14 +48,14 @@ exports.handler = async (event) => {
     }
 
     // 1. Get book data using GSI_by_book_id
-    const bookQuery = await dynamodb.query({
+    const bookQuery = await docClient.send(new QueryCommand({
       TableName: BOOK_TABLE,
       IndexName: 'GSI_by_book_id',
       KeyConditionExpression: 'book_id = :bookId',
       ExpressionAttributeValues: {
         ':bookId': bookId,
       },
-    }).promise();
+    }));
 
     if (!bookQuery.Items || bookQuery.Items.length === 0) {
       return {
@@ -48,26 +65,28 @@ exports.handler = async (event) => {
     }
 
     const book = bookQuery.Items[0];
-    const bookTrailerSignedUrl = getSignedUrl(book.book_trailer);
+    const bookTrailerSignedUrl = await getPresignedUrl(book.book_trailer);
 
     // 2. Get chapter summaries
-    const chapterQuery = await dynamodb.query({
+    const chapterQuery = await docClient.send(new QueryCommand({
       TableName: CHAPTER_TABLE,
       IndexName: 'Global_chapter_summary',
       KeyConditionExpression: 'book_id = :bookId',
       ExpressionAttributeValues: {
         ':bookId': bookId,
       },
-    }).promise();
-
-    const chapters = chapterQuery.Items.map(ch => ({
-      chapter_id: ch.chapter_id,
-      chapter_no: ch.chapter_no,
-      summary: ch.summary,
-      script: ch.script,
-      trailer_status: ch.trailer_status,
-      trailer: getSignedUrl(ch.trailer),
     }));
+
+    const chapters = await Promise.all(
+      (chapterQuery.Items || []).map(async (ch) => ({
+        chapter_id: ch.chapter_id,
+        chapter_no: ch.chapter_no,
+        summary: ch.summary,
+        script: ch.script,
+        trailer_status: ch.trailer_status,
+        trailer: await getPresignedUrl(ch.trailer),
+      }))
+    );
 
     return {
       statusCode: 200,
@@ -76,17 +95,17 @@ exports.handler = async (event) => {
           summary: book.summary,
           script: book.script,
           trailer_status: book.trailer_status,
-          trailer: bookTrailerSignedUrl, // Signed URL here!
+          trailer: bookTrailerSignedUrl,
         },
         chapters,
       }),
     };
 
   } catch (error) {
-    console.error('Error in getBook Lambda:', error);
+    console.error("❌ Error in getBook Lambda:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Internal server error' }),
+      body: JSON.stringify({ message: "Internal server error" }),
     };
   }
 };
