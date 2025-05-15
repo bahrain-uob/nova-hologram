@@ -4,8 +4,10 @@
   "description": "Lambda functions for file upload, retrieval, and deletion",
   "main": "index.js",
   "dependencies": {
-    "aws-sdk": "^2.1174.0",
-    "dotenv": "^16.5.0"
+    "aws-sdk": "^2.1692.0",
+    "dotenv": "^16.5.0",
+    "lambda-multipart-parser": "^1.0.1",
+    "uuid": "^11.1.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

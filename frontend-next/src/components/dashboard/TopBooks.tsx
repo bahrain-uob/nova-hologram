@@ -24,12 +24,8 @@ const books = [
 
 export function TopBooks() {
   return (
-    <Card className="bg-white shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-base font-medium">
-          Top Books This Week
-        </CardTitle>
-      </CardHeader>
+    <Card className="bg-white">
+      <CardHeader></CardHeader>
       <CardContent>
         <div className="space-y-6">
           {books.map((book, i) => (
