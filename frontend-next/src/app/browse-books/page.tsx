@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/readerLayout"; // Page layout component
 import { Badge } from "@/components/ui/badge"; // Badge UI component for genres
-import { Book } from "@/types/book"; // Book type definition
+import { BookPreview } from "@/types/book"; // Book type definition
 import withRoleProtection from "@/components/auth/withRoleProtection"; // Role-based access control
 
 // ---------- Sample Books Data (mock data) ----------
-const fetchBooks = async (): Promise<Book[]> => [
+const fetchBooks = async (): Promise<BookPreview[]> => [
   {
     id: 1,
     title: "Pride and Prejudice",
@@ -97,7 +97,7 @@ const fetchBooks = async (): Promise<Book[]> => [
 
 // ---------- Main Component ----------
 const BrowseBooks: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<BookPreview[]>([]);
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
   const [languageFilter, setLanguageFilter] = useState<string>("");
   const [authorFilter, setAuthorFilter] = useState<string>("");

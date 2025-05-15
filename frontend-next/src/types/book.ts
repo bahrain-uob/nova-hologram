@@ -10,7 +10,7 @@ export type BookData = {
     };
   };
 
-  export interface Book {
+  export interface BookPreview {
     id: number;
     title: string;
     author: string;
