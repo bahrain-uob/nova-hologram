@@ -6,6 +6,7 @@ import { lambdastack } from "../lib/Backend/lambda-stacks";
 import { SharedResourcesStack } from "../lib/sharedresources/SharedResourcesStack";
 import { APIStack } from "../lib/Backend/api-stacks";
 import { FrontendStack } from "../lib/Frontend/website-stack";
+import { LexStack } from "../lib/Lex/lex-stack";
 
 /**
  * Nova Hologram CDK App
@@ -44,6 +45,7 @@ const lambdaStack = new lambdastack(
 const Bedrock = new BedrockStack(app, "BedrockStack", lambdaStack, storageStack);
 const apiStack = new APIStack(app, "APIStack", dbStack, lambdaStack, storageStack);
 const frontendStack = new FrontendStack(app, "FrontendStack");
+const lexStack = new LexStack(app, "LexStack");
 
 
 // Add explicit dependencies to ensure the correct deployment order
@@ -54,4 +56,5 @@ Bedrock.addDependency(lambdaStack);
 apiStack.addDependency(lambdaStack);
 apiStack.addDependency(storageStack);
 apiStack.addDependency(dbStack);
+lexStack.addDependency(lambdaStack);
 

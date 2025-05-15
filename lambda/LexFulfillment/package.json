@@ -1,0 +1,14 @@
+{
+  "name": "lex-fulfillment-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function for Amazon Lex V2 fulfillment",
+  "main": "index.js",
+  "dependencies": {
+    "aws-sdk": "^2.1174.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
