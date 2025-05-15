@@ -8,16 +8,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
+import  { User } from "@/types/user";
 
-interface User {
-  user_id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  grade?: string;
-  readingLevel?: "Beginner" | "Intermediate" | "Advanced";
-  avatar?: string;
-}
+
 
 const API_URL = "https://your-api-url.execute-api.region.amazonaws.com/prod/readers";
 
@@ -58,8 +51,8 @@ const ManageReaders: React.FC = () => {
   const filteredReaders = readers.filter((user) => {
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
     const matchesSearch = fullName.includes(searchQuery.toLowerCase());
-    const matchesGrade = grade ? user.grade === grade : true;
-    const matchesLevel = readingLevel ? user.readingLevel === readingLevel : true;
+    const matchesGrade = grade ? User.grade === grade : true;
+    const matchesLevel = readingLevel ? User.readingLevel === readingLevel : true;
     return matchesSearch && matchesGrade && matchesLevel;
   });
 
