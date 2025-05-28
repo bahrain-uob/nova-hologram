@@ -28,6 +28,18 @@ export interface Book {
   created_at?: Date;
   updated_at?: Date;
 }
+
+export interface collection { 
+  collection_id: string;
+  col_name: string;
+  genre: string;
+  author: string;
+  language: string;
+  books: string[];  // Array of book IDs
+  bookCount: number; // make it count how many books in the array 
+  images: string[]; // make it the first 3 books covers image  
+}              
+
 export interface BookMark {
   book_mark_id: string;
   book_mark_test: string;

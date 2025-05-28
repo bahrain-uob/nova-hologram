@@ -82,7 +82,7 @@ export class DBStack extends cdk.Stack {
     // added to book table, global index with PK:collection_id
     this.book.addGlobalSecondaryIndex({
       indexName: 'Global_book1',
-      partitionKey: { name: 'collection_id', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'collection_id', type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 

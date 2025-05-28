@@ -3,11 +3,7 @@ export interface Genre {
   name?: string;
 }
 
-export interface Collection {
-  collection_id: string;
-  collection_name?: string;
-  created_at?: Date;
-}
+
 
 export interface Typography {
   typo_id: string;
