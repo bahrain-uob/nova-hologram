@@ -6,15 +6,23 @@ import os
 
 dynamodb = boto3.client("dynamodb")
 bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
+sqs = boto3.client("sqs")
 
-s3_output_uri = os.environ["VIDEO_OUTPUT_S3_URI"]
-if not s3_output_uri.startswith("s3://"):
-    s3_output_uri = f"s3://{s3_output_uri}"
+ssml_queue_url = os.environ["SSML_QUEUE_URL"]
+base_output_uri = os.environ["VIDEO_OUTPUT_S3_URI"]
+if not base_output_uri.startswith("s3://"):
+    base_output_uri = f"s3://{base_output_uri}"
 
 book_table = os.environ["BOOKS_TABLE"]
 chapter_table = os.environ["CHAPTERS_TABLE"]
 
-def start_video_job(prompt):
+def get_output_uri(book_id):
+    # Ensure trailing slash and attach bookId folder
+    if not base_output_uri.endswith("/"):
+        return f"{base_output_uri}/{book_id}/"
+    return f"{base_output_uri}{book_id}/"
+
+def start_video_job(prompt, s3_output_uri):
     model_id = "amazon.nova-reel-v1:1"
     seed = random.randint(0, 2147483646)
 
@@ -57,9 +65,10 @@ def lambda_handler(event, context):
         book_id = body["bookId"]
         chapter_no = body.get("chapterNo")
         script_text = body["scriptText"]
+        summary_text = body["summaryText"]
         is_book_summary = body.get("isBookSummary", False)
 
-        # Get user_id only (no prompt used)
+        # Fetch user ID for this book
         book_response = dynamodb.query(
             TableName=book_table,
             IndexName="GSI_by_book_id",
@@ -69,7 +78,6 @@ def lambda_handler(event, context):
         item = book_response["Items"][0]
         user_id = item["user_id"]["S"]
 
-        # Build the Nova Reel final prompt
         final_prompt = f"""
 Generate a 1-minute cinematic educational video using the following scene descriptions.
 
@@ -79,14 +87,13 @@ Scene descriptions:
 {script_text}
 """.strip()
 
-        # ✅ Log to help detect blocked prompts or chapter failures
         print("——— Nova Reel Prompt Submission ———")
         print("Chapter:", chapter_no)
         print("Book ID:", book_id)
         print("Prompt:\n", final_prompt)
         print("———————————————————————————————")
 
-        # Set initial status
+        # Mark DynamoDB status as "processing"
         if is_book_summary:
             key = {"user_id": {"S": user_id}, "book_id": {"S": book_id}}
             dynamodb.update_item(
@@ -106,10 +113,12 @@ Scene descriptions:
             )
 
         try:
-            invocation_arn = start_video_job(final_prompt)
+            # Generate video in the bookId folder
+            s3_output_uri = get_output_uri(book_id)
+            invocation_arn = start_video_job(final_prompt, s3_output_uri)
             video_url = poll_video_job(invocation_arn)
 
-            # Save video result
+            # Update status + video path
             if is_book_summary:
                 dynamodb.update_item(
                     TableName=book_table,
@@ -133,20 +142,26 @@ Scene descriptions:
 
             print(f"✅ Video available at: {video_url}")
 
+            # Trigger SSML
+            sqs.send_message(
+                QueueUrl=ssml_queue_url,
+                MessageBody=json.dumps({
+                    "bookId": book_id,
+                    "chapterNo": chapter_no,
+                    "script": script_text,
+                    "summary": summary_text,
+                    "videoS3Path": video_url,
+                    "isBookSummary": is_book_summary
+                })
+            )
+            print(" Sent to SSML Queue")
+
         except Exception as e:
-            print(f"❌ Video generation failed: {str(e)}")
+            print(f" Video generation failed: {str(e)}")
             fail_status = {"S": "failed"}
-            if is_book_summary:
-                dynamodb.update_item(
-                    TableName=book_table,
-                    Key=key,
-                    UpdateExpression="SET trailer_status = :status",
-                    ExpressionAttributeValues={":status": fail_status},
-                )
-            else:
-                dynamodb.update_item(
-                    TableName=chapter_table,
-                    Key=key,
-                    UpdateExpression="SET trailer_status = :status",
-                    ExpressionAttributeValues={":status": fail_status},
-                )
+            dynamodb.update_item(
+                TableName=book_table if is_book_summary else chapter_table,
+                Key=key,
+                UpdateExpression="SET trailer_status = :status",
+                ExpressionAttributeValues={":status": fail_status},
+            )

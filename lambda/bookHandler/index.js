@@ -1,13 +1,14 @@
-const AWS = require('aws-sdk');
-const { v4: uuidv4 } = require('uuid');
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
-const sns = new AWS.SNS();
+const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient());
+const snsClient = new SNSClient();
 
 const TABLE_NAME = process.env.TABLE_NAME;
 const SNS_TOPIC_ARN = process.env.TEXTRACT_TRIGGER_TOPIC_ARN;
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
     const bookId = body.book_id;
@@ -39,21 +40,18 @@ exports.handler = async (event) => {
       item.objectives = body.objectives;
     }
 
-    await dynamo.put({
+    await dynamoClient.send(new PutCommand({
       TableName: TABLE_NAME,
       Item: item
-    }).promise();
+    }));
 
-    // ✅ Publish to SNS to trigger Textract
-    await sns.publish({
+    await snsClient.send(new PublishCommand({
       TopicArn: SNS_TOPIC_ARN,
       Message: JSON.stringify({
         book_id: bookId,
         file_key: body.book_file
       }),
-    }).promise();
-
-    console.log("✅ Published to SNS to start Textract");
+    }));
 
     return {
       statusCode: 200,

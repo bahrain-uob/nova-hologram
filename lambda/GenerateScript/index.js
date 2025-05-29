@@ -47,11 +47,11 @@ exports.handler = async (event) => {
       const body = JSON.parse(record.body);
       const { bookId, chapterNo, summaryText, isBookSummary = false } = body;
 
-      console.log(`🎬 Generating script for ${isBookSummary ? "Book" : "Chapter"} ${bookId}${chapterNo ? ` - Chapter ${chapterNo}` : ""}`);
+      console.log(` Generating script for ${isBookSummary ? "Book" : "Chapter"} ${bookId}${chapterNo ? ` - Chapter ${chapterNo}` : ""}`);
 
       const fullPrompt = `${scriptPrompt}\n\n${summaryText}`;
       const bedrockInput = {
-        inferenceConfig: { max_new_tokens: 800 },
+        inferenceConfig: { max_new_tokens: 2500 },
         messages: [
           {
             role: "user",
@@ -71,7 +71,7 @@ exports.handler = async (event) => {
       const responseBody = JSON.parse(new TextDecoder().decode(response.body));
       const scriptText = responseBody.output.message.content[0].text.trim();
 
-      console.log("✅ Script generated");
+      console.log(" Script generated");
 
       const tableName = isBookSummary ? process.env.BOOKS_TABLE : process.env.CHAPTERS_TABLE;
       let key;
@@ -79,7 +79,7 @@ exports.handler = async (event) => {
       if (isBookSummary) {
         const userId = await getUserIdFromBookId(bookId);
         if (!userId) {
-          console.error(`❌ Could not find userId for bookId ${bookId}`);
+          console.error(` Could not find userId for bookId ${bookId}`);
           continue;
         }
         key = {
@@ -103,7 +103,7 @@ exports.handler = async (event) => {
       });
 
       await dynamo.send(update);
-      console.log(`🗃️ Script saved to ${isBookSummary ? "BOOKS_TABLE" : "CHAPTERS_TABLE"}`);
+      console.log(`Script saved to ${isBookSummary ? "BOOKS_TABLE" : "CHAPTERS_TABLE"}`);
 
       // Send script to video generation queue
       const videoQueueUrl = process.env.VIDEO_QUEUE_URL;
@@ -114,15 +114,16 @@ exports.handler = async (event) => {
           bookId,
           chapterNo,
           scriptText,
+          summaryText,
           isBookSummary,
         }),
       });
 
       await sqs.send(sendVideoJob);
-      console.log("📤 Script sent to VideoQueue");
+      console.log(" Script sent to VideoQueue");
 
     } catch (error) {
-      console.error("❌ Error in GenerateScriptLambda:", error);
+      console.error(" Error in GenerateScriptLambda:", error);
     }
   }
 };

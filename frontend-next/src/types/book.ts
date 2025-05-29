@@ -31,6 +31,9 @@ export interface Book {
   objectives?: { id: number; text: string }[]; 
   prompt?: string;
   trailer_status?: string;
+  audio_url?: string;
+  ssml?: string;
+  finalvideo?: string;
 }
 export interface BookMark {
   book_mark_id: string;
@@ -48,7 +51,10 @@ export interface BookChapter {
   script?: string;
   trailer?: string;
   trailer_status?: string;
-  //chapter_title: string;
+  chapter_title?: string;
+  audio_url?: string;
+  ssml?: string;
+  finalvideo?: string;
   //start_page: number;
   //end_page: number;
 }
