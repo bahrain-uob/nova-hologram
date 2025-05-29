@@ -172,6 +172,19 @@ export class lambdastack extends cdk.Stack {
     visibilityTimeout: cdk.Duration.seconds(910),
   });
 
+  const ssmlQueue = new sqs.Queue(this, "SSMLQueue", {
+    queueName: "SSMLQueue",
+    visibilityTimeout: cdk.Duration.seconds(910),
+  });
+  const pollyQueue = new sqs.Queue(this, "PollyQueue", {
+    queueName: "PollyQueue",
+    visibilityTimeout: cdk.Duration.seconds(910),
+  });
+  const audioMergeQueue = new sqs.Queue(this, "AudioMergeQueue", {
+    queueName: "AudioMergeQueue",
+    visibilityTimeout: cdk.Duration.seconds(910), 
+  });
+  
   const generateScriptLambda = new lambda.Function(this, "GenerateScriptLambda", {
     runtime: lambda.Runtime.NODEJS_18_X,
     handler: "index.handler",
@@ -230,11 +243,91 @@ export class lambdastack extends cdk.Stack {
       `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.chapter.tableName}/index/Global_chapter_summary`
     ]
   }));
-  
+  getBookLambda.addToRolePolicy(
+    new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: [
+        "arn:aws:s3:::storagestack-readingmaterialse72d08c8-spmbixoyxput/*"
+      ]
+    })
+  );
   // Save reference to use later if needed
   this.getBookLambda = getBookLambda;
   
+
   
+  //update book
+  const updateBookLambda = new lambda.Function(this, "UpdateBookLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/UpdateBook"),
+    timeout: cdk.Duration.seconds(30),
+    environment: {
+      BOOKS_TABLE: dbStack.book.tableName,
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+    },
+  });
+  
+  dbStack.book.grantReadWriteData(updateBookLambda);
+  dbStack.chapter.grantReadWriteData(updateBookLambda);
+
+  updateBookLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ["dynamodb:Query"],
+    resources: [
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.book.tableName}/index/GSI_by_book_id`,
+    ],
+  }));
+  
+  //update book
+  const deleteBookLambda = new lambda.Function(this, "DeleteBookLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/DeleteBook"),
+    timeout: cdk.Duration.seconds(30),
+    environment: {
+      BOOKS_TABLE: dbStack.book.tableName,
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+      READING_BUCKET: StorageStack.readingMaterials.bucketName,
+      VIDEO_BUCKET: StorageStack.genVideos.bucketName,
+    },
+  });
+  dbStack.book.grantReadWriteData(deleteBookLambda);
+  dbStack.chapter.grantReadWriteData(deleteBookLambda);
+  StorageStack.readingMaterials.grantReadWrite(deleteBookLambda);
+  StorageStack.genVideos.grantReadWrite(deleteBookLambda);
+      
+
+//  generate SSML 
+const generateSSMLLambda = new lambda.Function(this, "GenerateSSMLLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/GenerateSSML"),
+  timeout: cdk.Duration.minutes(2),
+  environment: {
+    BOOKS_TABLE: dbStack.book.tableName,
+    CHAPTERS_TABLE: dbStack.chapter.tableName,
+    POLLY_QUEUE_URL: pollyQueue.queueUrl,
+  },
+});
+ssmlQueue.grantConsumeMessages(generateSSMLLambda);
+pollyQueue.grantSendMessages(generateSSMLLambda);
+generateSSMLLambda.addEventSource(new lambdaEventSources.SqsEventSource(ssmlQueue));
+dbStack.book.grantReadWriteData(generateSSMLLambda);
+dbStack.chapter.grantReadWriteData(generateSSMLLambda);
+
+generateSSMLLambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    actions: ["bedrock:*","logs:*", "dynamodb:*"],
+    resources: ["*"], 
+  })
+);
+new cdk.CfnOutput(this, "GenerateSSMLQueueURL", {
+  value: ssmlQueue.queueUrl,
+});
+
+new cdk.CfnOutput(this, "PollyQueueURL", {
+  value: pollyQueue.queueUrl,
+});
 
   //////////////////////////////////////
   const textractTriggerTopic = new sns.Topic(this, 'TextractTriggerTopic', {
@@ -275,6 +368,96 @@ export class lambdastack extends cdk.Stack {
     },
   });
   StorageStack.readingMaterials.grantPut(this.getUploadUrlsLambda);
+
+
+  //generate audio
+  const generateAudioLambda = new lambda.Function(this, "GenerateAudioLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/GenerateAudio"),
+    timeout: cdk.Duration.minutes(3),
+    environment: {
+      BUCKET_NAME: StorageStack.genVideos.bucketName, 
+      BOOKS_TABLE: dbStack.book.tableName,
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+      AUDIO_MERGE_QUEUE_URL: audioMergeQueue.queueUrl,
+    },
+  });
+  
+  StorageStack.genVideos.grantWrite(generateAudioLambda); 
+  
+  dbStack.book.grantReadWriteData(generateAudioLambda);
+  dbStack.chapter.grantReadWriteData(generateAudioLambda);
+  audioMergeQueue.grantSendMessages(generateAudioLambda);
+  generateAudioLambda.addEventSource(new lambdaEventSources.SqsEventSource(pollyQueue));
+  pollyQueue.grantConsumeMessages(generateAudioLambda);
+
+  generateAudioLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: [
+      "polly:SynthesizeSpeech",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "s3:PutObject",
+      "s3:GetObject",
+      "dynamodb:UpdateItem",
+      "sqs:SendMessage"
+    ],
+    resources: ["*"],
+  }));
+  
+  new cdk.CfnOutput(this, "AudioMergeQueueURL", {
+    value: audioMergeQueue.queueUrl,
+  });
+  
+
+  
+      
+
+  // final video
+  const finalVideoLambda = new lambda.Function(this, "FinalVideo", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/FinalVideo"), // path to your FFmpeg merge code
+    timeout: cdk.Duration.minutes(3),
+    memorySize: 1024,
+    environment: {
+      BOOKS_TABLE: dbStack.book.tableName,
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+    },
+  });
+  finalVideoLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:ListBucket",
+      "dynamodb:UpdateItem",
+      "dynamodb:Query",
+      "logs:*",
+    ],
+    resources: ["*"],
+  }));
+  finalVideoLambda.addLayers(lambda.LayerVersion.fromLayerVersionArn(this, "FFmpegLayer", 
+    "arn:aws:lambda:us-east-1:672461264983:layer:ffmpeg:1"
+  ));
+  finalVideoLambda.addEventSource(new lambdaEventSources.SqsEventSource(audioMergeQueue));
+  audioMergeQueue.grantConsumeMessages(finalVideoLambda);
+  StorageStack.genVideos.grantReadWrite(finalVideoLambda);
+  dbStack.book.grantReadWriteData(finalVideoLambda);
+  dbStack.chapter.grantReadWriteData(finalVideoLambda);
+  finalVideoLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ["dynamodb:Query"],
+    resources: [
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.book.tableName}/index/GSI_by_book_id`
+    ]
+  }));
+  new cdk.CfnOutput(this, "FinalVideoLambdaArn", {
+    value: finalVideoLambda.functionArn,
+  });
+          
+  
+
+
   ////////////////////////////////////
   
   
@@ -309,13 +492,15 @@ export class lambdastack extends cdk.Stack {
           VIDEO_OUTPUT_S3_URI: `s3://${StorageStack.genVideos.bucketName}/upload/`,
           BOOKS_TABLE: dbStack.book.tableName,
           CHAPTERS_TABLE: dbStack.chapter.tableName,
+          SSML_QUEUE_URL: ssmlQueue.queueUrl,
         }
       });
       this.BedRockFunction.addEventSource(new lambdaEventSources.SqsEventSource(videoScriptQueue, {
         batchSize: 1,
         maxConcurrency: 2, // Add this line if your CDK version supports it
       }));
-      
+
+      ssmlQueue.grantSendMessages(this.BedRockFunction);
       dbStack.book.grantReadWriteData(this.BedRockFunction);
       dbStack.chapter.grantReadWriteData(this.BedRockFunction);
       StorageStack.genVideos.grantWrite(this.BedRockFunction);

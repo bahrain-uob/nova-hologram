@@ -10,13 +10,13 @@ const sqs = new SQSClient();
 
 export const handler = async (event) => {
   try {
-    console.log("📘 SNS Event:", JSON.stringify(event, null, 2));
+    console.log(" SNS Event:", JSON.stringify(event, null, 2));
     const snsMessage = JSON.parse(event.Records[0].Sns.Message);
     const jobId = snsMessage.JobId;
     const bookId = snsMessage.JobTag;
 
-    console.log("📘 JobId:", jobId);
-    console.log("📘 BookId:", bookId);
+    console.log(" JobId:", jobId);
+    console.log(" BookId:", bookId);
 
     let fullText = "";
     let params = { JobId: jobId };
@@ -35,7 +35,7 @@ export const handler = async (event) => {
       params.NextToken = response.NextToken;
     } while (response.NextToken);
 
-    console.log("📘 Total extracted text length:", fullText.length);
+    console.log(" Total extracted text length:", fullText.length);
 
     // Clean the text
     fullText = fullText.replace(/Activities[\s\S]*$/i, '').trim();
@@ -50,7 +50,7 @@ export const handler = async (event) => {
         ContentType: "text/plain",
       })
     );
-    console.log("📘 Full text saved at:", fullTextKey);
+    console.log(" Full text saved at:", fullTextKey);
 
     // Send full book summary request to SQS
     await sqs.send(new SendMessageCommand({
@@ -63,8 +63,8 @@ export const handler = async (event) => {
       }));
       
 
-    const chapterRegex = /(chapter\s+\d+[:\s\-]*[^\n]*)/gi;
-    const allMatches = [...fullText.matchAll(chapterRegex)];
+      const chapterRegex = /(chapter\s+((\d+)|([ivxlcdm]+))[:\s\-]*[^\n]*)/gi;
+      const allMatches = [...fullText.matchAll(chapterRegex)];
 
     let realStartIndex = null;
 
@@ -106,11 +106,11 @@ export const handler = async (event) => {
       }
     } 
 
-    console.log(`📘 Final number of chapters: ${chapters.length}`);
+    console.log(` Final number of chapters: ${chapters.length}`);
 
     for (const chapter of chapters) {
       const key = `books/${bookId}/chapters/chapter_${chapter.chapterNo}.txt`;
-      console.log(`📁 Uploading chapter ${chapter.chapterNo} to S3 key: ${key}`);
+      console.log(` Uploading chapter ${chapter.chapterNo} to S3 key: ${key}`);
 
       await s3.send(
         new PutObjectCommand({
@@ -135,7 +135,7 @@ export const handler = async (event) => {
         })
       );
 
-      console.log(`🗃️ Saved chapter ${chapter.chapterNo} to DynamoDB`);
+      console.log(` Saved chapter ${chapter.chapterNo} to DynamoDB`);
 
       // Send chapter summary request to SQS
       await sqs.send(new SendMessageCommand({
@@ -155,7 +155,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ message: "Chapters and full text saved", bookId }),
     };
   } catch (err) {
-    console.error("❌ Error in SplitChaptersLambda:", err);
+    console.error(" Error in SplitChaptersLambda:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),

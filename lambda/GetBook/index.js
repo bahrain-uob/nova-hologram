@@ -65,8 +65,11 @@ export const handler = async (event) => {
     }
 
     const book = bookQuery.Items[0];
-    const bookTrailerSignedUrl = await getPresignedUrl(book.book_trailer);
-
+    const bookTrailerSignedUrl = await getPresignedUrl(book.finalvideo);
+    const bookCoverSignedUrl = book.book_cover?.startsWith("s3://")
+    ? await getPresignedUrl(book.book_cover)
+    : book.book_cover;
+  
     // 2. Get chapter summaries
     const chapterQuery = await docClient.send(new QueryCommand({
       TableName: CHAPTER_TABLE,
@@ -84,7 +87,7 @@ export const handler = async (event) => {
         summary: ch.summary,
         script: ch.script,
         trailer_status: ch.trailer_status,
-        trailer: await getPresignedUrl(ch.trailer),
+        trailer: await getPresignedUrl(ch.finalvideo),
       }))
     );
 
@@ -92,17 +95,36 @@ export const handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         book: {
-          summary: book.summary,
-          script: book.script,
+          book_id: book.book_id,
+          user_id: book.user_id,
+          title: book.book_title,
+          authors: book.authors || [],
+          isbn: book.isbn,
+          genre: book.genre || [],
+          type: book.type,
+          collection_id: book.collection_id,
+          language: book.language,
+          publisher: book.publisher || {},
+          publication_year: book.publication_year,
+          reading_level: book.reading_level,
+          cover: bookCoverSignedUrl,
+          file: book.book_file,
+          summary: book.book_summary,
+          prompt: book.prompt,
+          objectives: book.objectives || [], 
+          created_at: book.created_at,
+          updated_at: book.updated_at,
           trailer_status: book.trailer_status,
           trailer: bookTrailerSignedUrl,
+          summary: book.summary,
         },
         chapters,
       }),
     };
+    
 
   } catch (error) {
-    console.error("❌ Error in getBook Lambda:", error);
+    console.error(" Error in getBook Lambda:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Internal server error" }),

@@ -256,8 +256,9 @@ export default function AddBookPage() {
         language,
         isbn: isbnInput,
         book_cover: uploadedImage
-        ? `s3://${coverImageKey}`
-        : (bookData?.book_cover || ""), 
+        ? `s3://storagestack-readingmaterialse72d08c8-spmbixoyxput /${coverImageKey}`
+        : (bookData?.book_cover || ""),
+
         book_file: `s3://${bookFileKey}`,
       };
       
@@ -842,24 +843,30 @@ export default function AddBookPage() {
 
 
         <div className="flex justify-end gap-4 mt-8">
-          <Button variant="outline" className="border-[#E4E4E7] hover:bg-[#F4F4F5] text-gray-700">Cancel</Button>
-          <Button
-  className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"
-  onClick={isFetched ? handleSubmit : fetchBookData}
-  disabled={loading || isSaving}
->
-  <SparklesIcon className="h-4 w-4" />
-  {(loading || isSaving)
-    ? "Loading..."
-    : isFetched
-      ? "Generate Overview & Video"
-      : "Fetch Book Data"}
-</Button>
+        {!loading && !isSaving && (
+  <Button
+    variant="outline"
+    className="border-[#E4E4E7] hover:bg-[#F4F4F5] text-gray-700"
+    onClick={() => router.push("/manage-book")}
+  >
+    Cancel
+  </Button>
+)}
 
+  <Button
+    className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"
+    onClick={isFetched ? handleSubmit : fetchBookData}
+    disabled={loading || isSaving}
+  >
+    <SparklesIcon className="h-4 w-4" />
+    {(loading || isSaving)
+      ? "Loading..."
+      : isFetched
+        ? "Generate Overview & Video"
+        : "Fetch Book Data"}
+  </Button>
+</div>
 
-
-
-        </div>
 
       </div>
     </MainLayout>
