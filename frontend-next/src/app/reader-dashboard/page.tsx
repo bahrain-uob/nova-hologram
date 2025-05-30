@@ -6,7 +6,7 @@ import { CircularDeterminateProgressIndicator } from "@/components/dashboard/Cir
 import withRoleProtection from "@/components/auth/withRoleProtection";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import MainLayout from "@/components/layout/MainLayout";
+import MainLayout from "@/components/layout/readerLayout";
 import { BookOpen, ChevronRight, ChevronLeft } from "lucide-react";
 import {
   fetchTopPicks,
@@ -194,7 +194,7 @@ const ReaderDashboard: React.FC = () => {
               {topPicks.map((book) => (
                 <div
                   key={book.id}
-                  className="flex-shrink-0 w-36 bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full"
+                  className="flex-shrink-0 w-50 bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full"
                 >
                   <div className="aspect-[3/4] w-full relative">
                     <Image
@@ -223,7 +223,7 @@ const ReaderDashboard: React.FC = () => {
                     </div>
                     <div className="mt-auto">
                       <button
-                        className="w-full py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
+                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
                         onClick={() => router.push(`/reader/${book.id}`)}
                       >
                         Start Reading
@@ -240,7 +240,7 @@ const ReaderDashboard: React.FC = () => {
           {/* Continue Reading Section > My Picks */}
           <div className="lg:col-span-1 bg-white rounded-md shadow-sm p-4">
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-base font-medium">My Picks</h2>
+              <h2 className="text-base font-medium">Continue Reading</h2>
               <button className="text-gray-500 hover:text-gray-700">
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -308,7 +308,7 @@ const ReaderDashboard: React.FC = () => {
           {/* Bookmarks Section > Favorites*/}
           <div className="lg:col-span-1 bg-white rounded-md shadow-sm p-4">
             <div className="flex justify-between items-center mb-3">
-              <h2 className="text-base font-medium">Favorites</h2>
+              <h2 className="text-base font-medium">Bookmarks</h2>
               <button className="text-gray-500 hover:text-gray-700">
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -349,7 +349,7 @@ const ReaderDashboard: React.FC = () => {
           {/* Reading Goal Section > Discovery Goal */}
           <div className="lg:col-span-1 bg-white rounded-md shadow-sm p-4">
             <h2 className="text-base font-medium mb-3">
-              {monthNames[month]} Discovery Goal
+              {monthNames[month]} Reading Goal
             </h2>
             <div className="flex flex-col items-center">
               <div className="relative w-20 h-20 mb-4">

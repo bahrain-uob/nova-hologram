@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import MainLayout from "@/components/layout/readerLayout";
@@ -16,9 +17,12 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { PlayIcon, StarIcon } from "lucide-react";
 
+
+
 const BookDetailPageReader: React.FC = () => {
   const searchParams = useSearchParams();
   const bookId = searchParams.get('id');
+  const router = useRouter();
   
   // In a real app, you would fetch book details based on bookId
   // For now, we'll use mock data
@@ -97,9 +101,15 @@ const BookDetailPageReader: React.FC = () => {
                         Start Reading
                       </Button>
 
-                      <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
-                        Chat with the Book
+                      <Button
+                        className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded"
+                          onClick={() => {
+                          router.push("/Interactive-page");
+                          }}
+                          >
+                          Chat with the Book
                       </Button>
+
 
                       <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
                         Characters Chat
