@@ -106,7 +106,7 @@ export class lambdastack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset('lambda/GetTextAndSplitChapters'),
-        timeout: cdk.Duration.minutes(5), 
+        timeout: cdk.Duration.minutes(10), 
     });
     
     splitChaptersLambda.addToRolePolicy(new iam.PolicyStatement({

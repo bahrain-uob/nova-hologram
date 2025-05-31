@@ -16,14 +16,17 @@ You are a cinematic scene writer helping create static video scenes for Nova Ree
 Your task: Based on the following story or chapter summary, write multiple visually rich, static scene descriptions for Nova Reel to use in a 1-minute educational video.
 
 Important guidelines:
-- Write at least 3–4 key scenes or turning points from the summary.
+- Write 3–4 key scenes or turning points from the summary.
 - The main character's appearance must stay consistent across all scenes.
 - Avoid describing any character movement like walking, running, jumping, etc.
 - Instead, imply action through the environment, pose, or facial expression.
 - Use rich, cinematic visual language.
 - Add light camera movement (e.g., "camera slowly dolly in") only at the beginning or end of each scene.
+- Do not use emojis, special characters, or symbols like *, $, #, @, etc.
 - Include visual settings, mood, lighting, and emotional tone.
 - Each scene must end with technical tags like: “4k, cinematic, soft lighting, shallow depth of field”.
+- The full output must be under 2000 characters.
+
 `;
 
 async function getUserIdFromBookId(bookId) {
