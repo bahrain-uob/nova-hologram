@@ -1,6 +1,36 @@
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 
+const deleteS3Folder = async (bucket, prefix) => {
+  let isTruncated = true;
+  let continuationToken;
+
+  while (isTruncated) {
+    const params = {
+      Bucket: bucket,
+      Prefix: prefix,
+      ContinuationToken: continuationToken
+    };
+
+    const listedObjects = await s3.listObjectsV2(params).promise();
+
+    if (!listedObjects.Contents || listedObjects.Contents.length === 0) break;
+
+    const deleteParams = {
+      Bucket: bucket,
+      Delete: {
+        Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+      }
+    };
+
+    await s3.deleteObjects(deleteParams).promise();
+
+    isTruncated = listedObjects.IsTruncated;
+    continuationToken = listedObjects.NextContinuationToken;
+  }
+};
+
+
 // Define valid file categories
 const VALID_CATEGORIES = ['bookings', 'journal', 'general'];
 
@@ -241,7 +271,15 @@ exports.handler = async function (event) {
     };
     
     await s3.deleteObject(deleteParams).promise();
-    
+
+    // ADD: Delete related genvideos folders from another bucket
+    const bookId = fileKey?.split("/")?.[1]; // assuming fileKey = "category/bookId/filename"
+    if (bookId) {
+      const GEN_BUCKET = 'storagestack-genvideosb3836295-cgsm7lv3g2uy';
+      await deleteS3Folder(GEN_BUCKET, `audio/${bookId}/`);
+      await deleteS3Folder(GEN_BUCKET, `final/${bookId}/`);
+    }
+
     // Return success response
     return {
       statusCode: 200,

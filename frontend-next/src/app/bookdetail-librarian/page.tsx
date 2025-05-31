@@ -1,8 +1,9 @@
 /* EditBookPage.tsx */
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import withRoleProtection from "@/components/auth/withRoleProtection";
 import Image from "next/image";
 import {
@@ -26,21 +27,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/addbook/select";
-import { BookData } from "@/types/book";
 
 
 
-const mockBook: BookData = {
-  title: "Harry Potter and the Philosopher’s Stone",
-  authors: ["J.K. Rowling"],
-  publisher: "Bloomsbury",
-  publishedDate: "1997",
-  maturityRating: "NOT_MATURE",
-  imageLinks: {
-    thumbnail:
-      "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1",
-  },
-};
+
 function FieldWithLabel({
   label,
   value,
@@ -114,67 +104,143 @@ function TextAreaWithLabel({
 
 const EditBookPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const bookId = searchParams.get('id');
+  const bookId = searchParams.get('bookId');
+  const router = useRouter();
 
-  // In a real app, you would fetch book details based on bookId
-  // For now, we'll use mock data
+  
   const [editMode, setEditMode] = React.useState(false);
-  const [bookData, setBookData] = React.useState<BookData | null>(null);
+  //const [bookData, setBookData] = React.useState<BookData | null>(null);
   const [title, setTitle] = React.useState("");
   const [authors, setAuthors] = React.useState("");
   const [publisher, setPublisher] = React.useState("");
   const [publishedDate, setPublishedDate] = React.useState("");
   const [maturity, setMaturity] = React.useState("");
-  const [type, setType] = React.useState("");
-  const [genre, setGenre] = React.useState("");
-  const [collection, setCollection] = React.useState("");
+  const [type, setType] = React.useState<string | undefined>(undefined);
+const [genre, setGenre] = React.useState<string | undefined>(undefined);
+const [collection, setCollection] = React.useState<string | undefined>(undefined);
+
   const [isbn, setIsbn] = React.useState("");
   const [uploadedImage, setUploadedImage] = React.useState<File | null>(null);
-  const [uploadedBookFile, setUploadedBookFile] = React.useState<File | null>(null);
+  //const [uploadedBookFile, setUploadedBookFile] = React.useState<File | null>(null);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
-  const bookFileInputRef = React.useRef<HTMLInputElement>(null);
+  //const bookFileInputRef = React.useRef<HTMLInputElement>(null);
   const [objectives, setObjectives] = React.useState([{ id: 1, text: "" }]);
   const [summary, setSummary] = React.useState("");
-  const [chapter1Summary, setChapter1Summary] = React.useState("");
+  //const [chapter1Summary, setChapter1Summary] = React.useState("");
+  const [loading, setLoading] = useState(true);
+  const [bookData, setBookData] = useState<any>(null); // You can refine the type later
+  const [chapters, setChapters] = useState([]);
 
-  React.useEffect(() => {
-    // In a real app, you would fetch the book data using the bookId
-    if (bookId) {
-      console.log(`Fetching details for book ID: ${bookId}`);
-      // In a real implementation, you would fetch book data from an API
-      // For now, we'll use mock data
-    }
 
-    setBookData(mockBook);
-    setTitle(mockBook.title || "");
-    setAuthors((mockBook.authors || []).join(", "));
-    setPublisher(mockBook.publisher || "");
-    setPublishedDate(mockBook.publishedDate || "");
-    setMaturity(
-      mockBook.maturityRating === "MATURE"
-        ? "Adults"
-        : mockBook.maturityRating === "NOT_MATURE"
-        ? "Kids"
-        : ""
-    );
-  }, [bookId]);
+  useEffect(() => {
+    if (!bookId) return;
+  
+    const fetchData = async () => {
+      try {
+        const res = await fetch(
+          `https://1rvx3jdou7.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
+        );
+        const data = await res.json();
+        setBookData(data);
+        setChapters(data.chapters || []);
 
-  const handleSaveChanges = () => {
-    const updatedBook = {
-      title,
-      authors: authors.split(",").map((a) => a.trim()),
-      publisher,
-      publishedDate,
-      maturityRating: maturity,
-      type,
-      genre,
-      collection,
-      isbn,
+        const book = data.book;
+        console.log("Fetched book:", book);
+
+        setTitle(book.title || "");
+        setAuthors((book.authors || []).join(", "));
+        setPublisher(
+          typeof book.publisher === "string"
+            ? book.publisher
+            : book.publisher?.name || ""
+        );
+        setPublishedDate(book.publication_year || "");
+        setMaturity(book.reading_level || "");
+        setSummary(book.summary || "");
+        setType(typeof book.type === "string" ? book.type : undefined);
+        setGenre(
+          Array.isArray(book.genre)
+            ? book.genre[0] // or `.join(", ")` if you want to show multiple
+            : typeof book.genre === "string"
+            ? book.genre
+            : undefined
+        );
+        setCollection(typeof book.collection === "string" ? book.collection : undefined);
+
+        setIsbn(book.isbn || "");
+  
+        if (Array.isArray(book.objectives)) {
+          if (typeof book.objectives[0] === "string") {
+            // It's an array of strings
+            setObjectives(book.objectives.map((text, index) => ({ id: index + 1, text })));
+          } else if (typeof book.objectives[0] === "object" && book.objectives[0].text) {
+            // It's already an array of objects
+            setObjectives(book.objectives);
+          }
+        }
+  
+      } catch (err) {
+        console.error("Error fetching book data:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    console.log("Updated book:", updatedBook);
-    alert("Changes saved (mock only)");
-    setEditMode(false);
+  
+    fetchData();
+    
+  }, [bookId]);
+  
+  
+  
+
+  const handleSaveChanges = async () => {
+    try {
+      const updatedFields: any = {
+        title,
+        authors: authors.split(",").map((a) => a.trim()),
+        publisher,
+        publication_year: publishedDate,
+        reading_level: maturity,
+        type,
+        genre,
+        isbn,
+        summary,
+        objectives,
+      };
+      
+      // 🛠️ Only include collection_id if it's not empty, and convert to number
+      if (collection) {
+        updatedFields.collection_id = Number(collection);
+      }
+      
+  
+      const payload = {
+        book_id: bookId,
+        updatedFields,
+        chapters: chapters.map(({ chapter_id, summary }) => ({ chapter_id, summary })),
+      };
+      
+  
+      const res = await fetch("https://egxmgdn74d.execute-api.us-east-1.amazonaws.com/prod/update-book", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const data = await res.json();
+      console.log("Update response:", data);
+      alert("Changes saved!");
+      setEditMode(false);
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to update book:", err);
+      alert("Failed to update. Check console for details.");
+    }
   };
+  
+  
 
   const addObjective = () => {
     setObjectives([...objectives, { id: Date.now(), text: "" }]);
@@ -219,14 +285,32 @@ const EditBookPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   className="text-red-600 hover:bg-red-50"
-                  onClick={() => {
+                  onClick={async () => {
                     const confirmed = confirm("Are you sure you want to delete this book?");
-                    if (confirmed) {
-                      // TODO: Call your delete API or function here
-                      console.log("Book deleted (mock only)");
-                      alert("Book deleted (mock only)");
+                    if (!confirmed || !bookId) return;
+                  
+                    try {
+                      const res = await fetch("https://xx1u90jlod.execute-api.us-east-1.amazonaws.com/delete-book", {
+                        method: "POST", // REST APIs typically use POST for deletions via Lambda
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ bookId }),
+                      });
+                  
+                      if (!res.ok) {
+                        const errData = await res.json();
+                        throw new Error(errData?.error || "Unknown error");
+                      }
+                  
+                      alert("Book deleted successfully!");
+                      router.push("/manage-book");
+                    } catch (err) {
+                      console.error("Delete failed:", err);
+                      alert("Failed to delete book. Please try again.");
                     }
                   }}
+                  
                 >
                   <TrashIcon className="h-4 w-4 mr-2" />
                   Delete
@@ -250,23 +334,32 @@ const EditBookPage: React.FC = () => {
           <div className="col-span-1">
             <Card className="bg-white shadow p-4 h-full">
               <CardContent className="pt-6 flex flex-col items-center">
-                {uploadedImage || bookData?.imageLinks?.thumbnail ? (
-                  <Image
-                    src={
-                      uploadedImage
-                        ? URL.createObjectURL(uploadedImage)
-                        : bookData?.imageLinks?.thumbnail || "/placeholder.png"
-                    }
-                    alt="Cover"
-                    width={180}
-                    height={240}
-                    className="object-cover rounded mb-4"
-                  />
-                ) : (
-                  <div className="w-40 h-56 bg-gray-100 flex items-center justify-center rounded mb-4">
-                    <Upload className="h-10 w-10 text-gray-400" />
-                  </div>
-                )}
+              <h3 className="text-sm font-medium text-gray-600 mb-2 self-start">Book Cover</h3>
+              <br></br>
+              {uploadedImage ? (
+                <Image
+                  src={URL.createObjectURL(uploadedImage)}
+                  alt="Uploaded Cover"
+                  width={180}
+                  height={240}
+                  className="object-cover rounded mb-4"
+                />
+              ) : bookData?.book?.cover ? (
+                <Image
+                  src={bookData.book.cover}
+                  alt="Book Cover"
+                  width={180}
+                  height={240}
+                  className="object-cover rounded mb-4"
+                />
+              ) : (
+                <div className="w-40 h-56 bg-gray-100 flex items-center justify-center rounded mb-4">
+                  <Upload className="h-10 w-10 text-gray-400" />
+                </div>
+              )}
+
+
+
 
                 <Button
                   variant="outline"
@@ -293,8 +386,9 @@ const EditBookPage: React.FC = () => {
                 >
                   <SparklesIcon className="h-4 w-4 mr-2" /> Generate New Cover
                 </Button>
+                
+                {/* Book File 
                 <hr className="w-full border-t border-gray-200 my-6" />
-
                 <h3 className="text-sm font-medium text-gray-600 mb-2 self-start">Book File</h3>
                 <div className="bg-gray-50 rounded-lg px-4 py-3 w-full flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -320,7 +414,7 @@ const EditBookPage: React.FC = () => {
                     const file = e.target.files?.[0];
                     if (file) setUploadedBookFile(file);
                   }}
-                />
+                />*/}
               </CardContent>
             </Card>
 
@@ -431,131 +525,128 @@ const EditBookPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            {/* Book Summary, Trailer, and Chapter-wise Section */}
-            <div className="mt-10 space-y-6">
-              {/* Book Summary + Trailer */}
-              <Card className="shadow-none border border-gray-200 rounded-xl bg-white">
-                <CardContent className="p-0 space-y-6">
-                  <div className="flex justify-between items-center p-5">
-                    <h2 className="text-lg font-medium">Book Summary</h2>
+            
+            <Card className="shadow-none border border-gray-200 rounded-xl bg-white mt-6">
+              <CardContent className="p-0 space-y-6">
+                {/* Book Summary */}
+                <div className="flex justify-between items-center p-5 pb-0">
+                  <h2 className="text-lg font-medium">Book Summary</h2>
+                  {editMode && (
                     <div className="flex items-center gap-2">
-                      <Input
-                        className="w-64 text-sm border border-gray-200"
-                        placeholder="Write a prompt to generate summary..."
-                        hidden={!editMode}
-                      />
-                      <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        hidden={!editMode}
-                      >
-                        <RotateCwIcon className="h-4 w-4 mr-2 text-white" />
+                      <Input className="w-64 text-sm border border-gray-200" placeholder="Prompt..." />
+                      <Button className="bg-indigo-600 text-white">
+                        <RotateCwIcon className="h-4 w-4 mr-2" />
                         Regenerate
                       </Button>
                     </div>
-                  </div>
-                  <div className="px-5">
-                    <TextAreaWithLabel
-                      label="Book Summary"
+                  )}
+                </div>
+
+                <div className="px-5">
+                  {editMode ? (
+                    <textarea
                       value={summary}
                       onChange={(e) => setSummary(e.target.value)}
-                      editMode={editMode}
+                      rows={5}
+                      className="w-full border border-gray-300 rounded p-2 text-sm"
                     />
-                  </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm whitespace-pre-wrap">
+                      {loading
+                        ? "Generating summary..."
+                        : bookData?.book?.summary || "No summary available."}
+                    </div>
+                  )}
+                </div>
 
 
-                  <div className="flex justify-between items-center p-5 pt-2">
-                    <h2 className="text-lg font-medium">Book Trailer</h2>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        className="w-64 text-sm border border-gray-200"
-                        placeholder="Write a prompt to generate trailer..."
-                        hidden={!editMode}
-                      />
-                      <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        hidden={!editMode}
-                      >
-                        <RotateCwIcon className="h-4 w-4 mr-2 text-white" />
-                        Regenerate
-                      </Button>
+                {/* Book-level Trailer */}
+                {bookData?.book?.trailer && bookData.book.trailer_status === "completed" && (
+                  <div className="space-y-2 px-5 pt-4">
+                    <h3 className="text-base font-medium">Book Trailer</h3>
+                    <div className="flex items-center justify-center">
+                      <video controls className="rounded-md w-full max-w-4xl aspect-video">
+                        <source src={bookData.book.trailer} type="video/mp4" />
+                      </video>
                     </div>
                   </div>
-                  <div className="px-5 pb-5">
-                    <div className="bg-gray-50 rounded-md p-6">
-                      <div className="h-40 flex items-center justify-center">
-                        <div className="rounded-full bg-white/80 p-3">
-                          <PlayCircleIcon className="h-10 w-10 text-gray-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                )}
+                   <div className="pb-2" />
+
                 </CardContent>
-              </Card>
+            </Card>
 
-              {/* Chapter-wise */}
-              <Card className="shadow-none border border-gray-200 rounded-xl bg-white">
-                <CardContent className="p-0 space-y-6">
-                  <div className="px-5 pt-5">
-                    <h2 className="text-lg font-semibold">Chapter-wise</h2>
-                  </div>
-
-                  <div className="flex justify-between items-center px-5 pt-4">
-                    <h3 className="text-base font-medium">Ch1 Summary</h3>
+            {/* Book Summary, Trailer, and Chapter-wise Section */}
+          <Card className="shadow-none border border-gray-200 rounded-xl bg-white mt-6">
+          <CardContent className="p-0 space-y-6">
+          <div className="px-5 pt-5">
+                <h2 className="text-lg font-semibold">Chapter-wise</h2>
+              </div>
+          {loading ? (
+            <p className="text-sm px-5 py-5">Loading chapters...</p>
+          ) : bookData?.chapters?.length ? (
+            bookData.chapters.map((chapter, index) => (
+              <div key={chapter.chapter_id} className="space-y-6 px-5 pt-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-base font-medium">Ch{index + 1} Summary</h3>
+                  {editMode && (
                     <div className="flex items-center gap-2">
-                      <Input
-                        className="w-64 text-sm border border-gray-200"
-                        placeholder="Write a prompt to guide the AI..."
-                        hidden={!editMode}
-                      />
-                      <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        hidden={!editMode}
-                      >
-                        <RotateCwIcon className="h-4 w-4 mr-2 text-white" />
-                        Regenerate
-                      </Button>
+                      <Input className="w-64 text-sm border border-gray-200" placeholder="Prompt..." />
+                      <Button className="bg-indigo-600 text-white"><RotateCwIcon className="h-4 w-4 mr-2" /> Regenerate</Button>
                     </div>
+                  )}
+                </div>
+                
+                {editMode ? (
+                  <TextAreaWithLabel
+  label=""
+  value={chapters[index]?.summary || ""}
+  onChange={(e) => {
+    const newSummary = e.target.value;
+    setChapters((prev) =>
+      prev.map((ch, i) =>
+        i === index ? { ...ch, summary: newSummary } : ch
+      )
+    );
+  }}
+  editMode={true}
+/>
+
+                ) : (
+                  <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm whitespace-pre-wrap">
+                    {chapter.summary || "No summary available."}
                   </div>
-                  <div className="px-5">
-                    <TextAreaWithLabel
-                      label="Ch1 Summary"
-                      value={chapter1Summary}
-                      onChange={(e) => setChapter1Summary(e.target.value)}
-                      editMode={editMode}
-                    />
-
-                  </div>
+                )}
 
 
-                  <div className="flex justify-between items-center px-5 pt-2">
-                    <h3 className="text-base font-medium">Ch1 Trailer</h3>
+                <div className="flex justify-between items-center pt-2">
+                  <h3 className="text-base font-medium">Ch{index + 1} Trailer</h3>
+                  {editMode && (
                     <div className="flex items-center gap-2">
-                      <Input
-                        className="w-64 text-sm border border-gray-200"
-                        placeholder="Write a prompt to guide the AI..."
-                        hidden={!editMode}
-                      />
-                      <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        hidden={!editMode}
-                      >
-                        <RotateCwIcon className="h-4 w-4 mr-2 text-white" />
-                        Regenerate
-                      </Button>
+                      <Input className="w-64 text-sm border border-gray-200" placeholder="Prompt..." />
+                      <Button className="bg-indigo-600 text-white"><RotateCwIcon className="h-4 w-4 mr-2" /> Regenerate</Button>
                     </div>
-                  </div>
-                  <div className="px-5 pb-5">
-                    <div className="bg-gray-50 rounded-md p-6">
-                      <div className="h-40 flex items-center justify-center">
-                        <div className="rounded-full bg-white/80 p-3">
-                          <PlayCircleIcon className="h-10 w-10 text-gray-400" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  )}
+                </div>
+                <div className=" flex items-center justify-center">
+                  {chapter.trailer_status === "completed" && chapter.trailer ? (
+                    <video controls className="rounded-md w-full max-w-4xl aspect-video">
+                      <source src={chapter.trailer} type="video/mp4" />
+                    </video>
+                  ) : chapter.trailer_status === "failed" ? (
+                    <p className="text-red-500">Trailer failed to generate.</p>
+                  ) : (
+                    <p className="text-gray-400">Generating trailer...</p>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm px-5 pb-5">No chapters available.</p>
+          )}  <div className="pb-2" />
+
                 </CardContent>
-              </Card>
-            </div>
+                </Card>
 
           </div>
         </div>

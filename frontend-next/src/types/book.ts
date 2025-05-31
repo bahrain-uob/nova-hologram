@@ -9,37 +9,64 @@ export interface BookData {
     thumbnail?: string;
   };
 }
-
+  export interface BookPreview {
+    id: number;
+    title: string;
+    author: string;
+    cover: string;
+    genres: string[];
+    language: string;
+  }  
+  
 export interface Book {
   book_id: string;
-  isbn?: string;
-  title: string;
-  type?: string;
-  genre_id?: string;
-  cover_path?: string;
-  book_summary?: string;
+  user_id: string;
+  book_title: string;
+  type: string;
+  genre: JSON;
+  collection_id?: string[];
+  isbn: string;
+  authors?: JSON;
+  language: string;
+  publisher: JSON;
+  publication_year: string;
+  reading_level: string;
+  book_cover?: string;
+  summary?: string;
+  script?: string;
   book_trailer?: string;
   created_at?: Date;
   updated_at?: Date;
+  objectives?: { id: number; text: string }[]; 
+  prompt?: string;
+  trailer_status?: string;
+  audio_url?: string;
+  ssml?: string;
+  finalvideo?: string;
 }
-
 export interface BookMark {
   book_mark_id: string;
+  book_mark_test: string;
   user_id: string;
   book_id: string;
   mark_id?: string;
-  page_id?: string;
+  page_id?: string; //ask abt it.
 }
-
 export interface BookChapter {
   chapter_id: string;
   book_id: string;
   chapter_no: number;
-  chapter_title: string;
-  start_page: number;
-  end_page: number;
+  summary?: string;
+  script?: string;
+  trailer?: string;
+  trailer_status?: string;
+  chapter_title?: string;
+  audio_url?: string;
+  ssml?: string;
+  finalvideo?: string;
+  //start_page: number;
+  //end_page: number;
 }
-
 export interface BookTrailer {
   trailer_id: string;
   book_id: string;
@@ -48,7 +75,6 @@ export interface BookTrailer {
   duration?: number;
   created_at?: Date;
 }
-
 export interface BookListeners {
   listener_id: string;
   book_id: string;
@@ -57,7 +83,6 @@ export interface BookListeners {
   duration?: number;
   created_at?: Date;
 }
-
 export interface BookFileDescription {
   book_file_id: string;
   book_id?: string;
