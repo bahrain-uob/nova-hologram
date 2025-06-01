@@ -3,11 +3,9 @@
 // Trigger Transcribe Lambda, no need, trigger transcribe here. idesally from api to transcribe but we need lambda. 
 
 const AWS = require('aws-sdk');
-const lambda = new AWS.Lambda();
+const lambdaClient = new AWS.Lambda();
 
 const { TranscribeStreamingClient, StartStreamTranscriptionCommand } = require("@aws-sdk/client-transcribe-streaming");
-
-const lambda = require('aws-sdk/clients/lambda');
 
 exports.handler = async (event) => {
   try {
@@ -85,7 +83,7 @@ exports.handler = async (event) => {
     console.log("Transcription result:", transcriptionResult);
     
     // 5. Invoke the Bedrock Lambda asynchronously with the transcription result.
-    await lambda.invoke({
+    await lambdaClient.invoke({
       FunctionName: process.env.BEDROCK_LAMBDA_NAME,
       InvocationType: 'Event', 
       Payload: JSON.stringify({ transcription: transcriptionResult })

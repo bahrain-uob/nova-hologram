@@ -90,21 +90,21 @@ export class lambdastack extends cdk.Stack {
         }
       });
       
-  //Student
+  //Student or Reader
 
-  
           // Lambda function for processing audio files
         this.messageProcessing = new lambda.Function(this, 'MessageProcessingLambda', {
           runtime: lambda.Runtime.NODEJS_18_X,
           code: lambda.Code.fromAsset('lambda/Student/MessageProcessing'),
           handler: 'messageProcessing.handler',
         }),
+        /*
           // Lambda function for transcribing audio files
         this.transcribe = new lambda.Function(this, 'TranscribeLambda', {
           runtime: lambda.Runtime.NODEJS_18_X,
           code: lambda.Code.fromAsset('lambda/Student/Transcribe'),//remove, one lambda needed
           handler: 'transcribe.handler',
-        }), 
+        }), */
         // Lambda function: // Calls Bedrock with the transcribed text and saves Q&A to DynamoDB
         this.invokeBedrock = new lambda.Function(this, 'InvokeBedrockLambda', {
           runtime: lambda.Runtime.NODEJS_18_X,
@@ -114,6 +114,9 @@ export class lambdastack extends cdk.Stack {
             QATABLE_NAME: dbStack.qaTable.tableName,
           },
         }),
+        
+        this.invokeBedrock.addEnvironment('TRIGGER_POLLY_LAMBDA_NAME', this.triggerPolly.functionName);
+
         // Lambda function for triggering Polly and saving audio in S3
         this.triggerPolly = new lambda.Function(this, 'TriggerPollyLambda', {
           runtime: lambda.Runtime.NODEJS_18_X,
@@ -129,6 +132,10 @@ export class lambdastack extends cdk.Stack {
           runtime: lambda.Runtime.NODEJS_18_X,
           code: lambda.Code.fromAsset('lambda/Student/PlayResponse'),
           handler: 'playResponse.handler',
+
+        environment: {
+          PLAYBACK_API_URL: 'https://your-api-id.execute-api.region.amazonaws.com/prod/play', // replace with your actual API Gateway endpoint
+        },
         }),
       
           // Lambda function for invoking Bedrock (Librarian) and stores Nova content in S3
@@ -181,6 +188,7 @@ export class lambdastack extends cdk.Stack {
         this.invokeBedrock.addToRolePolicy(new iam.PolicyStatement({
           actions: [
             'bedrock:*',
+            'lambda:InvokeFunction',
             'logs:CreateLogGroup',
             'logs:CreateLogStream',
             'logs:PutLogEvents',
@@ -208,7 +216,8 @@ export class lambdastack extends cdk.Stack {
 
         this.messageProcessing.addToRolePolicy(new iam.PolicyStatement({
           actions: [
-            'bedrock:*',
+            'lambda:InvokeFunction', // Allow invoking other Lambda functions
+            'bedrock:*', 
             'transcribe:*',
             'logs:CreateLogGroup',
             'logs:CreateLogStream',

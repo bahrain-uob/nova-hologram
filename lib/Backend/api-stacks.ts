@@ -46,7 +46,7 @@ export class APIStack extends cdk.Stack {
         value: PostGetDelete.apiEndpoint,
       });
 
-      //Student
+      //Student or Reader
 
     // Reader API for audio files
     const readerApi = new apigateway.RestApi(this, 'ReaderApi', {
