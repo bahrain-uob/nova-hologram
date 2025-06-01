@@ -5,33 +5,10 @@
 import * as BooksService from './booksService';
 import * as ReadingProgressService from './readingProgressService';
 import * as RecommendationsService from './recommendationsService';
+import { LegacyBook as Book, LegacyInProgressBook as InProgressBook, LegacyFavorite as Favorite } from '@/types';
 
 // Re-export types for backward compatibility
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverImage: string;
-  genre: string;
-  rating?: number;
-  description?: string;
-}
-
-export interface InProgressBook {
-  id: string;
-  title: string;
-  coverImage: string;
-  progress: number; // percentage
-}
-
-export interface Favorite {
-  id: string;
-  title: string;
-  author?: string;
-  coverImage?: string;
-  quote?: string;
-  bookId?: string;
-}
+export type { Book, InProgressBook, Favorite };
 
 // Mock data
 const mockBooks: Book[] = [

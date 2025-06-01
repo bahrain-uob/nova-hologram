@@ -7,7 +7,7 @@ export interface Review {
   created_at?: Date;
 }
 
-export interface BookChatbot {
+export interface ReviewChatbot {
   book_chat_id: string;
   user_id: string;
   book_id: string;

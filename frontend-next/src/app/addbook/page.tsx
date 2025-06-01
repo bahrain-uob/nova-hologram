@@ -120,7 +120,7 @@ export default function AddBookPage() {
     const publisherObj = bookData.publisher as { name?: string };
     setPublisher(publisherObj?.name || "");
 
-    setPublishedDate(bookData.publication_year || "");
+    setPublishedDate(typeof bookData.publication_year === 'number' ? String(bookData.publication_year) : (bookData.publication_year || ""));
     setMaturity(bookData.reading_level || "");
   }
 }, [bookData]);
@@ -144,21 +144,26 @@ export default function AddBookPage() {
 
       if (data && data.title) {
         setBookData({
-          book_id: "", // Optional: backend will create it
+          id: "", // Backend will create it
+          book_id: "", // Legacy ID field
           user_id: "", // Optional: depends on auth
-          book_title: data.title,
-          authors: JSON.parse(JSON.stringify(data.authors || [])), 
-          publisher: JSON.parse(JSON.stringify({ name: data.publisher || data.publishers?.[0] || "" })),
+          title: data.title,
+          book_title: data.title, // Legacy title field
+          author: data.authors?.[0] || "", // Primary author
+          authors: data.authors || [], 
+          publisher: { name: data.publisher || data.publishers?.[0] || "" },
           publication_year: data.publish_date || "",
           reading_level: data.maturity_rating === "MATURE" ? "Adults" : "Kids",
           type: "",
-          genre: JSON.parse(JSON.stringify([])),
+          genre: [],
           collection_id: [],
           isbn: isbnInput,
           language: "English",
-          book_cover: data.cover_image || "",
+          coverImage: data.cover_image || "",
+          book_cover: data.cover_image || "", // Legacy cover field
           summary: data.description || "",
-          book_trailer: "",
+          description: data.description || "",
+          trailer: "",
           created_at: new Date(),
           updated_at: new Date(),
         });

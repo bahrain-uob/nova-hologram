@@ -18,27 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Book, BooksResponse } from "@/types";
 
-interface Book {
-  book_id: string;
-  book_title: string;
-  authors: string[];
-  book_cover: string;
-  genre: string[];
-  reading_level: string;
-  publication_year: string;
-  isbn?: string;
-  language?: string;
-  publisher?: {
-    name: string;
-  };
-  book_summary?: string;
-}
-
-interface BooksResponse {
-  books?: Book[];
-  error?: string;
-}
 
 const fetchBooks = async (): Promise<BooksResponse> => {
   try {

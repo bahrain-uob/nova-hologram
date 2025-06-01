@@ -7,6 +7,10 @@ export interface User {
   role?: string;
   created_at?: Date;
   updated_at?: Date;
+  // Additional properties used in the application
+  avatar?: string;
+  grade?: string;
+  readingLevel?: string;
 }
 
 export interface UserSettings {

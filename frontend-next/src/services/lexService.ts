@@ -1,26 +1,16 @@
 import { authenticatedPost, API_URLS } from '@/utils/apiUtils';
 import { getCurrentUser } from '@/lib/auth';
+import { LexMessage, LexConversation, LexConfig, LexResponse, HologramGenerationRequest } from '@/types';
 
 // Define the API URL for Lex service
 const API_URL = API_URLS.lex;
 
 // Lex bot configuration from environment variables
-const LEX_CONFIG = {
-  botId: process.env.NEXT_PUBLIC_LEX_BOT_ID,
-  botAliasId: process.env.NEXT_PUBLIC_LEX_BOT_ALIAS_ID,
+const LEX_CONFIG: LexConfig = {
+  botId: process.env.NEXT_PUBLIC_LEX_BOT_ID || '',
+  botAliasId: process.env.NEXT_PUBLIC_LEX_BOT_ALIAS_ID || '',
   region: process.env.NEXT_PUBLIC_AWS_REGION || 'me-south-1',
 };
-
-export interface LexMessage {
-  type: 'user' | 'bot';
-  content: string;
-  timestamp: string;
-}
-
-export interface LexConversation {
-  messages: LexMessage[];
-  sessionId: string;
-}
 
 /**
  * Send a message to the Lex chatbot

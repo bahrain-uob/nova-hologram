@@ -1,41 +1,10 @@
 import { authenticatedGet, authenticatedPost, authenticatedPut, authenticatedDelete, API_URLS } from '@/utils/apiUtils';
 import s3Service from '@/lib/s3-service';
 import { getCurrentUser } from '@/lib/auth';
+import { LibraryBook, BookChapter } from '@/types';
 
 // Define the API URL for library management
 const API_URL = API_URLS.library;
-
-export interface LibraryBook {
-  book_id: string;
-  user_id: string;
-  book_title: string;
-  authors: string[];
-  publisher: { name: string };
-  publication_year: number;
-  reading_level: string;
-  type: string;
-  genre: string[];
-  collection: string;
-  objectives: { id: number; text: string }[];
-  language: string;
-  isbn: string;
-  book_cover: string;
-  book_file: string;
-  trailer?: string;
-  trailer_status?: 'pending' | 'processing' | 'completed' | 'failed';
-  chapters?: BookChapter[];
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface BookChapter {
-  chapter_id: string;
-  book_id: string;
-  title: string;
-  content?: string;
-  trailer?: string;
-  trailer_status?: 'pending' | 'processing' | 'completed' | 'failed';
-}
 
 /**
  * Get all books in the library

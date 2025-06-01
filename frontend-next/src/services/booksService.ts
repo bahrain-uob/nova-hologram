@@ -1,43 +1,11 @@
 import { authenticatedGet, authenticatedPost, authenticatedPut, authenticatedDelete, API_URLS } from '@/utils/apiUtils';
+import { Book, BookReview, ReadingList } from '@/types';
 
 // Define the API URL for books service
 // Add this to apiUtils.ts API_URLS if not already there
 const API_URL = API_URLS.books || process.env.NEXT_PUBLIC_BOOKS_API_URL || '/api/books';
 
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverImage: string;
-  genre: string[];
-  language: string;
-  summary: string;
-  publicationYear: number;
-  rating?: number;
-  reviewCount?: number;
-  readingLevel?: 'Easy' | 'Medium' | 'Hard';
-  learningObjectives?: string[];
-}
-
-export interface BookReview {
-  id: string;
-  bookId: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  rating: number;
-  text: string;
-  createdAt: string;
-}
-
-export interface ReadingList {
-  id: string;
-  name: string;
-  userId: string;
-  books: string[]; // Array of book IDs
-  createdAt: string;
-  updatedAt: string;
-}
+// ReadingList interface is now imported from @/types
 
 /**
  * Fetch a book by its ID

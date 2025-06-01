@@ -51,8 +51,8 @@ const ManageReaders: React.FC = () => {
   const filteredReaders = readers.filter((user) => {
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
     const matchesSearch = fullName.includes(searchQuery.toLowerCase());
-    const matchesGrade = grade ? User.grade === grade : true;
-    const matchesLevel = readingLevel ? User.readingLevel === readingLevel : true;
+    const matchesGrade = grade ? user.grade === grade : true;
+    const matchesLevel = readingLevel ? user.readingLevel === readingLevel : true;
     return matchesSearch && matchesGrade && matchesLevel;
   });
 

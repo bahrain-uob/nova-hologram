@@ -12,10 +12,8 @@ import {
   fetchTopPicks,
   fetchInProgress,
   fetchFavorites,
-  type Book,
-  type Favorite,
-  type InProgressBook,
 } from "@/services/api";
+import { LegacyBook as Book, LegacyFavorite as Favorite, LegacyInProgressBook as InProgressBook } from "@/types";
 
 const ReaderDashboard: React.FC = () => {
   const [userName, setUserName] = useState("Reader");
@@ -224,7 +222,7 @@ const ReaderDashboard: React.FC = () => {
                     <div className="mt-auto">
                       <button
                         className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
-                        onClick={() => router.push(`/reader/${book.id}`)}
+                        onClick={() => router.push(`/reader/${book.id}` as any)}
                       >
                         Start Reading
                       </button>
@@ -389,7 +387,7 @@ const ReaderDashboard: React.FC = () => {
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded flex items-center gap-2"
             onClick={() => {
               if (inProgressBooks.length > 0) {
-                router.push(`/reader/${inProgressBooks[0].id}`);
+                router.push(`/reader/${inProgressBooks[0].id}` as any);
               }
             }}
           >

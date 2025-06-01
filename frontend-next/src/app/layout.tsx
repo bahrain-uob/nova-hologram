@@ -3,7 +3,7 @@ import "./globals.css";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { AuthProvider } from "../context/auth-context";
 import { Toaster } from "sonner";
-import { ChatbotButton } from "../components/chatbot/ChatbotButton";
+import { ChatbotButton } from "../components/Chatbot/ChatbotButton";
 
 // ✅ حمل الخطوط من Google وربطهم بالـ variables اللي نستخدمها
 const jakarta = Plus_Jakarta_Sans({

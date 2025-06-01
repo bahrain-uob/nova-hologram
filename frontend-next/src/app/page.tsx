@@ -2,12 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import path from "path";
+// Remove unused import
+// import path from "path";
 
 export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  const pages = [
+  // Define proper type for page objects
+  type Page = {
+    name: string;
+    path: string;
+    description: string;
+  };
+
+  const pages: Page[] = [
     {
       name: "Dashboard",
       path: "/dashboard",
@@ -86,7 +94,7 @@ export default function Home() {
               </div>
               <div>
                 <Link
-                  href={page.path}
+                  href={page.path as any}
                   className="inline-block w-full px-4 py-2 text-center text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Go to {page.name}

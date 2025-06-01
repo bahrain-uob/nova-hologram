@@ -95,7 +95,7 @@ export default function MainLayout({
               return item.path ? (
                 <button
                   key={i}
-                  onClick={() => router.push(item.path!)}
+                  onClick={() => router.push(item.path! as any)}
                   className={`flex items-center gap-2 p-2 rounded-md w-full text-left ${
                     isActive
                       ? "bg-[#F0F1F3] text-[#4F46E5] font-medium"

@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Edit as EditIcon,
-  Trash2 as DeleteIcon,
-  Filter as FilterIcon,
-} from "lucide-react";
-import Image from "next/image";
+// import {
+//   Edit as EditIcon,
+//   Trash2 as DeleteIcon,
+//   Filter as FilterIcon,
+// } from "lucide-react";
+// import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
 
@@ -85,10 +85,11 @@ const chapters = [
 
 const InteractivePage: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [genre, setGenre] = useState("");
-  const [readingLevel, setReadingLevel] = useState("");
-  const [publicationYear, setPublicationYear] = useState("");
+  // Search and filter states - will be used in future implementation
+  const [searchQuery] = useState("");
+  const [genre] = useState("");
+  const [readingLevel] = useState("");
+  const [publicationYear] = useState("");
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
 
   const router = useRouter();
@@ -199,7 +200,7 @@ const InteractivePage: React.FC = () => {
                 Talk to Character
               </h3>
               <div className="text-sm text-gray-500">
-                <p>What's your mission in this story?</p>
+                <p>What&apos;s your mission in this story?</p>
               </div>
             </div>
 
@@ -208,7 +209,7 @@ const InteractivePage: React.FC = () => {
                 Talk to Character
               </h3>
               <div className="text-sm text-gray-500">
-                <p>What's the forest's secret?</p>
+                <p>What&apos;s the forest&apos;s secret?</p>
               </div>
             </div>
 

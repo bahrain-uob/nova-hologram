@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { bookId: string } }
+  { params }: { params: Promise<{ bookId: string }> }
 ) {
   try {
-    const bookId = params.bookId;
+    const { bookId } = await params;
     console.log("Next.js API route: DELETE request for book:", bookId);
     
     // Make the request to AWS API
@@ -31,7 +31,7 @@ export async function DELETE(
     let data;
     try {
       data = JSON.parse(responseText);
-    } catch (e) {
+    } catch (_) {
       data = { message: "Book deleted successfully" };
     }
     

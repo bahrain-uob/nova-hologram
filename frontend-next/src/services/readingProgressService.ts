@@ -1,28 +1,5 @@
 import { authenticatedGet, authenticatedPost, authenticatedPut, API_URLS } from '@/utils/apiUtils';
-
-export interface ReadingSession {
-  sessionId: string;
-  userId: string;
-  bookId: string;
-  chapterId?: string;
-  startPage: number;
-  endPage?: number;
-  startTime: string;
-  endTime?: string;
-  duration?: number; // in minutes
-}
-
-export interface ReadingProgress {
-  progressId: string;
-  userId: string;
-  bookId: string;
-  currentPage: number;
-  totalPages: number;
-  percentage: number;
-  lastReadAt: string;
-  completedChapters: string[];
-  totalTimeSpent: number; // in minutes
-}
+import { ReadingSession, ReadingProgress } from '@/types';
 
 // Base API URL from apiUtils
 const API_URL = API_URLS.progress;

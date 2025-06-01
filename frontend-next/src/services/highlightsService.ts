@@ -1,16 +1,5 @@
 import { authenticatedGet, authenticatedPost, authenticatedPut, authenticatedDelete, API_URLS } from '@/utils/apiUtils';
-
-export interface Highlight {
-  id: string;
-  userId: string;
-  bookId: string;
-  chapterId?: string;
-  pageNumber: number;
-  text: string;
-  color: string;
-  note?: string;
-  createdAt: string;
-}
+import { Highlight } from '@/types';
 
 // Base API URL from apiUtils
 const API_URL = API_URLS.highlights;

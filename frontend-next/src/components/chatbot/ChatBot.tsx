@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/chat/expandable-chat";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
-import { sendMessageToLex, startLexConversation, LexMessage } from "@/services/lexService";
+import { sendMessageToLex, startLexConversation } from "@/services/lexService";
+import { LexMessage } from "@/types";
 
 // Define message type for UI
 type Message = {

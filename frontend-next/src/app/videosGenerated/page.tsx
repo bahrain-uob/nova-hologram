@@ -1,13 +1,12 @@
 "use client";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 
-
-
-export default function VideosGeneratedPage() {
+// Client component that uses useSearchParams
+function VideosGeneratedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bookId = searchParams.get("bookId");
@@ -236,5 +235,14 @@ export default function VideosGeneratedPage() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+// Wrapper component with Suspense boundary
+export default function VideosGeneratedPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VideosGeneratedContent />
+    </Suspense>
   );
 }

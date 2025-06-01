@@ -1,32 +1,5 @@
 import { authenticatedGet, authenticatedPost, API_URLS } from '@/utils/apiUtils';
-
-export interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-}
-
-export interface Quiz {
-  id: string;
-  bookId: string;
-  chapterId?: string;
-  title: string;
-  description: string;
-  questions: QuizQuestion[];
-  createdAt: string;
-  timeLimit?: number; // in minutes
-}
-
-export interface QuizSubmission {
-  quizId: string;
-  userId: string;
-  answers: { questionId: string; selectedOption: number }[];
-  score: number;
-  completedAt: string;
-  timeSpent: number; // in seconds
-}
+import { Quiz, QuizQuestion, QuizSubmission } from '@/types';
 
 // Base API URL from apiUtils
 const API_URL = API_URLS.quizzes;

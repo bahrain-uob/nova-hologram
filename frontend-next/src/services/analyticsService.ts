@@ -1,48 +1,14 @@
 import { authenticatedGet, API_URLS } from '@/utils/apiUtils';
-
-export interface ReadingStats {
-  totalBooksStarted: number;
-  totalBooksCompleted: number;
-  totalReadingTime: number; // in minutes
-  averageReadingSpeed: number; // pages per hour
-  totalPages: number;
-  lastReadDate: string;
-  readingStreak: number; // consecutive days
-}
-
-export interface QuizStats {
-  totalQuizzesTaken: number;
-  averageScore: number;
-  highestScore: number;
-  totalCorrectAnswers: number;
-  totalQuestions: number;
-}
-
-export interface VocabularyStats {
-  totalWordsLearned: number;
-  lastAddedDate: string;
-  mostCommonCategories: { category: string; count: number }[];
-}
-
-export interface BookProgress {
-  bookId: string;
-  title: string;
-  coverImage: string;
-  progress: number; // percentage
-  lastReadDate: string;
-  timeSpent: number; // in minutes
-  pagesRead: number;
-}
-
-export interface StudentAnalytics {
-  userId: string;
-  readingStats: ReadingStats;
-  quizStats: QuizStats;
-  vocabularyStats: VocabularyStats;
-  inProgressBooks: BookProgress[];
-  completedBooks: BookProgress[];
-  recommendedNextSteps: string[];
-}
+import {
+  ReadingStats,
+  QuizStats,
+  VocabularyStats,
+  AnalyticsBookProgress,
+  StudentAnalytics,
+  ReadingProgressHistoryItem,
+  QuizPerformanceHistoryItem,
+  BookAnalytics
+} from '@/types';
 
 // Base API URL from apiUtils
 const API_URL = API_URLS.analytics;
@@ -63,9 +29,9 @@ export async function fetchUserAnalytics(): Promise<StudentAnalytics | null> {
  * Fetch reading progress history (for charts/graphs)
  * @param timeframe 'week', 'month', 'year', or 'all'
  */
-export async function fetchReadingProgressHistory(timeframe: 'week' | 'month' | 'year' | 'all' = 'month'): Promise<{date: string; pagesRead: number; timeSpent: number}[]> {
+export async function fetchReadingProgressHistory(timeframe: 'week' | 'month' | 'year' | 'all' = 'month'): Promise<ReadingProgressHistoryItem[]> {
   try {
-    return await authenticatedGet<{date: string; pagesRead: number; timeSpent: number}[]>(
+    return await authenticatedGet<ReadingProgressHistoryItem[]>(
       `${API_URL}/reading-history?timeframe=${timeframe}`
     );
   } catch (error) {
@@ -78,9 +44,9 @@ export async function fetchReadingProgressHistory(timeframe: 'week' | 'month' | 
  * Fetch quiz performance history (for charts/graphs)
  * @param timeframe 'week', 'month', 'year', or 'all'
  */
-export async function fetchQuizPerformanceHistory(timeframe: 'week' | 'month' | 'year' | 'all' = 'month'): Promise<{date: string; score: number; quizId: string; quizTitle: string}[]> {
+export async function fetchQuizPerformanceHistory(timeframe: 'week' | 'month' | 'year' | 'all' = 'month'): Promise<QuizPerformanceHistoryItem[]> {
   try {
-    return await authenticatedGet<{date: string; score: number; quizId: string; quizTitle: string}[]>(
+    return await authenticatedGet<QuizPerformanceHistoryItem[]>(
       `${API_URL}/quiz-history?timeframe=${timeframe}`
     );
   } catch (error) {
@@ -93,23 +59,9 @@ export async function fetchQuizPerformanceHistory(timeframe: 'week' | 'month' | 
  * Fetch book-specific analytics
  * @param bookId The ID of the book to get analytics for
  */
-export async function fetchBookAnalytics(bookId: string): Promise<{
-  progress: number;
-  timeSpent: number;
-  pagesRead: number;
-  readingSessions: number;
-  quizScores: {quizId: string; title: string; score: number}[];
-  vocabulary: {count: number; lastAdded: string};
-}> {
+export async function fetchBookAnalytics(bookId: string): Promise<BookAnalytics> {
   try {
-    return await authenticatedGet<{
-      progress: number;
-      timeSpent: number;
-      pagesRead: number;
-      readingSessions: number;
-      quizScores: {quizId: string; title: string; score: number}[];
-      vocabulary: {count: number; lastAdded: string};
-    }>(`${API_URL}/book/${bookId}`);
+    return await authenticatedGet<BookAnalytics>(`${API_URL}/book/${bookId}`);
   } catch (error) {
     console.error('Failed to fetch book analytics:', error);
     return {
@@ -119,6 +71,6 @@ export async function fetchBookAnalytics(bookId: string): Promise<{
       readingSessions: 0,
       quizScores: [],
       vocabulary: {count: 0, lastAdded: new Date().toISOString()}
-    };
+    } as BookAnalytics;
   }
 }

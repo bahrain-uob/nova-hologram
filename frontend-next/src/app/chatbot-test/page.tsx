@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChatbotButton } from "@/components/chatbot/ChatbotButton";
+import { ChatbotButton } from "@/components/Chatbot/ChatbotButton";
 
 export default function ChatbotTestPage() {
   return (

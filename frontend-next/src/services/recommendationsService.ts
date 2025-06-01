@@ -1,24 +1,5 @@
 import { authenticatedGet, authenticatedPost, API_URLS } from '@/utils/apiUtils';
-
-export interface BookRecommendation {
-  id: string;
-  bookId: string;
-  title: string;
-  author: string;
-  coverImage: string;
-  genre: string;
-  confidence: number;
-  rationale?: string;
-  rating?: number;
-  description?: string;
-}
-
-export interface UserPreferences {
-  favoriteGenres: string[];
-  readingLevel: string;
-  topics: string[];
-  authors: string[];
-}
+import { BookRecommendation, UserPreferences } from '@/types';
 
 // Base API URL from apiUtils
 const API_URL = API_URLS.recommendations;

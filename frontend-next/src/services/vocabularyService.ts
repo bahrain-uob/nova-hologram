@@ -1,15 +1,5 @@
 import { authenticatedGet, authenticatedPost, authenticatedPut, authenticatedDelete, API_URLS } from '@/utils/apiUtils';
-
-export interface VocabularyItem {
-  id: string;
-  userId: string;
-  bookId: string;
-  word: string;
-  definition: string;
-  context: string;
-  createdAt: string;
-  notes?: string;
-}
+import { VocabularyItem } from '@/types';
 
 // Base API URL from apiUtils
 const API_URL = API_URLS.vocabulary;

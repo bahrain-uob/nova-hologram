@@ -1,29 +1,8 @@
 import { authenticatedGet, authenticatedPost, API_URLS } from '@/utils/apiUtils';
+import { VideoStatus, BookVideoStatus } from '@/types';
 
 // Define the API URL for video generation
 const API_URL = API_URLS.video;
-
-export interface VideoStatus {
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  url?: string;
-  error?: string;
-  progress?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface BookVideoStatus {
-  book: {
-    trailer_status: 'pending' | 'processing' | 'completed' | 'failed';
-    trailer?: string;
-  };
-  chapters: {
-    chapter_id: string;
-    title: string;
-    trailer_status: 'pending' | 'processing' | 'completed' | 'failed';
-    trailer?: string;
-  }[];
-}
 
 /**
  * Generate a video for a book
