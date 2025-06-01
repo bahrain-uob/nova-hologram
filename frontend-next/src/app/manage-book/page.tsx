@@ -33,7 +33,7 @@ interface BooksResponse {
 
 const fetchBooks = async (): Promise<BooksResponse> => {
   try {
-    const response = await fetch("/api/books");
+    const response = await fetch("https://a31g9ushy4.execute-api.us-east-1.amazonaws.com/books");
 
     if (!response.ok) {
       return { error: `API error: ${response.status}` };
@@ -45,12 +45,19 @@ const fetchBooks = async (): Promise<BooksResponse> => {
       return { error: data.error };
     }
 
-    return { books: Array.isArray(data) ? data : [] };
+    // ✅ Make sure it's an array
+    if (!Array.isArray(data)) {
+      return { error: "Invalid data format" };
+    }
+
+    return { books: data };
   } catch (error) {
     console.error("Error fetching books:", error);
     return { error: "Failed to fetch books" };
   }
 };
+
+
 
 const ManageBooks: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -67,6 +74,7 @@ const ManageBooks: React.FC = () => {
       try {
         setLoading(true);
         const response = await fetchBooks();
+            console.log("📚 Books from API:", response.books);
 
         if (response.error) {
           setError(response.error);
@@ -88,55 +96,41 @@ const ManageBooks: React.FC = () => {
 
   const handleEditBook = (bookId: string) => {
     // Navigate to the edit book page with the book ID
-    router.push(`/bookdetail-librarian/${bookId}`);
+    router.push(`/bookdetail-librarian?bookId=${bookId}`);
   };
 
   const handleDeleteBook = async (bookId: string) => {
-    if (window.confirm("Are you sure you want to delete this book?")) {
-      try {
-        setLoading(true);
-        console.log(`Deleting book: ${bookId}`);
-        
-        // Include user ID in the request body
-        const response = await fetch(`/api/books/${bookId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: "c4180458-f091-70b8-58bd-9fc233dcf8bb" // Add the user ID from your curl command
-          })
-        });
-        
-        console.log(`Delete response status: ${response.status}`);
-        const responseText = await response.text();
-        console.log(`Delete response: ${responseText}`);
-        
-        let result;
-        try {
-          result = JSON.parse(responseText);
-        } catch (e) {
-          console.log("Response is not valid JSON");
-          result = { message: responseText };
-        }
-        
-        if (!response.ok) {
-          throw new Error(result.error || `Failed to delete book: ${response.status}`);
-        }
-        
-        // Remove the deleted book from state
-        setBooks(prevBooks => prevBooks.filter(book => book.book_id !== bookId));
-        
-        // Show success message
-        alert("Book deleted successfully");
-      } catch (error) {
-        console.error("Error deleting book:", error);
-        alert(error instanceof Error ? error.message : "Failed to delete book");
-      } finally {
-        setLoading(false);
+    const confirmed = window.confirm("Are you sure you want to delete this book?");
+    if (!confirmed || !bookId) return;
+  
+    try {
+      setLoading(true);
+  
+      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
+        method: "POST", // REST API expects POST for deletion
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookId }),
+      });
+  
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData?.error || "Unknown error");
       }
+  
+      // Remove the deleted book from UI
+      setBooks(prevBooks => prevBooks.filter(book => book.book_id !== bookId));
+  
+      alert("Book deleted successfully!");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete book. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
+  
 
   const filteredBooks = Array.isArray(books)
     ? books.filter((book) => {
@@ -262,7 +256,11 @@ const ManageBooks: React.FC = () => {
               <div className="flex flex-col justify-between ml-2">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">{book.book_title}</h3>
-                  <p className="text-sm text-gray-500">{book.authors ? book.authors.join(', ') : 'Unknown Author'}</p>
+                  <p className="text-sm text-gray-500">
+  {Array.isArray(book.authors)
+    ? book.authors.join(', ')
+    : book.authors || 'Unknown Author'}
+</p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {book.genre && book.genre.map((g, index) => (
                       <p key={index} className="text-xs bg-gray-200 text-gray-700 font-medium px-2 py-0.5 rounded">
@@ -288,6 +286,7 @@ const ManageBooks: React.FC = () => {
                   >
                     <DeleteIcon className="w-5 h-5" />
                   </button>
+
                 </div>
               </div>
             </div>

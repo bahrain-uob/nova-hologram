@@ -21,7 +21,7 @@ export default function VideosGeneratedPage() {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `https://1rvx3jdou7.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
+          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
         );
         const data = await res.json();
         setBookData(data);
@@ -195,7 +195,7 @@ export default function VideosGeneratedPage() {
     if (!confirmed || !bookId) return;
 
     try {
-      const res = await fetch("https://xx1u90jlod.execute-api.us-east-1.amazonaws.com/delete-book", {
+      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookId }),
