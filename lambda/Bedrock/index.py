@@ -17,10 +17,22 @@ book_table = os.environ["BOOKS_TABLE"]
 chapter_table = os.environ["CHAPTERS_TABLE"]
 
 def get_output_uri(book_id):
-    # Ensure trailing slash and attach bookId folder
     if not base_output_uri.endswith("/"):
         return f"{base_output_uri}/{book_id}/"
     return f"{base_output_uri}{book_id}/"
+
+def flatten_text(text):
+    flat = text.replace('\n', ' ')
+    flat = flat.replace('\r', ' ')
+    flat = flat.replace('"', '')
+    flat = flat.replace('**', '')
+    flat = flat.replace('###', '')
+    flat = flat.replace('*', '')
+    flat = flat.replace('#', '')
+    flat = flat.replace('$', '')
+    flat = flat.replace('@', '')
+    flat = ' '.join(flat.split())
+    return flat.strip()
 
 def start_video_job(prompt, s3_output_uri):
     model_id = "amazon.nova-reel-v1:1"
@@ -68,7 +80,7 @@ def lambda_handler(event, context):
         summary_text = body["summaryText"]
         is_book_summary = body.get("isBookSummary", False)
 
-        # Fetch user ID for this book
+        # Fetch user ID
         book_response = dynamodb.query(
             TableName=book_table,
             IndexName="GSI_by_book_id",
@@ -78,13 +90,19 @@ def lambda_handler(event, context):
         item = book_response["Items"][0]
         user_id = item["user_id"]["S"]
 
+        # Clean and trim script text
+        cleaned_script = flatten_text(script_text)
+        if len(cleaned_script) > 4000:
+            print(f"⚠️ Script is too long ({len(cleaned_script)} characters). Trimming to 4000.")
+            cleaned_script = cleaned_script[:4000]
+
         final_prompt = f"""
 Generate a 1-minute cinematic educational video using the following scene descriptions.
 
 Each scene has already been described in rich visual detail. Use each one as a separate static shot. Do not add extra movement or transitions.
 
 Scene descriptions:
-{script_text}
+{cleaned_script}
 """.strip()
 
         print("——— Nova Reel Prompt Submission ———")
@@ -93,7 +111,7 @@ Scene descriptions:
         print("Prompt:\n", final_prompt)
         print("———————————————————————————————")
 
-        # Mark DynamoDB status as "processing"
+        # Mark as "processing"
         if is_book_summary:
             key = {"user_id": {"S": user_id}, "book_id": {"S": book_id}}
             dynamodb.update_item(
@@ -113,12 +131,11 @@ Scene descriptions:
             )
 
         try:
-            # Generate video in the bookId folder
             s3_output_uri = get_output_uri(book_id)
             invocation_arn = start_video_job(final_prompt, s3_output_uri)
             video_url = poll_video_job(invocation_arn)
 
-            # Update status + video path
+            # Update video info
             if is_book_summary:
                 dynamodb.update_item(
                     TableName=book_table,
@@ -148,16 +165,16 @@ Scene descriptions:
                 MessageBody=json.dumps({
                     "bookId": book_id,
                     "chapterNo": chapter_no,
-                    "script": script_text,
+                    "script": cleaned_script,
                     "summary": summary_text,
                     "videoS3Path": video_url,
                     "isBookSummary": is_book_summary
                 })
             )
-            print(" Sent to SSML Queue")
+            print("✅ Sent to SSML Queue")
 
         except Exception as e:
-            print(f" Video generation failed: {str(e)}")
+            print(f"❌ Video generation failed: {str(e)}")
             fail_status = {"S": "failed"}
             dynamodb.update_item(
                 TableName=book_table if is_book_summary else chapter_table,
