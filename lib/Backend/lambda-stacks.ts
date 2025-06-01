@@ -29,8 +29,8 @@ export class lambdastack extends cdk.Stack {
     public readonly getUploadUrlsLambda: lambda.Function;
     public readonly getBookLambda: lambda.Function;
     public readonly getAllBooksLambda: lambda.Function;
-    public readonly deleteBookLambda: lambda.Function;
-    public readonly updateBookLambda: lambda.Function;
+    public readonly deleteBookLambdav2: lambda.Function;
+    public readonly updateBookLambdav2: lambda.Function;
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
     // Extract synthesisMode from props if present
@@ -723,7 +723,7 @@ dbStack.book.grantReadData(getAllBooksLambda);
 
 this.getAllBooksLambda = getAllBooksLambda;
 
-this.deleteBookLambda = new lambda.Function(this, "DeleteBookLambda", {
+this.deleteBookLambdav2 = new lambda.Function(this, "DeleteBookLambdav2", {
   runtime: lambda.Runtime.NODEJS_18_X,
   handler: "index.handler",
   code: lambda.Code.fromAsset("lambda/deleteBook"),
@@ -732,7 +732,7 @@ this.deleteBookLambda = new lambda.Function(this, "DeleteBookLambda", {
   },
 });
 
-this.updateBookLambda = new lambda.Function(this, "UpdateBookLambda", {
+this.updateBookLambdav2 = new lambda.Function(this, "UpdateBookLambdav2", {
   runtime: lambda.Runtime.NODEJS_18_X,
   handler: "index.handler",
   code: lambda.Code.fromAsset("lambda/updateBook"),
@@ -740,7 +740,7 @@ this.updateBookLambda = new lambda.Function(this, "UpdateBookLambda", {
     BOOK_TABLE_NAME: dbStack.book.tableName,
   },
 });
-this.deleteBookLambda.addToRolePolicy(new iam.PolicyStatement({
+this.deleteBookLambdav2.addToRolePolicy(new iam.PolicyStatement({
   actions: ["dynamodb:*"],
   resources: ["arn:aws:dynamodb:us-east-1:672461264983:table/DBStack-bookF0785129-1B9WR0J1EB4DN"]
 }));
@@ -749,8 +749,8 @@ this.deleteBookLambda.addToRolePolicy(new iam.PolicyStatement({
 
 
 // Grant permissions to access the DynamoDB table
-dbStack.book.grantFullAccess(this.deleteBookLambda);
-dbStack.book.grantReadWriteData(this.updateBookLambda);
+dbStack.book.grantFullAccess(this.deleteBookLambdav2);
+dbStack.book.grantReadWriteData(this.updateBookLambdav2);
 
   }
   

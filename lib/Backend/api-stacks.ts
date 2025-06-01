@@ -345,7 +345,7 @@ const bookByIdResource = getAllBooksResource.addResource("{bookId}");
 // Add DELETE method for deleting a book
 bookByIdResource.addMethod(
   "DELETE",
-  new apigateway.LambdaIntegration(lambdaStack.deleteBookLambda, {
+  new apigateway.LambdaIntegration(lambdaStack.deleteBookLambdav2, {
 requestTemplates: {
   'application/json': JSON.stringify({
     bookId: "$input.params('bookId')",
@@ -378,7 +378,7 @@ requestTemplates: {
 // Add PUT method for updating a book
 bookByIdResource.addMethod(
   "PUT",
-  new apigateway.LambdaIntegration(lambdaStack.updateBookLambda),
+  new apigateway.LambdaIntegration(lambdaStack.updateBookLambdav2),
   {
     requestParameters: {
       "method.request.path.bookId": true,
