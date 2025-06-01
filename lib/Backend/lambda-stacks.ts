@@ -28,6 +28,14 @@ export class lambdastack extends cdk.Stack {
     public readonly bookHandlerLambda: lambda.Function;
     public readonly getUploadUrlsLambda: lambda.Function;
     public readonly getBookLambda: lambda.Function;
+    
+    // Additional Lambda functions for API integration
+    public readonly bookRecommendationLambda: lambda.Function;
+    public readonly readingProgressTrackerLambda: lambda.Function;
+    public readonly userHighlightsLambda: lambda.Function;
+    public readonly vocabularyManagerLambda: lambda.Function;
+    public readonly quizAssessmentLambda: lambda.Function;
+    public readonly studentAnalyticsLambda: lambda.Function;
 
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
@@ -706,6 +714,104 @@ new cdk.CfnOutput(this, "PollyQueueURL", {
           code: lambda.Code.fromAsset("lambda/getBookInfo"), 
           });
           this.getBookInfoLambda = getBookInfoLambda;
+          
+          // Book Recommendation Lambda
+          const bookRecommendationLambda = new lambda.Function(this, "BookRecommendationLambda", {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: "index.handler",
+            code: lambda.Code.fromAsset("lambda/BookRecommendation"),
+            environment: {
+              DB_TABLE: dbStack.book.tableName,
+              USER_TABLE: dbStack.user.tableName,
+              COGNITO_USER_POOL_ID: "me-south-1_X7adr285t", // From memory
+            },
+          });
+          this.bookRecommendationLambda = bookRecommendationLambda;
+          
+          // Grant permissions
+          dbStack.book.grantReadWriteData(bookRecommendationLambda);
+          dbStack.user.grantReadData(bookRecommendationLambda);
+          
+          // Reading Progress Tracker Lambda
+          const readingProgressTrackerLambda = new lambda.Function(this, "ReadingProgressTrackerLambda", {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: "index.handler",
+            code: lambda.Code.fromAsset("lambda/ReadingProgressTracker"),
+            environment: {
+              PROGRESS_TABLE: dbStack.reading_progress.tableName,
+              USER_TABLE: dbStack.user.tableName,
+              COGNITO_USER_POOL_ID: "me-south-1_X7adr285t", // From memory
+            },
+          });
+          this.readingProgressTrackerLambda = readingProgressTrackerLambda;
+          
+          // Grant permissions
+          dbStack.reading_progress.grantReadWriteData(readingProgressTrackerLambda);
+          dbStack.user.grantReadData(readingProgressTrackerLambda);
+          
+          // User Highlights Lambda
+          const userHighlightsLambda = new lambda.Function(this, "UserHighlightsLambda", {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: "index.handler",
+            code: lambda.Code.fromAsset("lambda/UserHighlights"),
+            environment: {
+              HIGHLIGHTS_TABLE: dbStack.highlights.tableName,
+              USER_TABLE: dbStack.user.tableName,
+              COGNITO_USER_POOL_ID: "me-south-1_X7adr285t", // From memory
+            },
+          });
+          this.userHighlightsLambda = userHighlightsLambda;
+          
+          // Grant permissions
+          dbStack.highlights.grantReadWriteData(userHighlightsLambda);
+          dbStack.user.grantReadData(userHighlightsLambda);
+          
+          // Vocabulary Manager Lambda
+          const vocabularyManagerLambda = new lambda.Function(this, "VocabularyManagerLambda", {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: "index.handler",
+            code: lambda.Code.fromAsset("lambda/VocabularyManager"),
+            environment: {
+              USER_TABLE: dbStack.user.tableName,
+              COGNITO_USER_POOL_ID: "me-south-1_X7adr285t", // From memory
+            },
+          });
+          this.vocabularyManagerLambda = vocabularyManagerLambda;
+          
+          // Grant permissions
+          dbStack.user.grantReadData(vocabularyManagerLambda);
+          
+          // Quiz Assessment Lambda
+          const quizAssessmentLambda = new lambda.Function(this, "QuizAssessmentLambda", {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: "index.handler",
+            code: lambda.Code.fromAsset("lambda/QuizAssessment"),
+            environment: {
+              USER_TABLE: dbStack.user.tableName,
+              COGNITO_USER_POOL_ID: "me-south-1_X7adr285t", // From memory
+            },
+          });
+          this.quizAssessmentLambda = quizAssessmentLambda;
+          
+          // Grant permissions
+          dbStack.user.grantReadData(quizAssessmentLambda);
+          
+          // Student Analytics Lambda
+          const studentAnalyticsLambda = new lambda.Function(this, "StudentAnalyticsLambda", {
+            runtime: lambda.Runtime.NODEJS_18_X,
+            handler: "index.handler",
+            code: lambda.Code.fromAsset("lambda/StudentAnalytics"),
+            environment: {
+              PROGRESS_TABLE: dbStack.reading_progress.tableName,
+              USER_TABLE: dbStack.user.tableName,
+              COGNITO_USER_POOL_ID: "me-south-1_X7adr285t", // From memory
+            },
+          });
+          this.studentAnalyticsLambda = studentAnalyticsLambda;
+          
+          // Grant permissions
+          dbStack.reading_progress.grantReadData(studentAnalyticsLambda);
+          dbStack.user.grantReadData(studentAnalyticsLambda);
   }
   
 }

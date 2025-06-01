@@ -12,23 +12,15 @@ import {
 } from "@/components/ui/chat/expandable-chat";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
+import { sendMessageToLex, startLexConversation, LexMessage } from "@/services/lexService";
 
-// Define message type
+// Define message type for UI
 type Message = {
   id: string;
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
 };
-
-// Dummy bot responses
-const dummyResponses = [
-  "I found several books that might interest you based on your reading history.",
-  "Would you like me to recommend books similar to 'The Red Pathways'?",
-  "I can help you find books in specific genres. What are you interested in?",
-  "Based on your preferences, I think you might enjoy 'The Silent Echo' by Maria Johnson.",
-  "I've noticed you enjoy mystery novels. Have you tried the latest release by James Patterson?",
-];
 
 export function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
@@ -41,7 +33,35 @@ export function ChatBot() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Initialize conversation with Lex when component mounts
+  useEffect(() => {
+    const initializeConversation = async () => {
+      try {
+        const conversation = await startLexConversation();
+        setSessionId(conversation.sessionId);
+        
+        // Add the welcome message from Lex if it's different from our default
+        if (conversation.messages.length > 0 && 
+            conversation.messages[0].content !== messages[0].content) {
+          setMessages([
+            {
+              id: '1',
+              content: conversation.messages[0].content,
+              sender: 'bot',
+              timestamp: new Date(conversation.messages[0].timestamp),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to initialize Lex conversation:', error);
+      }
+    };
+    
+    initializeConversation();
+  }, []);
 
   // Focus input when chat opens
   useEffect(() => {
@@ -67,22 +87,42 @@ export function ChatBot() {
     setInputValue('');
     setIsLoading(true);
     
-    // Simulate API delay
-    setTimeout(() => {
-      // Get random response
-      const randomResponse = dummyResponses[Math.floor(Math.random() * dummyResponses.length)];
+    try {
+      // Send message to Lex
+      const { response, sessionId: newSessionId } = await sendMessageToLex(
+        inputValue,
+        sessionId
+      );
+      
+      // Update session ID if it changed
+      if (newSessionId !== sessionId) {
+        setSessionId(newSessionId);
+      }
       
       // Add bot response
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: randomResponse,
+        content: response,
         sender: 'bot',
         timestamp: new Date(),
       };
       
       setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Failed to send message to Lex:', error);
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm sorry, I'm having trouble connecting right now. Please try again later.",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   // Handle input changes

@@ -5,6 +5,7 @@ import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { DBStack } from "../DB/db-stack";
 import { lambdastack } from "./lambda-stacks";
 import { StorageStack } from "../Storage/storage-stack";
+import { EventNotificationsStack } from "../sharedresources/EventNotificationsStack";
 
 // Import dotenv to load environment variables
 import * as dotenv from "dotenv";
@@ -18,7 +19,8 @@ export class APIStack extends cdk.Stack {
     dbStack: DBStack,
     lambdaStack: lambdastack,
     storageStack: StorageStack,
-    props?: cdk.StackProps 
+    eventNotificationsStack?: EventNotificationsStack,
+    props?: cdk.StackProps
   ) {
     super(scope, id, props);
 
@@ -305,6 +307,738 @@ getBookByIdResource.addMethod(
     new cdk.CfnOutput(this, "GetBookByIdAPIURL", {
       value: `${librarianApi.url}get-book/{bookId}`,
     });
-    
+
+    // Create API resources for notifications and classroom management
+    // These endpoints are accessible to both readers and librarians
+
+    // Notifications API
+    const notificationsResource = readerApi.root.addResource("notifications");
+
+    // GET method to list notifications
+    notificationsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.notificationManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to create notifications
+    notificationsResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.notificationManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // PUT method to update notifications (mark as read)
+    notificationsResource.addMethod(
+      "PUT",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.notificationManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // DELETE method to delete notifications
+    notificationsResource.addMethod(
+      "DELETE",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.notificationManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    notificationsResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Classroom API
+    const classroomsResource = readerApi.root.addResource("classrooms");
+
+    // GET method to list classrooms
+    classroomsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.classroomManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to create classrooms
+    classroomsResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.classroomManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // PUT method to update classrooms
+    classroomsResource.addMethod(
+      "PUT",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.classroomManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // DELETE method to delete classrooms
+    classroomsResource.addMethod(
+      "DELETE",
+      new apigateway.LambdaIntegration(eventNotificationsStack!.classroomManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    new cdk.CfnOutput(this, "ClassroomsAPIURL", {
+      value: `${readerApi.url}classrooms`,
+    });
+
+    // Create API resources for book recommendations
+    const recommendationsResource = readerApi.root.addResource("recommendations");
+
+    // GET method to get personalized recommendations
+    recommendationsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(lambdaStack.bookRecommendationLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to update user preferences for recommendations
+    recommendationsResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaStack.bookRecommendationLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    recommendationsResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Create API resources for reading progress tracking
+    const progressResource = readerApi.root.addResource("progress");
+
+    // GET method to list reading progress
+    progressResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(lambdaStack.readingProgressTrackerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to create/update reading progress
+    progressResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaStack.readingProgressTrackerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    progressResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Create API resources for user highlights
+    const highlightsResource = readerApi.root.addResource("highlights");
+
+    // GET method to list highlights
+    highlightsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(lambdaStack.userHighlightsLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to create highlights
+    highlightsResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaStack.userHighlightsLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // PUT method to update highlights
+    highlightsResource.addMethod(
+      "PUT",
+      new apigateway.LambdaIntegration(lambdaStack.userHighlightsLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // DELETE method to delete highlights
+    highlightsResource.addMethod(
+      "DELETE",
+      new apigateway.LambdaIntegration(lambdaStack.userHighlightsLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    highlightsResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Create API resources for vocabulary management
+    const vocabularyResource = readerApi.root.addResource("vocabulary");
+
+    // GET method to list vocabulary items
+    vocabularyResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(lambdaStack.vocabularyManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to add vocabulary items
+    vocabularyResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaStack.vocabularyManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // PUT method to update vocabulary items
+    vocabularyResource.addMethod(
+      "PUT",
+      new apigateway.LambdaIntegration(lambdaStack.vocabularyManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // DELETE method to delete vocabulary items
+    vocabularyResource.addMethod(
+      "DELETE",
+      new apigateway.LambdaIntegration(lambdaStack.vocabularyManagerLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    vocabularyResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Create API resources for quiz assessments
+    const quizResource = readerApi.root.addResource("quizzes");
+
+    // GET method to list quizzes
+    quizResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(lambdaStack.quizAssessmentLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // POST method to create/submit quizzes
+    quizResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaStack.quizAssessmentLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    quizResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,POST,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Create API resources for student analytics
+    const analyticsResource = readerApi.root.addResource("analytics");
+
+    // GET method to get student analytics
+    analyticsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(lambdaStack.studentAnalyticsLambda, {
+        proxy: true,
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS
+    analyticsResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Add API Gateway outputs for new endpoints
+    new cdk.CfnOutput(this, "NotificationsAPIURL", {
+      value: `${readerApi.url}notifications`,
+    });
+
+    new cdk.CfnOutput(this, "RecommendationsAPIURL", {
+      value: `${readerApi.url}recommendations`,
+    });
+
+    new cdk.CfnOutput(this, "ReadingProgressAPIURL", {
+      value: `${readerApi.url}progress`,
+    });
+
+    new cdk.CfnOutput(this, "UserHighlightsAPIURL", {
+      value: `${readerApi.url}highlights`,
+    });
+
+    new cdk.CfnOutput(this, "VocabularyAPIURL", {
+      value: `${readerApi.url}vocabulary`,
+    });
+
+    new cdk.CfnOutput(this, "QuizzesAPIURL", {
+      value: `${readerApi.url}quizzes`,
+    });
+
+    new cdk.CfnOutput(this, "AnalyticsAPIURL", {
+      value: `${readerApi.url}analytics`,
+    });
   }
 }

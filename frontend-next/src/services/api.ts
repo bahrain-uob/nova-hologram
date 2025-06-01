@@ -1,5 +1,12 @@
-// This is a mock API service for demonstration purposes
+// API service for the frontend
+// This file provides backward compatibility with existing components
+// while leveraging our new API services
 
+import * as BooksService from './booksService';
+import * as ReadingProgressService from './readingProgressService';
+import * as RecommendationsService from './recommendationsService';
+
+// Re-export types for backward compatibility
 export interface Book {
   id: string;
   title: string;
@@ -20,8 +27,10 @@ export interface InProgressBook {
 export interface Favorite {
   id: string;
   title: string;
-  quote: string;
-  bookId: string;
+  author?: string;
+  coverImage?: string;
+  quote?: string;
+  bookId?: string;
 }
 
 // Mock data
@@ -120,60 +129,152 @@ const mockFavorites: Favorite[] = [
 
 // API functions
 export async function fetchTopPicks(): Promise<Book[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  // Return mock data
-  return mockBooks;
+  try {
+    // Use our real API service
+    const books = await RecommendationsService.fetchTrendingBooks();
+    
+    // Map to the expected format if needed
+    return books.map(book => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      coverImage: book.coverImage,
+      genre: Array.isArray(book.genre) ? book.genre[0] : book.genre,
+      rating: book.rating,
+      description: book.description
+    }));
+  } catch (error) {
+    console.error('Error fetching top picks:', error);
+    // Fallback to empty array
+    return [];
+  }
 }
 
 export async function fetchLibrarianPicks(): Promise<Book[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Return mock data (a subset of mockBooks for demonstration)
-  return mockBooks.slice(0, 3);
+  try {
+    // Use our real API service
+    const books = await RecommendationsService.fetchCuratedRecommendations();
+    
+    // Map to the expected format if needed
+    return books.map(book => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      coverImage: book.coverImage,
+      genre: Array.isArray(book.genre) ? book.genre[0] : book.genre,
+      rating: book.rating,
+      description: book.description
+    }));
+  } catch (error) {
+    console.error('Error fetching librarian picks:', error);
+    // Fallback to empty array
+    return [];
+  }
 }
 
 export async function fetchBecauseYouLiked(bookId: string): Promise<Book[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 700));
-
-  // Find the book that was liked
-  const likedBook = mockBooks.find((book) => book.id === bookId);
-
-  if (!likedBook) {
-    return []; // Return empty array if book not found
+  try {
+    // Use our real API service
+    const books = await BooksService.fetchSimilarBooks(bookId);
+    
+    // Map to the expected format if needed
+    return books.map(book => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      coverImage: book.coverImage,
+      genre: Array.isArray(book.genre) ? book.genre[0] : book.genre,
+      rating: book.rating,
+      description: book.summary
+    }));
+  } catch (error) {
+    console.error('Error fetching similar books:', error);
+    // Fallback to empty array
+    return [];
   }
-
-  // Return books with the same genre (excluding the liked book itself)
-  return mockBooks.filter(
-    (book) => book.genre === likedBook.genre && book.id !== likedBook.id
-  );
 }
 
 export async function fetchInProgress(): Promise<InProgressBook[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  // Return mock data
-  return mockInProgressBooks;
+  try {
+    // Use our real API service
+    const booksInProgress = await ReadingProgressService.getAllBooksInProgress();
+    
+    // Map to the expected format
+    return booksInProgress.map(book => ({
+      id: book.bookId,
+      title: book.bookId, // We would need to fetch book details to get the title
+      coverImage: '', // We would need to fetch book details to get the cover image
+      progress: book.percentage
+    }));
+    
+    // In a real implementation, we would fetch the book details for each book in progress
+    // to get the title and cover image
+  } catch (error) {
+    console.error('Error fetching in-progress books:', error);
+    // Fallback to empty array
+    return [];
+  }
 }
 
 export async function fetchFavorites(): Promise<Favorite[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 700));
-
-  // Return mock data
-  return mockFavorites;
+  try {
+    // Use our real API service
+    const readingLists = await BooksService.fetchReadingLists();
+    
+    // Find the favorites list, or use the first list
+    const favoritesList = readingLists.find(list => list.name.toLowerCase() === 'favorites') || readingLists[0];
+    
+    if (!favoritesList) {
+      return [];
+    }
+    
+    // We would need to fetch book details for each book in the list
+    // This is a simplified implementation
+    const favorites: Favorite[] = [];
+    
+    for (const bookId of favoritesList.books) {
+      const book = await BooksService.fetchBookById(bookId);
+      if (book) {
+        favorites.push({
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          coverImage: book.coverImage
+        });
+      }
+    }
+    
+    return favorites;
+  } catch (error) {
+    console.error('Error fetching favorites:', error);
+    // Fallback to empty array
+    return [];
+  }
 }
 
 export async function addToReadingList(
   bookId: string
 ): Promise<{ success: boolean }> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  // Simulate success
-  return { success: true };
+  try {
+    // Get the user's reading lists
+    const readingLists = await BooksService.fetchReadingLists();
+    
+    // Find the default reading list, or create one if it doesn't exist
+    let defaultList = readingLists.find(list => list.name === 'My Reading List');
+    
+    if (!defaultList) {
+      defaultList = await BooksService.createReadingList('My Reading List');
+      if (!defaultList) {
+        throw new Error('Failed to create reading list');
+      }
+    }
+    
+    // Add the book to the reading list
+    const success = await BooksService.addBookToReadingList(defaultList.id, bookId);
+    
+    return { success };
+  } catch (error) {
+    console.error('Error adding book to reading list:', error);
+    return { success: false };
+  }
 }
