@@ -82,7 +82,7 @@ const ManageBooks: React.FC = () => {
   const router = useRouter();
 
   // Extract unique genres and reading levels from books for filters
-  const uniqueGenres = [...new Set(books.flatMap(book => book.genres || []))];
+  const uniqueGenres = [...new Set(books.flatMap(book => book.genre || []))];
   const uniqueReadingLevels = [...new Set(books.map(book => book.reading_level).filter(Boolean))];
   const uniqueYears = [...new Set(books.map(book => book.publication_year).filter(Boolean))];
 
