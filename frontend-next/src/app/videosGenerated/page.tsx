@@ -21,7 +21,7 @@ export default function VideosGeneratedPage() {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `https://1rvx3jdou7.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
+          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
         );
         const data = await res.json();
         setBookData(data);
@@ -137,14 +137,16 @@ export default function VideosGeneratedPage() {
               {loading ? (
                 <p className="text-sm px-5 py-5">Loading chapters...</p>
               ) : bookData?.chapters?.length ? (
-                bookData.chapters.map((chapter, index) => {
+                [...bookData.chapters]
+                .sort((a, b) => a.chapter_no - b.chapter_no)
+                .map((chapter, index) => {
                   const trailerStatus = chapter.trailer_status;
                   return (
                     <div
                       key={chapter.chapter_id}
                       className="px-5 mt-12 pb-8 space-y-4"
                     >
-                      <h3 className="text-base font-medium">Ch{index + 1} Summary</h3>
+                      <h3 className="text-base font-medium">Ch{chapter.chapter_no} Summary</h3>
 
                       <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm">
                         {chapter.summary?.length > 0
@@ -152,7 +154,7 @@ export default function VideosGeneratedPage() {
                           : "Generating summary..."}
                       </div>
 
-                      <h3 className="text-base font-medium pt-4">Ch{index + 1} Trailer</h3>
+                      <h3 className="text-base font-medium pt-4">Ch{chapter.chapter_no} Trailer</h3>
 
                       <div className="flex items-center justify-center">
                       {trailerStatus === "completed" ? (
@@ -193,7 +195,7 @@ export default function VideosGeneratedPage() {
     if (!confirmed || !bookId) return;
 
     try {
-      const res = await fetch("https://xx1u90jlod.execute-api.us-east-1.amazonaws.com/delete-book", {
+      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookId }),

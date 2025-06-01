@@ -25,7 +25,7 @@ import {
   Your task: Write a short, clear voiceover narration that tells the full story in chronological order using the summary and visual scene descriptions provided.
   
   Guidelines:
-  - Keep the script under 100 words to fit in about 1 minute of speech.
+  - Keep the script under 70 words to fit in about 1 minute of speech.
   - Focus on telling exactly what happens, step by step.
   - Use simple, direct sentences and transition words like: first, then, after that, finally.
   - Do not include background music, camera movements, or visual descriptions — just the narration.

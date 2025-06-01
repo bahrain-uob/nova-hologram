@@ -9,6 +9,15 @@ export interface BookData {
     thumbnail?: string;
   };
 }
+  export interface BookPreview {
+    id: number;
+    title: string;
+    author: string;
+    cover: string;
+    genres: string[];
+    language: string;
+  }  
+  
 export interface Book {
   book_id: string;
   user_id: string;
@@ -83,4 +92,3 @@ export interface BookFileDescription {
   file_words?: number;
   uploaded_at?: Date;
 }
-
