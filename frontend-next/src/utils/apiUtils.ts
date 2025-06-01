@@ -16,6 +16,7 @@ export const API_URLS = {
   lex: '/api/lex',
   library: '/api/library',
   video: '/api/video',
+  // auth: '/api/auth', // No longer using API routes for authentication - using direct Cognito SDK calls
 };
 
 /**
@@ -25,8 +26,15 @@ export const API_URLS = {
 export async function getAuthToken(): Promise<string> {
   try {
     const currentUser = await getCurrentUser();
-    if (currentUser && currentUser.signInUserSession) {
-      return currentUser.signInUserSession.idToken.jwtToken;
+    if (currentUser && currentUser.user) {
+      // If we're using the updated auth.ts implementation
+      if (currentUser.idToken) {
+        return currentUser.idToken;
+      }
+      // Fallback for older implementation
+      if (currentUser.signInUserSession && currentUser.signInUserSession.idToken) {
+        return currentUser.signInUserSession.idToken.jwtToken;
+      }
     }
     throw new Error('No authentication token found');
   } catch (error) {

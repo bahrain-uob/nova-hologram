@@ -1,16 +1,14 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { signIn, signUp, verifyAccount, signOut, getCurrentUser } from '../lib/auth';
+import { signIn, signUp, verifyAccount, signOut, getCurrentUser } from '@/lib/auth';
 
 // Define the shape of the user object
 interface User {
   email: string;
-  attributes: Record<string, string>;
-  tokens: {
-    accessToken: string;
-    idToken: string;
-    refreshToken: string;
-  };
+  name?: string;
+  userType: string;
+  sub?: string;
+  emailVerified?: boolean;
 }
 
 // Define the shape of the auth context
@@ -50,11 +48,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const checkCurrentUser = async () => {
       try {
-        const userData = await getCurrentUser();
-        setUser(userData);
+        const currentUser = await getCurrentUser();
+        if (currentUser && currentUser.user) {
+          // Extract user attributes
+          const userAttributes = currentUser.user.attributes || {};
+          
+          setUser({
+            email: userAttributes.email || '',
+            name: userAttributes.name || '',
+            userType: userAttributes['custom:userType'] || 'reader',
+            sub: currentUser.user.sub,
+            emailVerified: userAttributes.email_verified === 'true'
+          });
+        } else {
+          // No user is signed in, that's okay
+          console.log('No user currently signed in');
+        }
       } catch (err) {
-        // No user is signed in, that's okay
-        console.log('No user currently signed in');
+        console.error('Error checking authentication:', err);
       } finally {
         setIsLoading(false);
       }
@@ -70,15 +81,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       const result = await signIn({ email, password });
-      setUser({
-        email,
-        attributes: result.user.attributes || {},
-        tokens: {
-          accessToken: result.accessToken,
-          idToken: result.idToken,
-          refreshToken: result.refreshToken,
-        },
-      });
+      
+      if (result && result.user) {
+        // Extract user attributes
+        const userAttributes = result.user.attributes || {};
+        
+        setUser({
+          email: email,
+          name: userAttributes.name || '',
+          userType: userAttributes['custom:userType'] || 'reader',
+          sub: result.user.sub,
+          emailVerified: userAttributes.email_verified === 'true'
+        });
+      } else {
+        throw new Error('Login failed');
+      }
     } catch (err) {
       setError(err as Error);
       throw err;
@@ -93,7 +110,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     
     try {
-      await signUp({ email, password, name, userType });
+      const result = await signUp({
+        email,
+        password,
+        name,
+        userType
+      });
+      
+      if (!result) {
+        throw new Error('Registration failed');
+      }
     } catch (err) {
       setError(err as Error);
       throw err;
@@ -103,12 +129,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Verify function
-  const verify = async (username: string, code: string) => {
+  const verify = async (email: string, code: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      await verifyAccount({ username, code });
+      const result = await verifyAccount({
+        username: email,
+        code
+      });
+      
+      if (!result) {
+        throw new Error('Verification failed');
+      }
     } catch (err) {
       setError(err as Error);
       throw err;
@@ -118,9 +151,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Logout function
-  const logout = () => {
-    signOut();
-    setUser(null);
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      signOut();
+      setUser(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Provide the auth context to children

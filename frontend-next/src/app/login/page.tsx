@@ -4,8 +4,7 @@ import { useState } from "react";
 import "./login.css";
 import { IoIosLock } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
-import { userPool } from "@/app/aws-config";
+import { signIn } from "@/lib/auth";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -59,60 +58,27 @@ export default function Login() {
     setError("");
 
     try {
-      const authenticationDetails = new AuthenticationDetails({
-        Username: email,
-        Password: password,
-      });
-
-      const cognitoUser = new CognitoUser({
-        Username: email,
-        Pool: userPool,
-      });
-
-      cognitoUser.authenticateUser(authenticationDetails, {
-        onSuccess: (result) => {
-          console.log("Login successful:", result);
-
-          // Get user attributes to determine user type
-          cognitoUser.getUserAttributes((err, attributes) => {
-            if (err) {
-              console.error("Error getting user attributes:", err);
-              return;
-            }
-
-            // Find userType from attributes
-            let userType = "reader"; // Default to reader
-            if (attributes) {
-              for (let i = 0; i < attributes.length; i++) {
-                if (attributes[i].getName() === "custom:userType") {
-                  userType = attributes[i].getValue();
-                  break;
-                }
-              }
-            }
-
-            handleLoginSuccess({
-              email,
-              userType,
-              accessToken: result.getAccessToken().getJwtToken(),
-              idToken: result.getIdToken().getJwtToken(),
-            });
-          });
-        },
-        onFailure: (err) => {
-          console.error("Login failed:", err);
-          setError(
-            err.message || "Invalid email or password. Please try again."
-          );
-        },
-        newPasswordRequired: (userAttributes, requiredAttributes) => {
-          console.log(
-            "New password required",
-            userAttributes,
-            requiredAttributes
-          );
-          setError("Please contact administrator to set up your password.");
-        },
+      // Use Cognito SDK directly
+      const result = await signIn({ email, password });
+      
+      console.log("Login successful:", result.user);
+      
+      // Extract user attributes
+      const userAttributes = result.user.attributes || {};
+      const userEmail = email;
+      const userType = userAttributes['custom:userType'] || 'reader';
+      const userName = userAttributes['name'] || '';
+      
+      // Store user info for client-side access
+      localStorage.setItem("userEmail", userEmail);
+      localStorage.setItem("userType", userType);
+      localStorage.setItem("userName", userName);
+      
+      handleLoginSuccess({
+        email: userEmail,
+        userType: userType,
+        accessToken: result.accessToken,
+        idToken: result.idToken,
       });
     } catch (err: Error | unknown) {
       const error = err as Error;

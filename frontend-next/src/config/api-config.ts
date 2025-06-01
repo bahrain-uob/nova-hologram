@@ -24,14 +24,8 @@ export const API_ENDPOINTS = {
   userLibrary: (userId: string) => `${API_GATEWAY_ENDPOINT}/library/user/${userId}`,
   bookDetails: (bookId: string) => `${API_GATEWAY_ENDPOINT}/library/book/${bookId}`,
   
-  // Authentication
-  auth: {
-    login: `${API_GATEWAY_ENDPOINT}/auth/login`,
-    signup: `${API_GATEWAY_ENDPOINT}/auth/signup`,
-    verify: `${API_GATEWAY_ENDPOINT}/auth/verify`,
-    refresh: `${API_GATEWAY_ENDPOINT}/auth/refresh`,
-    logout: `${API_GATEWAY_ENDPOINT}/auth/logout`,
-  },
+  // Authentication - Using direct Cognito SDK calls
+  // No longer using API endpoints for authentication
   
   // Reading Progress
   readingProgress: `${API_GATEWAY_ENDPOINT}/reading-progress`,

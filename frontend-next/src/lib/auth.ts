@@ -158,10 +158,59 @@ export const getCurrentUser = (): Promise<any> => {
   });
 };
 
+/**
+ * Request a password reset for a user
+ */
+export const forgotPassword = (email: string): Promise<any> => {
+  const cognitoUser = new CognitoUser({
+    Username: email,
+    Pool: userPool,
+  });
+  
+  return new Promise((resolve, reject) => {
+    cognitoUser.forgotPassword({
+      onSuccess: (data) => {
+        resolve({
+          success: true,
+          data,
+        });
+      },
+      onFailure: (err) => {
+        reject(err);
+      },
+    });
+  });
+};
+
+/**
+ * Confirm a new password with the verification code
+ */
+export const confirmForgotPassword = (email: string, code: string, newPassword: string): Promise<any> => {
+  const cognitoUser = new CognitoUser({
+    Username: email,
+    Pool: userPool,
+  });
+  
+  return new Promise((resolve, reject) => {
+    cognitoUser.confirmPassword(code, newPassword, {
+      onSuccess: () => {
+        resolve({
+          success: true,
+        });
+      },
+      onFailure: (err) => {
+        reject(err);
+      },
+    });
+  });
+};
+
 export default {
   signIn,
   signUp,
   verifyAccount,
   signOut,
   getCurrentUser,
+  forgotPassword,
+  confirmForgotPassword,
 };
