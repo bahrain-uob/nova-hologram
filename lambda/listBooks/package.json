@@ -1,0 +1,8 @@
+{
+  "name": "my-lambda",
+  "version": "1.0.0",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.810.0",
+    "aws-sdk": "^2.1692.0"
+  }
+}

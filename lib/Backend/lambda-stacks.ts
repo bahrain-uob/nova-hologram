@@ -28,7 +28,9 @@ export class lambdastack extends cdk.Stack {
     public readonly bookHandlerLambda: lambda.Function;
     public readonly getUploadUrlsLambda: lambda.Function;
     public readonly getBookLambda: lambda.Function;
-
+    public readonly getAllBooksLambda: lambda.Function;
+    public readonly deleteBookLambda: lambda.Function;
+    public readonly updateBookLambda: lambda.Function;
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
     // Extract synthesisMode from props if present
@@ -706,6 +708,50 @@ new cdk.CfnOutput(this, "PollyQueueURL", {
           code: lambda.Code.fromAsset("lambda/getBookInfo"), 
           });
           this.getBookInfoLambda = getBookInfoLambda;
+
+const getAllBooksLambda = new lambda.Function(this, "GetAllBooksLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/listBooks"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName,
+  },
+});
+
+dbStack.book.grantReadData(getAllBooksLambda);
+
+
+this.getAllBooksLambda = getAllBooksLambda;
+
+this.deleteBookLambda = new lambda.Function(this, "DeleteBookLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/deleteBook"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName,
+  },
+});
+
+this.updateBookLambda = new lambda.Function(this, "UpdateBookLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/updateBook"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName,
+  },
+});
+this.deleteBookLambda.addToRolePolicy(new iam.PolicyStatement({
+  actions: ["dynamodb:*"],
+  resources: ["arn:aws:dynamodb:us-east-1:672461264983:table/DBStack-bookF0785129-1B9WR0J1EB4DN"]
+}));
+
+
+
+
+// Grant permissions to access the DynamoDB table
+dbStack.book.grantFullAccess(this.deleteBookLambda);
+dbStack.book.grantReadWriteData(this.updateBookLambda);
+
   }
   
 }

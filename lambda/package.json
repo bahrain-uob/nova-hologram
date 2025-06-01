@@ -4,6 +4,7 @@
   "description": "Lambda functions for file upload, retrieval, and deletion",
   "main": "index.js",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.810.0",
     "aws-sdk": "^2.1692.0",
     "dotenv": "^16.4.5",
     "lambda-multipart-parser": "^1.0.1",
