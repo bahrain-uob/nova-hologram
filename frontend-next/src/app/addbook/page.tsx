@@ -130,7 +130,7 @@ export default function AddBookPage() {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://778wwf05pa.execute-api.us-east-1.amazonaws.com/default/LambdaStack-GetBookInfoLambda83EE58F2-tWw8R4eM9loD",
+        " https://mfgxnv35ob.execute-api.us-east-1.amazonaws.com/dev/get-book-info",
         {
           method: "POST",
           headers: {
@@ -206,7 +206,7 @@ export default function AddBookPage() {
   
     try {
       // 1. Get pre-signed URLs
-      const presignResponse = await fetch('https://8xecyzic6l.execute-api.us-east-1.amazonaws.com/get-upload-urls', {
+      const presignResponse = await fetch('https://9kr9jldpt6.execute-api.us-east-1.amazonaws.com/get-upload-urls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -263,7 +263,7 @@ export default function AddBookPage() {
       };
       
       
-      const saveResponse = await fetch('https://8xecyzic6l.execute-api.us-east-1.amazonaws.com/save-book', {
+      const saveResponse = await fetch('https://wr54bu1u72.execute-api.us-east-1.amazonaws.com/save-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(metadata),

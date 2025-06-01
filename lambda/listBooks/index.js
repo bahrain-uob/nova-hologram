@@ -1,14 +1,19 @@
-const AWS = require("aws-sdk");
-const dynamo = new AWS.DynamoDB.DocumentClient();
+import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb"; 
+const client = new DynamoDBClient({});
 
-const tableName = process.env.BOOK_TABLE_NAME;
-
-exports.handler = async function(event) {
+export const handler = async function () {
   try {
-    const data = await dynamo.scan({ TableName: tableName }).promise();
+    const data = await client.send(new ScanCommand({
+      TableName: process.env.BOOK_TABLE_NAME,
+    }));
+
+    //  Convert each item from DynamoDB format to plain JS object
+    const books = data.Items?.map((item) => unmarshall(item)) || [];
+
     return {
       statusCode: 200,
-      body: JSON.stringify(data.Items),
+      body: JSON.stringify(books),
     };
   } catch (error) {
     return {
