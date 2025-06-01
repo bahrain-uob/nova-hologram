@@ -28,7 +28,11 @@ export class lambdastack extends cdk.Stack {
     public readonly bookHandlerLambda: lambda.Function;
     public readonly getUploadUrlsLambda: lambda.Function;
     public readonly getBookLambda: lambda.Function;
-    
+    public readonly getAllBooksLambda: lambda.Function;
+    public readonly deleteBookLambdav2: lambda.Function;
+    public readonly updateBookLambdav2: lambda.Function;
+    public readonly updateBookLambda: lambda.Function;
+    public readonly deleteBookLambda: lambda.Function;    
     // Additional Lambda functions for API integration
     public readonly bookRecommendationLambda: lambda.Function;
     public readonly readingProgressTrackerLambda: lambda.Function;
@@ -114,7 +118,7 @@ export class lambdastack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset('lambda/GetTextAndSplitChapters'),
-        timeout: cdk.Duration.minutes(5), 
+        timeout: cdk.Duration.minutes(10), 
     });
     
     splitChaptersLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -285,8 +289,14 @@ export class lambdastack extends cdk.Stack {
       `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.book.tableName}/index/GSI_by_book_id`,
     ],
   }));
+  this.updateBookLambda = updateBookLambda;
+
+  new cdk.CfnOutput(this, "UpdateBookLambdaArn", {
+    value: updateBookLambda.functionArn,
+    exportName: "UpdateBookLambdaArn",
+  });
   
-  //update book
+  //Delete book
   const deleteBookLambda = new lambda.Function(this, "DeleteBookLambda", {
     runtime: lambda.Runtime.NODEJS_18_X,
     handler: "index.handler",
@@ -303,8 +313,12 @@ export class lambdastack extends cdk.Stack {
   dbStack.chapter.grantReadWriteData(deleteBookLambda);
   StorageStack.readingMaterials.grantReadWrite(deleteBookLambda);
   StorageStack.genVideos.grantReadWrite(deleteBookLambda);
-      
-
+  this.deleteBookLambda = deleteBookLambda;    
+  new cdk.CfnOutput(this, "DeleteBookLambdaArn", {
+    value: deleteBookLambda.functionArn,
+    exportName: "DeleteBookLambdaArn",
+  });
+  
 //  generate SSML 
 const generateSSMLLambda = new lambda.Function(this, "GenerateSSMLLambda", {
   runtime: lambda.Runtime.NODEJS_18_X,
@@ -714,6 +728,50 @@ new cdk.CfnOutput(this, "PollyQueueURL", {
           code: lambda.Code.fromAsset("lambda/getBookInfo"), 
           });
           this.getBookInfoLambda = getBookInfoLambda;
+
+const getAllBooksLambda = new lambda.Function(this, "GetAllBooksLambda", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/listBooks"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName,
+  },
+});
+
+dbStack.book.grantReadData(getAllBooksLambda);
+
+
+this.getAllBooksLambda = getAllBooksLambda;
+
+this.deleteBookLambdav2 = new lambda.Function(this, "DeleteBookLambdav2", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/deleteBook"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName,
+  },
+});
+
+this.updateBookLambdav2 = new lambda.Function(this, "UpdateBookLambdav2", {
+  runtime: lambda.Runtime.NODEJS_18_X,
+  handler: "index.handler",
+  code: lambda.Code.fromAsset("lambda/updateBook"),
+  environment: {
+    BOOK_TABLE_NAME: dbStack.book.tableName,
+  },
+});
+this.deleteBookLambdav2.addToRolePolicy(new iam.PolicyStatement({
+  actions: ["dynamodb:*"],
+  resources: ["arn:aws:dynamodb:us-east-1:672461264983:table/DBStack-bookF0785129-1B9WR0J1EB4DN"]
+}));
+
+
+
+
+// Grant permissions to access the DynamoDB table
+dbStack.book.grantFullAccess(this.deleteBookLambdav2);
+dbStack.book.grantReadWriteData(this.updateBookLambdav2);
+
           
           // Book Recommendation Lambda
           const bookRecommendationLambda = new lambda.Function(this, "BookRecommendationLambda", {

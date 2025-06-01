@@ -138,7 +138,7 @@ const [collection, setCollection] = React.useState<string | undefined>(undefined
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `https://1rvx3jdou7.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
+          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
         );
         const data = await res.json();
         setBookData(data);
@@ -221,7 +221,7 @@ const [collection, setCollection] = React.useState<string | undefined>(undefined
       };
       
   
-      const res = await fetch("https://egxmgdn74d.execute-api.us-east-1.amazonaws.com/prod/update-book", {
+      const res = await fetch("https://ozdejdjb9e.execute-api.us-east-1.amazonaws.com/update-book", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -290,7 +290,7 @@ const [collection, setCollection] = React.useState<string | undefined>(undefined
                     if (!confirmed || !bookId) return;
                   
                     try {
-                      const res = await fetch("https://xx1u90jlod.execute-api.us-east-1.amazonaws.com/delete-book", {
+                      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
                         method: "POST", // REST APIs typically use POST for deletions via Lambda
                         headers: {
                           "Content-Type": "application/json",

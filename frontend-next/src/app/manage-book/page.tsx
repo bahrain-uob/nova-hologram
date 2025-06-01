@@ -22,24 +22,60 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 interface Book {
   book_id: string;
   book_title: string;
-  authors: string[] | string;
-  cover_image?: string;
-  genres?: string[];
-  reading_level?: string;
-  publication_year?: number;
-  status?: string;
-  created_at?: string;
-  updated_at?: string;
+  authors: string[];
+  book_cover: string;
+  genre: string[];
+  reading_level: string;
+  publication_year: string;
+  isbn?: string;
+  language?: string;
+  publisher?: {
+    name: string;
+  };
+  book_summary?: string;
 }
+
+interface BooksResponse {
+  books?: Book[];
+  error?: string;
+}
+
+const fetchBooks = async (): Promise<BooksResponse> => {
+  try {
+    const response = await fetch("https://a31g9ushy4.execute-api.us-east-1.amazonaws.com/books");
+
+    if (!response.ok) {
+      return { error: `API error: ${response.status}` };
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      return { error: data.error };
+    }
+
+    // ✅ Make sure it's an array
+    if (!Array.isArray(data)) {
+      return { error: "Invalid data format" };
+    }
+
+    return { books: data };
+  } catch (error) {
+    console.error("Error fetching books:", error);
+    return { error: "Failed to fetch books" };
+  }
+};
+
+
 
 const ManageBooks: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [genre, setGenre] = useState("");
   const [readingLevel, setReadingLevel] = useState("");
   const [publicationYear, setPublicationYear] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -54,68 +90,95 @@ const ManageBooks: React.FC = () => {
     const loadBooks = async () => {
       try {
         setLoading(true);
-        setError(null);
-        const booksData = await getAllBooks();
-        setBooks(booksData || []);
+        const response = await fetchBooks();
+            console.log("📚 Books from API:", response.books);
+
+        if (response.error) {
+          setError(response.error);
+          setBooks([]);
+        } else {
+          setBooks(response.books || []);
+          setError(null);
+        }
       } catch (err) {
-        console.error("Error fetching books:", err);
-        setError("Failed to load books. Please try again later.");
+        setError("Failed to load books from database");
+        setBooks([]);
       } finally {
         setLoading(false);
       }
     };
+
     loadBooks();
   }, []);
 
   const handleEditBook = (bookId: string) => {
+    // Navigate to the edit book page with the book ID
     router.push(`/bookdetail-librarian?bookId=${bookId}`);
-    console.log(`Editing book with id: ${bookId}`);
   };
 
   const handleDeleteBook = async (bookId: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this book?");
+    if (!confirmed || !bookId) return;
+  
     try {
-      setDeleting(true);
-      const success = await deleteBook(bookId);
-      if (success) {
-        // Remove the book from the local state
-        setBooks(books.filter(book => book.book_id !== bookId));
-        setDeleteDialogOpen(false);
-        setBookToDelete(null);
-      } else {
-        setError("Failed to delete book. Please try again.");
+      setLoading(true);
+  
+      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
+        method: "POST", // REST API expects POST for deletion
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookId }),
+      });
+  
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData?.error || "Unknown error");
       }
-    } catch (err) {
-      console.error("Error deleting book:", err);
-      setError("An error occurred while deleting the book.");
+  
+      // Remove the deleted book from UI
+      setBooks(prevBooks => prevBooks.filter(book => book.book_id !== bookId));
+  
+      alert("Book deleted successfully!");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete book. Please try again.");
     } finally {
-      setDeleting(false);
+      setLoading(false);
     }
   };
+  
 
-  const filteredBooks = books.filter((book) => {
-    // Handle authors that might be an array or string
-    const authorText = Array.isArray(book.authors) 
-      ? book.authors.join(", ").toLowerCase() 
-      : (typeof book.authors === 'string' ? book.authors.toLowerCase() : "");
-      
-    const matchesSearch =
-      book.book_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      authorText.includes(searchQuery.toLowerCase());
+  const filteredBooks = Array.isArray(books)
+    ? books.filter((book) => {
+        // Safe search matching with null checks
+        const matchesSearch = !searchQuery ? true : (
+          // Check if book_title exists before calling toLowerCase()
+          ((book.book_title || "").toLowerCase().includes(searchQuery.toLowerCase())) ||
+          // Check if authors array exists and has elements
+          (Array.isArray(book.authors) && book.authors.some(author => 
+            (author || "").toLowerCase().includes(searchQuery.toLowerCase())
+          ))
+        );
 
-    const matchesGenre = genre && book.genres
-      ? book.genres.some(g => g.toLowerCase().includes(genre.toLowerCase()))
-      : true;
-      
-    const matchesLevel = readingLevel
-      ? book.reading_level === readingLevel
-      : true;
-      
-    const matchesYear = publicationYear && book.publication_year
-      ? book.publication_year.toString() === publicationYear
-      : true;
+        // Safe genre matching with null checks
+        const matchesGenre = !genre ? true : (
+          Array.isArray(book.genre) && book.genre.some(g => 
+            (g || "").toLowerCase().includes(genre.toLowerCase())
+          )
+        );
+        
+        // Safe level matching with null check
+        const matchesLevel = !readingLevel ? true : 
+          book.reading_level === readingLevel;
+        
+        // Safe year matching with null check
+        const matchesYear = !publicationYear ? true : 
+          book.publication_year === publicationYear;
 
-    return matchesSearch && matchesGenre && matchesLevel && matchesYear;
-  });
+        return matchesSearch && matchesGenre && matchesLevel && matchesYear;
+      })
+    : [];
 
   return (
     <MainLayout activePage="Manage Books">
@@ -185,100 +248,66 @@ const ManageBooks: React.FC = () => {
           </div>
         </div>
 
+        {/* Loading and error messages */}
+        {loading && <p className="text-center text-gray-600">Loading books...</p>}
+        {error && <p className="text-center text-red-600">{error}</p>}
+        {!loading && !error && filteredBooks.length === 0 && (
+          <p className="text-center text-gray-600">No books found.</p>
+        )}
+
         {/* Book Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-          {loading ? (
-            <div className="col-span-3 text-center py-10">
-              <LoaderIcon className="animate-spin h-10 w-10 mx-auto mb-4 text-primary" />
-              <p>Loading books...</p>
-            </div>
-          ) : error ? (
-            <div className="col-span-3 text-center py-10 text-red-500">
-              <p>{error}</p>
-              <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
-                Try Again
-              </Button>
-            </div>
-          ) : filteredBooks.length === 0 ? (
-            <div className="col-span-3 text-center py-10">
-              <p>No books found matching your criteria.</p>
-            </div>
-          ) : (
-            filteredBooks.map((book) => (
-              <Card key={book.book_id} className="overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  <div className="flex p-4 gap-4">
-                    {book.cover_image ? (
-                      <Image
-                        src={book.cover_image}
-                        alt={book.book_title}
-                        width={96} // Tailwind w-24 = 96px
-                        height={128} // Tailwind h-32 = 128px
-                        className="object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-24 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <BookIcon className="w-12 h-12 text-gray-400" />
-                      </div>
-                    )}
+          {filteredBooks.map((book) => (
+            <div
+              key={book.book_id}
+              className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex gap-6"
+            >
+              <Image
+                src={book.book_cover || "/placeholder-book.jpg"}
+                alt={book.book_title}
+                width={96}
+                height={128}
+                className="object-cover rounded-lg"
+              />
 
-                    <div className="flex flex-col justify-between flex-1">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">
-                          {book.book_title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {Array.isArray(book.authors) ? book.authors.join(", ") : book.authors}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {book.genres?.map((genre, idx) => (
-                            <span 
-                              key={idx} 
-                              className="text-xs bg-gray-200 text-gray-700 font-medium px-2 py-0.5 rounded">
-                              {genre}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-sm text-gray-600">
-                        {book.reading_level && <p>Level: {book.reading_level}</p>}
-                        {book.publication_year && <p>Published: {book.publication_year}</p>}
-                      </div>
-                      <div className="flex gap-4 mt-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleEditBook(book.book_id)}
-                          className="text-indigo-600 hover:text-indigo-800 h-8 w-8 p-0"
-                        >
-                          <EditIcon className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => {
-                            setBookToDelete(book);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="text-red-600 hover:text-red-800 h-8 w-8 p-0"
-                        >
-                          <DeleteIcon className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => router.push(`/videosGenerated?bookId=${book.book_id}`)}
-                          className="text-blue-600 hover:text-blue-800 h-8 w-8 p-0"
-                        >
-                          <VideoIcon className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+              <div className="flex flex-col justify-between ml-2">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">{book.book_title}</h3>
+                  <p className="text-sm text-gray-500">
+  {Array.isArray(book.authors)
+    ? book.authors.join(', ')
+    : book.authors || 'Unknown Author'}
+</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {book.genre && book.genre.map((g, index) => (
+                      <p key={index} className="text-xs bg-gray-200 text-gray-700 font-medium px-2 py-0.5 rounded">
+                        {g}
+                      </p>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  <p>Level: {book.reading_level}</p>
+                  <p>Published: {book.publication_year}</p>
+                </div>
+                <div className="flex gap-4 mt-2">
+                  <button
+                    onClick={() => handleEditBook(book.book_id)}
+                    className="text-indigo-600 hover:text-indigo-800"
+                  >
+                    <EditIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBook(book.book_id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <DeleteIcon className="w-5 h-5" />
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Pagination (placeholder) */}
@@ -286,9 +315,7 @@ const ManageBooks: React.FC = () => {
           <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
             ←
           </button>
-          <button className="w-10 h-10 rounded-lg bg-indigo-600 text-white">
-            1
-          </button>
+          <button className="w-10 h-10 rounded-lg bg-indigo-600 text-white">1</button>
           <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
             →
           </button>

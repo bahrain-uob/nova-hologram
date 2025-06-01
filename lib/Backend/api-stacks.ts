@@ -24,6 +24,236 @@ export class APIStack extends cdk.Stack {
   ) {
     super(scope, id, props);
 
+///////////////////////////
+    // New standalone REST API for GetBookInfo
+    const newGetBookInfoApi = new apigateway.RestApi(this, "NewGetBookInfoApi", {
+      restApiName: "NewGetBookInfoAPI",
+      deployOptions: { stageName: "dev" },
+    });
+
+    // /get-book-info resource
+    const newGetBookInfoResource = newGetBookInfoApi.root.addResource("get-book-info");
+
+    // POST method with Lambda integration
+    newGetBookInfoResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaStack.getBookInfoLambda),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // OPTIONS method for CORS preflight
+    newGetBookInfoResource.addMethod(
+      "OPTIONS",
+      new apigateway.MockIntegration({
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
+            },
+            responseTemplates: {
+              "application/json": "",
+            },
+          },
+        ],
+        passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+        requestTemplates: {
+          "application/json": '{"statusCode": 200}',
+        },
+      }),
+      {
+        methodResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+            },
+          },
+        ],
+      }
+    );
+
+    // Output the new API endpoint
+    new cdk.CfnOutput(this, "NewGetBookInfoAPIURL", {
+      value: `${newGetBookInfoApi.url}get-book-info`,
+    });
+////////////////////////////////////
+
+    //  New HTTP API for Uploading Books
+    const newBookUploadPresignApi = new apigatewayv2.HttpApi(this, "NewBookUploadPresignApi", {
+      apiName: "NewBookUploadPresignAPI",
+      corsPreflight: {
+        allowMethods: [apigatewayv2.CorsHttpMethod.POST],
+        allowHeaders: ["*"],
+        allowOrigins: ["*"],
+      },
+    });
+
+    // POST /get-upload-urls → getUploadUrlsLambda
+    newBookUploadPresignApi.addRoutes({
+      path: "/get-upload-urls",
+      methods: [apigatewayv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewGetUploadUrlsIntegration",
+        lambdaStack.getUploadUrlsLambda
+      ),
+    });
+
+    // POST /save-book → bookHandlerLambda
+    newBookUploadPresignApi.addRoutes({
+      path: "/save-book",
+      methods: [apigatewayv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewSaveBookIntegration",
+        lambdaStack.bookHandlerLambda
+      ),
+    });
+
+    // Output the new endpoint URL
+    new cdk.CfnOutput(this, "NewBookUploadPresignAPIURL", {
+      value: newBookUploadPresignApi.apiEndpoint,
+    });
+////////////////////////////////////
+
+    //new HTTP API only for save-book
+    const newBookSaveApi = new apigatewayv2.HttpApi(this, "NewBookSaveApi", {
+      apiName: "NewBookSaveAPI",
+      corsPreflight: {
+        allowMethods: [apigatewayv2.CorsHttpMethod.POST],
+        allowHeaders: ["*"],
+        allowOrigins: ["*"],
+      },
+    });
+
+    // POST /save-book → bookHandlerLambda
+    newBookSaveApi.addRoutes({
+      path: "/save-book",
+      methods: [apigatewayv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewBookSaveIntegration",
+        lambdaStack.bookHandlerLambda
+      ),
+    });
+
+    // Output API endpoint
+    new cdk.CfnOutput(this, "NewBookSaveAPIURL", {
+      value: newBookSaveApi.apiEndpoint,
+    });
+////////////////////////////////////
+
+    //  New Standalone GetBook API
+    const newGetBookApi = new apigatewayv2.HttpApi(this, "NewGetBookApi", {
+      apiName: "NewGetBookApi",
+      corsPreflight: {
+        allowMethods: [apigatewayv2.CorsHttpMethod.GET],
+        allowOrigins: ["*"],
+        allowHeaders: ["*"],
+      },
+    });
+
+    newGetBookApi.addRoutes({
+      path: "/get-book/{bookId}",
+      methods: [apigatewayv2.HttpMethod.GET],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewGetBookIntegration",
+        lambdaStack.getBookLambda
+      ),
+    });
+
+    new cdk.CfnOutput(this, "NewGetBookApiURL", {
+      value: `${newGetBookApi.apiEndpoint}/get-book/{bookId}`,
+    });
+////////////////////////////////////
+    
+    //  New Standalone UpdateBook API
+    const newUpdateBookApi = new apigatewayv2.HttpApi(this, "NewUpdateBookApi", {
+      apiName: "NewUpdateBookApi",
+      corsPreflight: {
+        allowMethods: [apigatewayv2.CorsHttpMethod.PUT],
+        allowOrigins: ["*"],
+        allowHeaders: ["*"],
+      },
+    });
+
+    newUpdateBookApi.addRoutes({
+      path: "/update-book",
+      methods: [apigatewayv2.HttpMethod.PUT],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewUpdateBookIntegration",
+        lambdaStack.updateBookLambda
+      ),
+    });
+
+    new cdk.CfnOutput(this, "NewUpdateBookApiURL", {
+      value: `${newUpdateBookApi.apiEndpoint}/update-book`,
+    });
+
+////////////////////////////////////
+
+    //new HTTP API only for delete-book
+    const newDeleteBookApi = new apigatewayv2.HttpApi(this, "NewDeleteBookApi", {
+      apiName: "NewDeleteBookAPI",
+      corsPreflight: {
+        allowMethods: [apigatewayv2.CorsHttpMethod.POST],
+        allowHeaders: ["*"],
+        allowOrigins: ["*"],
+      },
+    });
+
+    // POST /delete-book → deleteBookLambda
+    newDeleteBookApi.addRoutes({
+      path: "/delete-book",
+      methods: [apigatewayv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewDeleteBookIntegration",
+        lambdaStack.deleteBookLambda 
+      ),
+    });
+
+    // Output API endpoint
+    new cdk.CfnOutput(this, "NewDeleteBookAPIURL", {
+      value: newDeleteBookApi.apiEndpoint,
+    });
+////////////////////////////////////
+
+    //New HTTP API to Get All Books
+    const newGetAllBooksApi = new apigatewayv2.HttpApi(this, "NewGetAllBooksApi", {
+      apiName: "NewGetAllBooksApi",
+      corsPreflight: {
+        allowMethods: [apigatewayv2.CorsHttpMethod.GET],
+        allowOrigins: ["*"],
+        allowHeaders: ["*"],
+      },
+    });
+
+    newGetAllBooksApi.addRoutes({
+      path: "/books",
+      methods: [apigatewayv2.HttpMethod.GET],
+      integration: new integrations.HttpLambdaIntegration(
+        "NewGetAllBooksIntegration",
+        lambdaStack.getAllBooksLambda 
+      ),
+    });
+
+    new cdk.CfnOutput(this, "NewGetAllBooksApiURL", {
+      value: `${newGetAllBooksApi.apiEndpoint}/books`,
+    });
+////////////////////////////////////
+
     // Access environment variables from .env
     const readerApiUrl = process.env.READER_API_URL|| '';
     const librarianApiUrl = process.env.LIBRARIAN_API_URL|| '';
@@ -287,7 +517,161 @@ getBookByIdResource.addMethod(
     ],
   }
 );
+const getAllBooksResource = librarianApi.root.addResource("books");
 
+getAllBooksResource.addMethod(
+  "GET",
+  new apigateway.LambdaIntegration(lambdaStack.getAllBooksLambda),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
+// OPTIONS method for CORS preflight
+getAllBooksResource.addMethod(
+  "OPTIONS",
+  new apigateway.MockIntegration({
+    integrationResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers":
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          "method.response.header.Access-Control-Allow-Origin": "'*'",
+          "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'",
+        },
+        responseTemplates: {
+          "application/json": "",
+        },
+      },
+    ],
+    passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+    requestTemplates: {
+      "application/json": '{"statusCode": 200}',
+    },
+  }),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers": true,
+          "method.response.header.Access-Control-Allow-Methods": true,
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
+// Create a resource for managing individual books by ID
+const bookByIdResource = getAllBooksResource.addResource("{bookId}");
+
+// Add DELETE method for deleting a book
+bookByIdResource.addMethod(
+  "DELETE",
+  new apigateway.LambdaIntegration(lambdaStack.deleteBookLambdav2, {
+requestTemplates: {
+  'application/json': JSON.stringify({
+    bookId: "$input.params('bookId')",
+    userId: "admin" // Default admin ID
+  })
+}
+
+  }),
+  {
+    requestParameters: {
+      "method.request.path.bookId": true,
+    },
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+      {
+        statusCode: "400",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      }
+    ],
+  }
+);
+
+// Add PUT method for updating a book
+bookByIdResource.addMethod(
+  "PUT",
+  new apigateway.LambdaIntegration(lambdaStack.updateBookLambdav2),
+  {
+    requestParameters: {
+      "method.request.path.bookId": true,
+    },
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+      {
+        statusCode: "400",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      }
+    ],
+  }
+);
+
+// Add OPTIONS method for CORS
+bookByIdResource.addMethod(
+  "OPTIONS",
+  new apigateway.MockIntegration({
+    integrationResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers":
+            "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          "method.response.header.Access-Control-Allow-Origin": "'*'",
+          "method.response.header.Access-Control-Allow-Methods": "'DELETE,PUT,GET,OPTIONS'",
+        },
+        responseTemplates: {
+          "application/json": "",
+        },
+      },
+    ],
+    passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+    requestTemplates: {
+      "application/json": '{"statusCode": 200}',
+    },
+  }),
+  {
+    methodResponses: [
+      {
+        statusCode: "200",
+        responseParameters: {
+          "method.response.header.Access-Control-Allow-Headers": true,
+          "method.response.header.Access-Control-Allow-Methods": true,
+          "method.response.header.Access-Control-Allow-Origin": true,
+        },
+      },
+    ],
+  }
+);
+
+new cdk.CfnOutput(this, "BooksAPIEndpoint", {
+  value: `${librarianApi.url}books`,
+});
 
     new cdk.CfnOutput(this, "ReaderAPIURL", { value: readerApiUrl });
     new cdk.CfnOutput(this, "LibrarianAPIURL", { value: librarianApiUrl });
