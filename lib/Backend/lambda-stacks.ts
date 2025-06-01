@@ -29,6 +29,8 @@ export class lambdastack extends cdk.Stack {
     public readonly getUploadUrlsLambda: lambda.Function;
     public readonly getBookLambda: lambda.Function;
 
+    public readonly getBookAdvancedLambda: lambda.Function;
+
 
   constructor(scope: cdk.App, id: string, dbStack: DBStack, StorageStack:StorageStack, shared:SharedResourcesStack, props?: cdk.StackProps & { synthesisMode?: boolean }) {
     // Extract synthesisMode from props if present
@@ -254,7 +256,40 @@ export class lambdastack extends cdk.Stack {
   // Save reference to use later if needed
   this.getBookLambda = getBookLambda;
   
-
+  const getBookAdvancedLambda = new lambda.Function(this, "GetBookAdvancedLambda", {
+    runtime: lambda.Runtime.NODEJS_18_X,
+    handler: "index.handler",
+    code: lambda.Code.fromAsset("lambda/GetBookAdvanced"),
+    timeout: cdk.Duration.seconds(30),
+    environment: {
+      BOOKS_TABLE: dbStack.book.tableName,
+      CHAPTERS_TABLE: dbStack.chapter.tableName,
+    },
+  });
+  
+  // Grant access to DynamoDB and S3
+  dbStack.book.grantReadData(getBookAdvancedLambda);
+  dbStack.chapter.grantReadData(getBookAdvancedLambda);
+  StorageStack.genVideos.grantRead(getBookAdvancedLambda);
+  
+  // Grant access to GSIs
+  getBookAdvancedLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ["dynamodb:Query"],
+    resources: [
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.book.tableName}/index/GSI_by_book_id`,
+      `arn:aws:dynamodb:${this.region}:${this.account}:table/${dbStack.chapter.tableName}/index/Global_chapter_summary`,
+    ]
+  }));
+  
+  // Grant access to S3 objects
+  getBookAdvancedLambda.addToRolePolicy(new iam.PolicyStatement({
+    actions: ["s3:GetObject"],
+    resources: ["arn:aws:s3:::storagestack-readingmaterialse72d08c8-spmbixoyxput/*"]
+  }));
+  
+  // Save reference
+  this.getBookAdvancedLambda = getBookAdvancedLambda;
+  
   
   //update book
   const updateBookLambda = new lambda.Function(this, "UpdateBookLambda", {
