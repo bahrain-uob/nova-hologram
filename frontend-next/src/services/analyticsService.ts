@@ -1,4 +1,5 @@
-import { authenticatedGet, API_URLS } from '@/utils/apiUtils';
+import { authenticatedFetch, API_URLS } from '@/utils/apiUtils';
+import { API_ENDPOINTS } from '@/config/api-config';
 import {
   ReadingStats,
   QuizStats,
@@ -8,9 +9,10 @@ import {
   ReadingProgressHistoryItem,
   QuizPerformanceHistoryItem,
   BookAnalytics
-} from '@/types';
+} from '@/types/analytics';
 
-// Base API URL from apiUtils
+// Use API_URLS from apiUtils for local API endpoints
+// and API_ENDPOINTS from api-config for AWS API endpoints
 const API_URL = API_URLS.analytics;
 
 /**
@@ -18,7 +20,12 @@ const API_URL = API_URLS.analytics;
  */
 export async function fetchUserAnalytics(): Promise<StudentAnalytics | null> {
   try {
-    return await authenticatedGet<StudentAnalytics>(API_URL);
+    const response = await authenticatedFetch(API_URL, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return null;
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch analytics:', error);
     return null;
@@ -31,9 +38,13 @@ export async function fetchUserAnalytics(): Promise<StudentAnalytics | null> {
  */
 export async function fetchReadingProgressHistory(timeframe: 'week' | 'month' | 'year' | 'all' = 'month'): Promise<ReadingProgressHistoryItem[]> {
   try {
-    return await authenticatedGet<ReadingProgressHistoryItem[]>(
-      `${API_URL}/reading-history?timeframe=${timeframe}`
+    const response = await authenticatedFetch(
+      `${API_URL}/reading-history?timeframe=${timeframe}`,
+      { method: 'GET' }
     );
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch reading history:', error);
     return [];
@@ -46,9 +57,13 @@ export async function fetchReadingProgressHistory(timeframe: 'week' | 'month' | 
  */
 export async function fetchQuizPerformanceHistory(timeframe: 'week' | 'month' | 'year' | 'all' = 'month'): Promise<QuizPerformanceHistoryItem[]> {
   try {
-    return await authenticatedGet<QuizPerformanceHistoryItem[]>(
-      `${API_URL}/quiz-history?timeframe=${timeframe}`
+    const response = await authenticatedFetch(
+      `${API_URL}/quiz-history?timeframe=${timeframe}`,
+      { method: 'GET' }
     );
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch quiz performance history:', error);
     return [];
@@ -61,7 +76,16 @@ export async function fetchQuizPerformanceHistory(timeframe: 'week' | 'month' | 
  */
 export async function fetchBookAnalytics(bookId: string): Promise<BookAnalytics> {
   try {
-    return await authenticatedGet<BookAnalytics>(`${API_URL}/book/${bookId}`);
+    const response = await authenticatedFetch(
+      `${API_URL}/book/${bookId}`,
+      { method: 'GET' }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch book analytics: ${response.status}`);
+    }
+    
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch book analytics:', error);
     return {

@@ -1,9 +1,11 @@
-import { authenticatedGet, authenticatedPost, authenticatedPut, authenticatedDelete, API_URLS } from '@/utils/apiUtils';
-import { Book, BookReview, ReadingList } from '@/types';
+import { authenticatedFetch, API_URLS } from '@/utils/apiUtils';
+import { Book, BookReview } from '@/types/book';
+import { ReadingList } from '@/types/readingList';
+import { API_ENDPOINTS } from '@/config/api-config';
 
-// Define the API URL for books service
-// Add this to apiUtils.ts API_URLS if not already there
-const API_URL = API_URLS.books || process.env.NEXT_PUBLIC_BOOKS_API_URL || '/api/books';
+// Use API_URLS from apiUtils for local API endpoints
+// and API_ENDPOINTS from api-config for AWS API endpoints
+const API_URL = API_URLS.books;
 
 // ReadingList interface is now imported from @/types
 
@@ -12,7 +14,12 @@ const API_URL = API_URLS.books || process.env.NEXT_PUBLIC_BOOKS_API_URL || '/api
  */
 export async function fetchBookById(bookId: string): Promise<Book | null> {
   try {
-    return await authenticatedGet<Book>(`${API_URL}/${bookId}`);
+    const response = await authenticatedFetch(`${API_URL}/${bookId}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return null;
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch book:', error);
     return null;
@@ -46,7 +53,12 @@ export async function fetchBooks(
       }
     }
     
-    return await authenticatedGet<Book[]>(url);
+    const response = await authenticatedFetch(url, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch books:', error);
     return [];
@@ -58,7 +70,12 @@ export async function fetchBooks(
  */
 export async function fetchTopRatedBooks(limit: number = 10): Promise<Book[]> {
   try {
-    return await authenticatedGet<Book[]>(`${API_URL}/top-rated?limit=${limit}`);
+    const response = await authenticatedFetch(`${API_URL}/top-rated?limit=${limit}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch top-rated books:', error);
     return [];
@@ -70,7 +87,12 @@ export async function fetchTopRatedBooks(limit: number = 10): Promise<Book[]> {
  */
 export async function fetchRecommendedBooks(limit: number = 10): Promise<Book[]> {
   try {
-    return await authenticatedGet<Book[]>(`${API_URL}/recommended?limit=${limit}`);
+    const response = await authenticatedFetch(`${API_URL}/recommended?limit=${limit}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch recommended books:', error);
     return [];
@@ -82,7 +104,12 @@ export async function fetchRecommendedBooks(limit: number = 10): Promise<Book[]>
  */
 export async function fetchSimilarBooks(bookId: string, limit: number = 5): Promise<Book[]> {
   try {
-    return await authenticatedGet<Book[]>(`${API_URL}/${bookId}/similar?limit=${limit}`);
+    const response = await authenticatedFetch(`${API_URL}/${bookId}/similar?limit=${limit}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch similar books:', error);
     return [];
@@ -94,8 +121,12 @@ export async function fetchSimilarBooks(bookId: string, limit: number = 5): Prom
  */
 export async function rateBook(bookId: string, rating: number): Promise<boolean> {
   try {
-    await authenticatedPost(`${API_URL}/${bookId}/rate`, { rating });
-    return true;
+    const response = await authenticatedFetch(`${API_URL}/${bookId}/rate`, {
+      method: 'POST',
+      body: JSON.stringify({ rating })
+    });
+    
+    return response.ok;
   } catch (error) {
     console.error('Failed to rate book:', error);
     return false;
@@ -107,7 +138,12 @@ export async function rateBook(bookId: string, rating: number): Promise<boolean>
  */
 export async function fetchBookReviews(bookId: string): Promise<BookReview[]> {
   try {
-    return await authenticatedGet<BookReview[]>(`${API_URL}/${bookId}/reviews`);
+    const response = await authenticatedFetch(`${API_URL}/${bookId}/reviews`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch book reviews:', error);
     return [];
@@ -122,7 +158,13 @@ export async function addBookReview(
   review: { rating: number; text: string }
 ): Promise<BookReview | null> {
   try {
-    return await authenticatedPost<BookReview>(`${API_URL}/${bookId}/reviews`, review);
+    const response = await authenticatedFetch(`${API_URL}/${bookId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(review)
+    });
+    
+    if (!response.ok) return null;
+    return await response.json();
   } catch (error) {
     console.error('Failed to add book review:', error);
     return null;
@@ -134,7 +176,12 @@ export async function addBookReview(
  */
 export async function fetchReadingLists(): Promise<ReadingList[]> {
   try {
-    return await authenticatedGet<ReadingList[]>(`${API_URL}/reading-lists`);
+    const response = await authenticatedFetch(`${API_URL}/reading-lists`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) return [];
+    return await response.json();
   } catch (error) {
     console.error('Failed to fetch reading lists:', error);
     return [];
@@ -146,7 +193,13 @@ export async function fetchReadingLists(): Promise<ReadingList[]> {
  */
 export async function createReadingList(name: string): Promise<ReadingList | null> {
   try {
-    return await authenticatedPost<ReadingList>(`${API_URL}/reading-lists`, { name });
+    const response = await authenticatedFetch(`${API_URL}/reading-lists`, {
+      method: 'POST',
+      body: JSON.stringify({ name })
+    });
+    
+    if (!response.ok) return null;
+    return await response.json();
   } catch (error) {
     console.error('Failed to create reading list:', error);
     return null;
@@ -161,8 +214,12 @@ export async function addBookToReadingList(
   bookId: string
 ): Promise<boolean> {
   try {
-    await authenticatedPost(`${API_URL}/reading-lists/${listId}/books`, { bookId });
-    return true;
+    const response = await authenticatedFetch(`${API_URL}/reading-lists/${listId}/books`, {
+      method: 'POST',
+      body: JSON.stringify({ bookId })
+    });
+    
+    return response.ok;
   } catch (error) {
     console.error('Failed to add book to reading list:', error);
     return false;
@@ -177,8 +234,11 @@ export async function removeBookFromReadingList(
   bookId: string
 ): Promise<boolean> {
   try {
-    await authenticatedDelete(`${API_URL}/reading-lists/${listId}/books/${bookId}`);
-    return true;
+    const response = await authenticatedFetch(`${API_URL}/reading-lists/${listId}/books/${bookId}`, {
+      method: 'DELETE'
+    });
+    
+    return response.ok;
   } catch (error) {
     console.error('Failed to remove book from reading list:', error);
     return false;

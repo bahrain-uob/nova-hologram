@@ -1,21 +1,21 @@
 import { getCurrentUser } from '@/lib/auth';
-import { awsConfig } from '@/config/aws-config';
+import { API_ENDPOINTS, DEFAULT_HEADERS, ERROR_MESSAGES, REQUEST_TIMEOUT } from '@/config/api-config';
 
 /**
  * Base API URLs for different services
- * These would typically come from environment variables in production
+ * Using the centralized API configuration
  */
 export const API_URLS = {
-  recommendations: process.env.NEXT_PUBLIC_RECOMMENDATIONS_API_URL || '/api/recommendations',
-  progress: process.env.NEXT_PUBLIC_READING_PROGRESS_API_URL || '/api/progress',
-  highlights: process.env.NEXT_PUBLIC_HIGHLIGHTS_API_URL || '/api/highlights',
-  vocabulary: process.env.NEXT_PUBLIC_VOCABULARY_API_URL || '/api/vocabulary',
-  quizzes: process.env.NEXT_PUBLIC_QUIZZES_API_URL || '/api/quizzes',
-  analytics: process.env.NEXT_PUBLIC_ANALYTICS_API_URL || '/api/analytics',
-  books: process.env.NEXT_PUBLIC_BOOKS_API_URL || '/api/books',
-  lex: process.env.NEXT_PUBLIC_LEX_API_URL || '/api/lex',
-  library: process.env.NEXT_PUBLIC_LIBRARY_API_URL || '/api/library',
-  video: process.env.NEXT_PUBLIC_VIDEO_API_URL || '/api/video',
+  recommendations: '/api/recommendations',
+  progress: '/api/progress',
+  highlights: '/api/highlights',
+  vocabulary: '/api/vocabulary',
+  quizzes: '/api/quizzes',
+  analytics: '/api/analytics',
+  books: '/api/books',
+  lex: '/api/lex',
+  library: '/api/library',
+  video: '/api/video',
 };
 
 /**
@@ -47,16 +47,46 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
     
     const headers = {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      ...DEFAULT_HEADERS,
       ...options.headers,
     };
     
-    return fetch(url, {
-      ...options,
-      headers,
-    });
+    // Create an AbortController to handle request timeouts
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Handle common error responses
+      if (!response.ok) {
+        console.error(`API error: ${response.status} - ${response.statusText}`);
+        
+        // Log detailed error information in development
+        if (process.env.NODE_ENV === 'development') {
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
+        }
+      }
+      
+      return response;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
+        throw new Error(ERROR_MESSAGES.TIMEOUT);
+      }
+      
+      throw fetchError;
+    }
   } catch (error) {
-    console.error('Error making authenticated request:', error);
+    console.error('Error in authenticatedFetch:', error);
     throw error;
   }
 }
