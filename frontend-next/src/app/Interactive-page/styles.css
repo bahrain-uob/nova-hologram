@@ -1,0 +1,126 @@
+/* Video Layout Styles */
+#rotated-video-layout {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  margin: 0 auto 40px auto;
+}
+
+.rotated-video {
+  position: absolute;
+  width: 720px;
+  height: 405px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  background: #000;
+}
+
+.rotated-video.center {
+  left: 600px;
+  top: 50px;
+  transform: rotate(180deg);
+}
+
+.rotated-video.left {
+  left: -96px;
+  top: 150px;
+  transform: rotate(90deg);
+}
+
+.rotated-video.right {
+  left: 1300px;
+  top: 150px;
+  transform: rotate(270deg);
+}
+
+/* Message Styles */
+.message {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 12px;
+  position: relative;
+  max-width: 70%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  word-wrap: break-word;
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(5px);
+}
+
+.message.assistant {
+  background-color: #fce4ec;
+  color: #333;
+  align-self: flex-start;
+  border-bottom-left-radius: 3px;
+  margin-right: auto;
+}
+
+.role-label {
+  font-size: 0.75em;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.message-content {
+  line-height: 1.4;
+}
+
+/* Media Queries */
+@media (max-width: 2000px) {
+  #rotated-video-layout {
+    width: 100vw;
+    height: 56vw;
+    min-width: 320px;
+    min-height: 180px;
+  }
+
+  .rotated-video {
+    width: 37.5vw;
+    height: 21vw;
+    min-width: 160px;
+    min-height: 90px;
+  }
+
+  .rotated-video.center {
+    left: 31vw;
+    top: 5vw;
+  }
+
+  .rotated-video.left {
+    left: -5vw;
+    top: 20vw;
+  }
+
+  .rotated-video.right {
+    left: 67vw;
+    top: 20vw;
+  }
+}
+
+@media (max-width: 900px) {
+  #rotated-video-layout {
+    width: 100vw;
+    height: 120vw;
+  }
+
+  .rotated-video {
+    width: 80vw;
+    height: 45vw;
+  }
+
+  .rotated-video.center {
+    left: 10vw;
+    top: 5vw;
+  }
+
+  .rotated-video.left {
+    left: -30vw;
+    top: 50vw;
+  }
+
+  .rotated-video.right {
+    left: 60vw;
+    top: 50vw;
+  }
+} 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Edit as EditIcon,
   Trash2 as DeleteIcon,
@@ -9,6 +9,7 @@ import {
 import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
+import "./styles.css";
 
 interface Book {
   id: number;
@@ -90,6 +91,8 @@ const InteractivePage: React.FC = () => {
   const [readingLevel, setReadingLevel] = useState("");
   const [publicationYear, setPublicationYear] = useState("");
   const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
+  const [showHologram, setShowHologram] = useState(false);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const router = useRouter();
 
@@ -101,6 +104,21 @@ const InteractivePage: React.FC = () => {
 
     loadBooks();
   }, []);
+
+  useEffect(() => {
+    if (showHologram) {
+      const videoUrl = "https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4";
+      
+      videoRefs.current.forEach(video => {
+        if (video) {
+          video.src = videoUrl;
+          video.loop = true;
+          video.muted = true;
+          video.play().catch(e => console.error("Video play error:", e));
+        }
+      });
+    }
+  }, [showHologram]);
 
   const handleEditBook = (bookId: number) => {
     router.push(`/bookdetail-librarian`);
@@ -130,26 +148,47 @@ const InteractivePage: React.FC = () => {
   });
 
   return (
-    <MainLayout activePage="Manage Books">
-      <main className="flex flex-row bg-gray-50 min-h-screen">
-        {/* Left Column - Chapter Video */}
-        <div className="flex-1 p-8">
-          {/* Chapter Selector */}
-          <div className="mb-4">
-            <label
-              htmlFor="chapter-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
+    <MainLayout activePage="Interactive Book">
+      {/* Hologram Modal */}
+      {showHologram && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <div className="absolute top-4 right-4 z-10">
+            <button
+              onClick={() => setShowHologram(false)}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center"
             >
+              Close Hologram
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+          <div id="rotated-video-layout">
+            <video 
+              ref={(el) => { videoRefs.current[0] = el; }}
+              className="rotated-video left"
+            />
+            <video 
+              ref={(el) => { videoRefs.current[1] = el; }}
+              className="rotated-video center"
+            />
+            <video 
+              ref={(el) => { videoRefs.current[2] = el; }}
+              className="rotated-video right"
+            />
+          </div>
+        </div>
+      )}
+
+      <main className={`flex flex-col bg-gray-50 min-h-screen ${showHologram ? "opacity-0 h-0 overflow-hidden" : ""}`}>
+        <div className="flex-1 p-8">
+          <div className="mb-4">
+            <label htmlFor="chapter-select" className="block text-sm font-medium text-gray-700 mb-1">
               Select Chapter:
             </label>
             <select
               id="chapter-select"
-              value={selectedChapter.id}
-              onChange={(e) =>
-                setSelectedChapter(
-                  chapters.find((ch) => ch.id === Number(e.target.value))!
-                )
-              }
               className="w-full md:w-64 p-2 border border-gray-300 rounded-lg shadow-sm text-sm"
             >
               {chapters.map((chapter) => (
@@ -160,84 +199,41 @@ const InteractivePage: React.FC = () => {
             </select>
           </div>
 
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            {selectedChapter.title}
-          </h2>
+          <div className="relative mb-6">
+            <video 
+              className="w-full rounded-lg shadow-lg"
+              src="https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4"
+              controls
+            />
 
-          <div className="flex flex-col gap-4">
-            <div className="relative mb-6">
-              <video width="100%" controls className="rounded-lg shadow-lg">
-                <source
-                  src="https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4"
-                  type="video/mp4"
-                />
-                Your browser does not support the video tag.
-              </video>
-
-              <div className="flex justify-start mt-4">
-                <button
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 hover:scale-105 hover:shadow-lg active:scale-95 active:bg-indigo-800 cursor-pointer transition-all duration-200 font-semibold shadow-md"
-                  onClick={() => console.log("Hologram activated")}
-                >
-                  Hologram
-                </button>
-              </div>
+            <div className="flex justify-start mt-4">
+              <button
+                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 hover:scale-105 hover:shadow-lg active:scale-95 active:bg-indigo-800 cursor-pointer transition-all duration-200 font-semibold shadow-md"
+                onClick={() => setShowHologram(true)}
+              >
+                View Hologram
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column - Chat Panel */}
-        <div className="w-96 bg-white shadow-lg p-6 flex flex-col justify-between">
-          {/* Greeting */}
-          <div className="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Princess Elena
-            </h3>
-            <div className="text-sm text-gray-500">
-              <p>
-                Greetings, brave reader! I am Princess Elena. What would you
-                like to know about my quest?
-              </p>
-            </div>
-          </div>
-
-          {/* Chat messages */}
-          <div className="flex flex-col gap-6 overflow-y-auto flex-1">
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>What's your mission in this story?</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>What's the forest's secret?</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>Who is your biggest enemy?</p>
+        {/* Chat Panel */}
+        <div className="w-full md:w-96 bg-white shadow-lg p-6 flex flex-col justify-between fixed bottom-0 right-0 h-[400px]">
+          <div className="flex-1 overflow-y-auto mb-4">
+            <div className="message assistant">
+              <div className="role-label">Assistant</div>
+              <div className="message-content">
+                Hello! How can I help you today?
               </div>
             </div>
           </div>
 
-          {/* Chat Input */}
-          <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
+          <div className="mt-4">
             <textarea
               className="w-full p-2 text-sm text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Type your message..."
               rows={2}
-            ></textarea>
+            />
             <div className="flex justify-end mt-2">
               <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                 Send
