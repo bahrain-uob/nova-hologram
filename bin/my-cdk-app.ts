@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { DBStack } from "../lib/DB/db-stack";
 import { StorageStack } from "../lib/Storage/storage-stack";
+import { StorageNotifications } from "../lib/Storage/storage-notifications";
 import { BedrockStack } from "../lib/Backend/bedrock-stack";
 import { lambdastack } from "../lib/Backend/lambda-stacks";
 import { SharedResourcesStack } from "../lib/sharedresources/SharedResourcesStack";
@@ -27,6 +28,15 @@ const lambdaStack = new lambdastack(
 );
 
 // Create EventNotificationsStack for notification system and classroom management
+// Create StorageNotifications stack to handle S3 event notifications
+const storageNotificationsStack = new StorageNotifications(
+  app,
+  "StorageNotificationsStack",
+  storageStack,
+  lambdaStack
+);
+
+// Create EventNotificationsStack for notification system and classroom management
 const eventNotificationsStack = new EventNotificationsStack(
   app,
   "EventNotificationsStack",
@@ -49,6 +59,10 @@ const frontendStack = new FrontendStack(app, "FrontendStack");
 
 lambdaStack.addDependency(storageStack);
 lambdaStack.addDependency(dbStack);
+
+// Add dependencies for StorageNotifications
+storageNotificationsStack.addDependency(storageStack);
+storageNotificationsStack.addDependency(lambdaStack);
 
 // Add dependencies for EventNotificationsStack
 eventNotificationsStack.addDependency(lambdaStack);

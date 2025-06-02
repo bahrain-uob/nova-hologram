@@ -35,11 +35,7 @@ export class StorageStack extends cdk.Stack {
      // SQS Queue for extracted text from textract function 
      this.extractedTextQueue = new sqs.Queue(this, "ExtractedTextQueue",{}); //after the textextraction lambda function processes the object, it puts the result in this queue for the next lambda function to process it
 
-     // trigger the SQS readingmaterialsQueue when a new object is created in the ReadingMaterials s3 bucket (this is here because if i put it in storage or queue i get a circular dependency error)
-     this.readingMaterials.addEventNotification(
-        s3.EventType.OBJECT_CREATED,
-        new s3n.SqsDestination(this.readingMaterialsQueue)
-      );
+     // Notifications are now handled in storage-notifications.ts
 
       //Student
        // Bucket for audio files
