@@ -1,228 +1,145 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Edit as EditIcon,
-  Trash2 as DeleteIcon,
-  Filter as FilterIcon,
-} from "lucide-react";
-import Image from "next/image";
-import MainLayout from "@/components/layout/MainLayout";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import ReaderLayout from "@/components/layout/readerLayout";
 
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  cover: string;
-  genre: string;
-  readingLevel: "Easy" | "Medium" | "Hard";
-  publicationYear: number;
+interface Character {
+  name: string;
+  role: string;
+  intro: string;
+  image?: string;
 }
 
-const fetchBooks = async (): Promise<Book[]> => [
-  {
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    cover: "/covers/gatsby.jpg",
-    genre: "Classic Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1925,
-  },
-  {
-    id: 2,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    cover: "/covers/mockingbird.jpg",
-    genre: "Literary Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1960,
-  },
-  {
-    id: 3,
-    title: "1984",
-    author: "George Orwell",
-    cover: "/covers/1984.jpg",
-    genre: "Science Fiction",
-    readingLevel: "Hard",
-    publicationYear: 1949,
-  },
-  {
-    id: 4,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    cover: "/covers/pride.jpg",
-    genre: "Romance",
-    readingLevel: "Medium",
-    publicationYear: 1813,
-  },
-  {
-    id: 5,
-    title: "Atomic Habits",
-    author: "James Clear",
-    cover: "/covers/atomichabits.jpg",
-    genre: "Self Help",
-    readingLevel: "Easy",
-    publicationYear: 2018,
-  },
-  {
-    id: 6,
-    title: "The Catcher in the Rye",
-    author: "J.D. Salinger",
-    cover: "/covers/catcher.jpg",
-    genre: "Coming-of-Age",
-    readingLevel: "Medium",
-    publicationYear: 1951,
-  },
-];
-
-const chapters = [
-  { id: 1, title: "Chapter 1: The Beginning" },
-  { id: 2, title: "Chapter 2: Into the Forest" },
-  { id: 3, title: "Chapter 3: The Hidden Village" },
-];
+interface Template {
+  id: number;
+  title: string;
+  video: string;
+  video_status: string;
+  characters?: Character[]
+}
 
 const InteractivePage: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [genre, setGenre] = useState("");
-  const [readingLevel, setReadingLevel] = useState("");
-  const [publicationYear, setPublicationYear] = useState("");
-  const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const bookId = searchParams.get("bookId");
 
   useEffect(() => {
-    const loadBooks = async () => {
-      const booksData = await fetchBooks();
-      setBooks(booksData);
+    const fetchTemplates = async () => {
+      if (!bookId) return;
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `https://1rvx3jdou7.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
+        );
+        const data = await res.json();
+
+        const loadedTemplates = (data?.chapters || []).map((tpl: any, index: number) => ({
+          id: index + 1,
+          title: `Template ${index + 1}: ${tpl?.chapter_title || tpl?.title || "Untitled"}`,
+          video: tpl.trailer,
+          video_status: tpl.trailer_status,
+        }));
+
+        setTemplates(loadedTemplates);
+        setSelectedTemplate(loadedTemplates[0]);
+      } catch (err) {
+        console.error("Error fetching templates:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadBooks();
-  }, []);
-
-  const handleEditBook = (bookId: number) => {
-    router.push(`/bookdetail-librarian`);
-    console.log(`Editing book with id: ${bookId}`);
-  };
-
-  const handleDeleteBook = (bookId: number) => {
-    console.log(`Deleting book with id: ${bookId}`);
-  };
-
-  const filteredBooks = books.filter((book) => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesGenre = genre
-      ? book.genre.toLowerCase().includes(genre.toLowerCase())
-      : true;
-    const matchesLevel = readingLevel
-      ? book.readingLevel === readingLevel
-      : true;
-    const matchesYear = publicationYear
-      ? book.publicationYear.toString() === publicationYear
-      : true;
-
-    return matchesSearch && matchesGenre && matchesLevel && matchesYear;
-  });
+    fetchTemplates();
+  }, [bookId]);
 
   return (
-    <MainLayout activePage="Manage Books">
-      <main className="flex flex-row bg-gray-50 min-h-screen">
-        {/* Left Column - Chapter Video */}
-        <div className="flex-1 p-8">
-          {/* Chapter Selector */}
-          <div className="mb-4">
-            <label
-              htmlFor="chapter-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Select Chapter:
-            </label>
-            <select
-              id="chapter-select"
-              value={selectedChapter.id}
-              onChange={(e) =>
-                setSelectedChapter(
-                  chapters.find((ch) => ch.id === Number(e.target.value))!
+    <ReaderLayout activePage="Browse Books">
+      <div className="flex flex-col md:flex-row bg-gray-50 min-h-screen w-full">
+        {/* Left Panel */}
+        <div className="flex-1 p-6">
+          <div className="space-y-6">
+            {/* Template Selection */}
+            <div>
+              <label
+                htmlFor="template-select"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Select Template:
+              </label>
+              <select
+                id="template-select"
+                value={selectedTemplate?.id}
+                onChange={(e) =>
+                  setSelectedTemplate(
+                    templates.find((tpl) => tpl.id === Number(e.target.value))!
+                  )
+                }
+                className="w-full max-w-sm p-2 border border-gray-300 rounded-lg shadow-sm text-sm"
+              >
+                {templates.map((tpl) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Template Title */}
+            <h2 className="text-xl font-semibold text-gray-800">
+              {selectedTemplate?.title}
+            </h2>
+
+            {/* Video Display */}
+            <div className="w-full rounded-lg overflow-hidden border border-gray-300 shadow-sm bg-white p-4">
+              {loading ? (
+                <p className="text-sm text-gray-500">Loading template video...</p>
+              ) : selectedTemplate?.video_status === "completed" ? (
+                selectedTemplate?.video ? (
+                  <video
+                    controls
+                    className="rounded-lg w-full max-w-full aspect-video"
+                    key={selectedTemplate.video} // force video reload
+                  >
+                    <source src={selectedTemplate.video} type="video/mp4" />
+                  </video>
+                ) : (
+                  <p className="text-sm text-gray-500">Final video is being prepared...</p>
                 )
-              }
-              className="w-full md:w-64 p-2 border border-gray-300 rounded-lg shadow-sm text-sm"
-            >
-              {chapters.map((chapter) => (
-                <option key={chapter.id} value={chapter.id}>
-                  {chapter.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            {selectedChapter.title}
-          </h2>
-
-          <div className="flex flex-col gap-4">
-            <div className="relative mb-6">
-              <video width="100%" controls className="rounded-lg shadow-lg">
-                <source
-                  src="https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4"
-                  type="video/mp4"
-                />
-                Your browser does not support the video tag.
-              </video>
+              ) : selectedTemplate?.video_status === "failed" ? (
+                <p className="text-red-500">Video generation failed.</p>
+              ) : (
+                <p className="text-sm text-gray-500">Generating video...</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right Column - Chat Panel */}
-        <div className="w-96 bg-white shadow-lg p-6 flex flex-col justify-between">
-          {/* Greeting */}
+        {/* Right Panel - Chat */}
+        <div className="w-full md:w-96 bg-white shadow-md border-l p-6 flex flex-col justify-between">
           <div className="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Princess Elena
-            </h3>
-            <div className="text-sm text-gray-500">
-              <p>
-                Greetings, brave reader! I am Princess Elena. What would you
-                like to know about my quest?
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-700">Princess Elena</h3>
+            <p className="text-sm text-gray-600 mt-2">
+              Greetings, brave reader! I am Princess Elena. What would you like to know about my quest?
+            </p>
           </div>
 
-          {/* Chat messages */}
-          <div className="flex flex-col gap-6 overflow-y-auto flex-1">
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>What's your mission in this story?</p>
+          <div className="flex flex-col gap-4 overflow-y-auto flex-1">
+            {[
+              "What inspired this story?",
+              "How do you feel in this scene?",
+              "What’s the biggest challenge here?",
+            ].map((q, idx) => (
+              <div key={idx} className="bg-gray-100 p-4 rounded-lg shadow-sm">
+                <h4 className="text-sm font-medium text-gray-700 mb-1">Talk to Character</h4>
+                <p className="text-sm text-gray-500">{q}</p>
               </div>
-            </div>
-
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>What's the forest's secret?</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>Who is your biggest enemy?</p>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Chat Input */}
           <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
             <textarea
               className="w-full p-2 text-sm text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -236,8 +153,8 @@ const InteractivePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </main>
-    </MainLayout>
+      </div>
+    </ReaderLayout>
   );
 };
 
