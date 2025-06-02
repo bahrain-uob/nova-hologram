@@ -5,7 +5,7 @@
 
 export const awsConfig = {
   // AWS Region
-  region: process.env.NEXT_PUBLIC_AWS_PROJECT_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'us-east-1',
   
   // Cognito Configuration
   cognito: {
