@@ -2,7 +2,8 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { Users, BookOpen, Library } from "lucide-react";
+import { BookOpen, Library, Users } from "lucide-react";
+import { API_ENDPOINTS } from "@/config/api-config";
 import withRoleProtection from "@/components/auth/withRoleProtection";
 import MainLayout from "@/components/layout/MainLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,33 +20,70 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState("Librarian");
+  // Analytics state
+  const [stats, setStats] = useState<{readers: number, books: number, collections: number}>({readers: 0, books: 0, collections: 0});
+  const [activityData, setActivityData] = useState<any[]>([]);
+  const [genreData, setGenreData] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [topBooks, setTopBooks] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
 
-    // Get user data from session
-    try {
-      const userSessionStr = localStorage.getItem("userSession");
-      if (userSessionStr) {
-        const userSession = JSON.parse(userSessionStr);
-        // Use the name attribute if available, otherwise fall back to email
-        if (userSession.attributes && userSession.attributes.name) {
-          setUserName(userSession.attributes.name);
-        } else if (userSession.email) {
-          // Fallback to email if name is not available
-          const name = userSession.email.split("@")[0];
-          setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+    // Get user data from Cognito
+    const fetchUserData = async () => {
+      try {
+        const { getCurrentUser } = await import('@/lib/auth');
+        const currentUser = await getCurrentUser();
+        
+        if (currentUser && currentUser.user) {
+          const userAttributes = currentUser.user.attributes || {};
+          
+          // Use the name attribute if available, otherwise fall back to email
+          if (userAttributes.name) {
+            setUserName(userAttributes.name);
+          } else if (userAttributes.email) {
+            // Fallback to email if name is not available
+            const name = userAttributes.email.split("@")[0];
+            setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
-    } catch (error) {
-      console.error("Error getting user session:", error);
-    }
+    };
+    
+    fetchUserData();
   }, []);
 
   const fetchData = async () => {
     try {
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Fetch all analytics in parallel
+      const [statsRes, activityRes, genreRes, recentRes, topBooksRes] = await Promise.all([
+        fetch(API_ENDPOINTS.analyticsStats),
+        fetch(API_ENDPOINTS.analyticsActivity),
+        fetch(API_ENDPOINTS.analyticsGenre),
+        fetch(API_ENDPOINTS.analyticsRecent),
+        fetch(API_ENDPOINTS.analyticsTopBooks),
+      ]);
+      if (!statsRes.ok || !activityRes.ok || !genreRes.ok || !recentRes.ok || !topBooksRes.ok) {
+        throw new Error("One or more analytics endpoints failed");
+      }
+      const statsData = await statsRes.json();
+      const activityData = await activityRes.json();
+      const genreData = await genreRes.json();
+      const recentData = await recentRes.json();
+      const topBooksData = await topBooksRes.json();
+
+      setStats({
+        readers: statsData.readers ?? 0,
+        books: statsData.books ?? 0,
+        collections: statsData.collections ?? 0,
+      });
+      setActivityData(activityData || []);
+      setGenreData(genreData || []);
+      setRecentActivity(recentData || []);
+      setTopBooks(topBooksData || []);
       setLoading(false);
     } catch (err) {
       console.error("Error:", err);
@@ -53,6 +91,7 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -129,20 +168,20 @@ const Dashboard: React.FC = () => {
 
         {/* Stats */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-8">
-          <StatsCard title="Readers" value="245" icon={Users} />
-          <StatsCard title="Books" value="180" icon={BookOpen} />
-          <StatsCard title="Collections" value="23" icon={Library} />
+          <StatsCard title="Readers" value={stats.readers} icon={Users} />
+          <StatsCard title="Books" value={stats.books} icon={BookOpen} />
+          <StatsCard title="Collections" value={stats.collections} icon={Library} />
         </div>
 
         {/* Charts */}
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 mb-8">
           <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
             <h3 className="text-base font-medium mb-4">Reading Activity</h3>
-            <ActivityChart />
+            <ActivityChart data={activityData} />
           </div>
           <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
             <h3 className="text-base font-medium mb-4">Popular Genre</h3>
-            <GenreChart />
+            <GenreChart data={genreData} />
           </div>
         </div>
 
@@ -150,11 +189,11 @@ const Dashboard: React.FC = () => {
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
             <h3 className="text-base font-medium mb-4">Recent Activity</h3>
-            <RecentActivity />
+            <RecentActivity activities={recentActivity} />
           </div>
           <div className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
             <h3 className="text-base font-medium">Top Books</h3>
-            <TopBooks />
+            <TopBooks books={topBooks} />
           </div>
         </div>
       </div>

@@ -8,12 +8,9 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import MainLayout from "@/components/layout/readerLayout";
 import { BookOpen, ChevronRight, ChevronLeft } from "lucide-react";
-import {
-  fetchTopPicks,
-  fetchInProgress,
-  fetchFavorites,
-} from "@/services/api";
-import { LegacyBook as Book, LegacyFavorite as Favorite, LegacyInProgressBook as InProgressBook } from "@/types";
+import { Book, InProgressBook } from '@/types/book';
+import { fetchTrendingBooks } from '@/services/recommendationsService';
+import { fetchRecommendedBooks, fetchReadingLists } from '@/services/booksService';
 
 const ReaderDashboard: React.FC = () => {
   const [userName, setUserName] = useState("Reader");
@@ -22,7 +19,7 @@ const ReaderDashboard: React.FC = () => {
   // State for API data
   const [topPicks, setTopPicks] = useState<Book[]>([]);
   const [inProgressBooks, setInProgressBooks] = useState<InProgressBook[]>([]);
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favorites, setFavorites] = useState<Book[]>([]);
 
   // Loading states
   const [isLoading, setIsLoading] = useState({
@@ -36,50 +33,94 @@ const ReaderDashboard: React.FC = () => {
   const scrollAmount = 300; // pixels to scroll
 
   useEffect(() => {
-    // Get user data from session
-    try {
-      const userSessionStr = localStorage.getItem("userSession");
-      if (userSessionStr) {
-        const userSession = JSON.parse(userSessionStr);
-        // Use the name attribute if available, otherwise fall back to email
-        if (userSession.attributes && userSession.attributes.name) {
-          setUserName(userSession.attributes.name);
-        } else if (userSession.email) {
-          // Fallback to email if name is not available
-          const name = userSession.email.split("@")[0];
-          setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+    // Get user data from Cognito
+    const fetchUserData = async () => {
+      try {
+        const { getCurrentUser } = await import('@/lib/auth');
+        const currentUser = await getCurrentUser();
+        
+        if (currentUser && currentUser.user) {
+          const userAttributes = currentUser.user.attributes || {};
+          
+          // Use the name attribute if available, otherwise fall back to email
+          if (userAttributes.name) {
+            setUserName(userAttributes.name);
+          } else if (userAttributes.email) {
+            // Fallback to email if name is not available
+            const name = userAttributes.email.split("@")[0];
+            setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+          }
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
-    } catch (error) {
-      console.error("Error getting user session:", error);
-    }
+    };
+    
+    fetchUserData();
 
     // Fetch data from API
     const fetchData = async () => {
       try {
-        const books = await fetchTopPicks();
-        setTopPicks(books);
+        const books = await fetchTrendingBooks(10);
+        const mapped = books.map((b: any) => ({
+          id: b.id || b.book_id || '',
+          title: b.title || b.book_title || '',
+          author: b.author || (b.authors && b.authors[0]) || '',
+          coverImage: b.coverImage || b.book_cover || '/placeholder-book.jpg',
+          genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+          readingLevel: b.readingLevel || b.reading_level,
+          publicationYear: b.publicationYear || b.publication_year,
+          rating: b.rating,
+          description: b.description || b.summary || '',
+        }));
+        setTopPicks(mapped);
         setIsLoading((prev) => ({ ...prev, topPicks: false }));
       } catch (error) {
-        console.error("Error fetching top picks:", error);
+        console.error('Error fetching top picks:', error);
         setIsLoading((prev) => ({ ...prev, topPicks: false }));
       }
 
       try {
-        const inProgress = await fetchInProgress();
-        setInProgressBooks(inProgress);
+        // In-progress: Use recommended books for demo (replace with real progress logic if available)
+        const inProgress = await fetchRecommendedBooks(10);
+        const mappedInProgress = inProgress.map((b: any) => ({
+          id: b.id || b.book_id || '',
+          title: b.title || b.book_title || '',
+          author: b.author || (b.authors && b.authors[0]) || '',
+          coverImage: b.coverImage || b.book_cover || '/placeholder-book.jpg',
+          genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+          readingLevel: b.readingLevel || b.reading_level,
+          publicationYear: b.publicationYear || b.publication_year,
+          rating: b.rating,
+          description: b.description || b.summary || '',
+          progress: 0,
+        }));
+        setInProgressBooks(mappedInProgress);
         setIsLoading((prev) => ({ ...prev, inProgress: false }));
       } catch (error) {
-        console.error("Error fetching in-progress books:", error);
+        console.error('Error fetching in-progress books:', error);
         setIsLoading((prev) => ({ ...prev, inProgress: false }));
       }
 
       try {
-        const favs = await fetchFavorites();
-        setFavorites(favs);
+        // Favorites: Use reading lists (flatten books from all lists)
+        const lists = await fetchReadingLists();
+        const allBooks = lists.flatMap(list => list.books || []);
+        const mappedFavorites = allBooks.map((b: any) => ({
+          id: b.id || b.book_id || '',
+          title: b.title || b.book_title || '',
+          author: b.author || (b.authors && b.authors[0]) || '',
+          coverImage: b.coverImage || b.book_cover || '/placeholder-book.jpg',
+          genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+          readingLevel: b.readingLevel || b.reading_level,
+          publicationYear: b.publicationYear || b.publication_year,
+          rating: b.rating,
+          description: b.description || b.summary || '',
+        }));
+        setFavorites(mappedFavorites);
         setIsLoading((prev) => ({ ...prev, favorites: false }));
       } catch (error) {
-        console.error("Error fetching favorites:", error);
+        console.error('Error fetching favorites:', error);
         setIsLoading((prev) => ({ ...prev, favorites: false }));
       }
     };
@@ -331,9 +372,6 @@ const ReaderDashboard: React.FC = () => {
                     <h3 className="text-xs font-medium mb-1">
                       {favorite.title}
                     </h3>
-                    <p className="text-xs text-gray-600 italic">
-                      &quot;{favorite.quote}&quot;
-                    </p>
                   </div>
                 ))
               ) : (

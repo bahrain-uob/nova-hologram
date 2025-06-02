@@ -5,9 +5,23 @@ import MainLayout from "@/components/layout/readerLayout"; // Page layout compon
 import { Badge } from "@/components/ui/badge"; // Badge UI component for genres
 import { BookPreview } from "@/types/book"; // Book type definition
 import withRoleProtection from "@/components/auth/withRoleProtection"; // Role-based access control
+import { API_ENDPOINTS } from "@/config/api-config"; // API endpoints
 
-// ---------- Sample Books Data (mock data) ----------
-const fetchBooks = async (): Promise<BookPreview[]> => [
+// Function to fetch books from API
+const fetchBooks = async (): Promise<BookPreview[]> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.getAllBooks);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch books: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching books:', error);
+    // Return mock data as fallback if API fails
+    return [
   {
     id: 1,
     title: "Pride and Prejudice",
@@ -93,20 +107,34 @@ const fetchBooks = async (): Promise<BookPreview[]> => [
     genres: ["Epic", "Classic"],
     language: "English",
   },
-];
+  ];
+  }
+};
 
 // ---------- Main Component ----------
 const BrowseBooks: React.FC = () => {
   const [books, setBooks] = useState<BookPreview[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
   const [languageFilter, setLanguageFilter] = useState<string>("");
   const [authorFilter, setAuthorFilter] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<string>("a-z");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadBooks = async () => {
-      const booksData = await fetchBooks();
-      setBooks(booksData);
+      try {
+        setIsLoading(true);
+        const booksData = await fetchBooks();
+        setBooks(booksData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load books:', err);
+        setError('Failed to load books. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadBooks();
   }, []);
@@ -131,10 +159,25 @@ const BrowseBooks: React.FC = () => {
       : b.title.localeCompare(a.title);
   });
 
+  if (isLoading) {
+    return (
+      <MainLayout activePage="Browse Books">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex justify-center items-center">
+          <p className="text-lg">Loading books...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout activePage="Browse Books">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-semibold mb-6">Browse Books</h1>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
           {/* Book Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">

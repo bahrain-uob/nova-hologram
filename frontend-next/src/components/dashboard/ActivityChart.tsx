@@ -1,7 +1,11 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
+interface ActivityChartProps {
+  data?: { time: string; value: number }[];
+}
+
+const defaultData = [
   { time: '00:00', value: 8 },
   { time: '04:00', value: 24 },
   { time: '08:00', value: 32 },
@@ -11,7 +15,7 @@ const data = [
   { time: '23:59', value: 16 },
 ];
 
-export function ActivityChart() {
+export function ActivityChart({ data = defaultData }: ActivityChartProps) {
   return (
     <div className="h-[200px]">
       <ResponsiveContainer width="100%" height="100%">

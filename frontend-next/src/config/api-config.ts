@@ -19,10 +19,20 @@ export const API_ENDPOINTS = {
   bookChapters: (id: string) => `${API_GATEWAY_ENDPOINT}/books/${id}/chapters`,
   bookChapter: (bookId: string, chapterId: string) => `${API_GATEWAY_ENDPOINT}/books/${bookId}/chapters/${chapterId}`,
   
+  // Book Management - Direct API Gateway URLs from CDK
+  getBook: (bookId: string) => `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`,
+  getAllBooks: `https://wr54bu1u72.execute-api.us-east-1.amazonaws.com/books`,
+  saveBook: `https://wr54bu1u72.execute-api.us-east-1.amazonaws.com/save-book`,
+  updateBook: `https://ozdejdjb9e.execute-api.us-east-1.amazonaws.com/update-book`,
+  deleteBook: `https://9kr9jldpt6.execute-api.us-east-1.amazonaws.com/delete-book`,
+  getUploadUrls: `https://9kr9jldpt6.execute-api.us-east-1.amazonaws.com/get-upload-urls`,
+  
   // Library Management
   library: `${API_GATEWAY_ENDPOINT}/library`,
   userLibrary: (userId: string) => `${API_GATEWAY_ENDPOINT}/library/user/${userId}`,
   bookDetails: (bookId: string) => `${API_GATEWAY_ENDPOINT}/library/book/${bookId}`,
+  addToLibrary: `${API_GATEWAY_ENDPOINT}/library/add`,
+  removeFromLibrary: `${API_GATEWAY_ENDPOINT}/library/remove`,
   
   // Authentication - Using direct Cognito SDK calls
   // No longer using API endpoints for authentication
@@ -49,9 +59,14 @@ export const API_ENDPOINTS = {
   // Quizzes
   quizzes: `${API_GATEWAY_ENDPOINT}/quizzes`,
   bookQuizzes: (bookId: string) => `${API_GATEWAY_ENDPOINT}/quizzes/book/${bookId}`,
-  
-  // Analytics
+
+  // Analytics (Dashboard)
   analytics: `${API_GATEWAY_ENDPOINT}/analytics`,
+  analyticsStats: `${API_GATEWAY_ENDPOINT}/analytics?type=stats`,
+  analyticsActivity: `${API_GATEWAY_ENDPOINT}/analytics?type=activity`,
+  analyticsGenre: `${API_GATEWAY_ENDPOINT}/analytics?type=genre`,
+  analyticsTopBooks: `${API_GATEWAY_ENDPOINT}/analytics?type=top-books`,
+  analyticsRecent: `${API_GATEWAY_ENDPOINT}/analytics?type=recent`,
   userAnalytics: (userId: string) => `${API_GATEWAY_ENDPOINT}/analytics/user/${userId}`,
   bookAnalytics: (bookId: string) => `${API_GATEWAY_ENDPOINT}/analytics/book/${bookId}`,
   

@@ -62,7 +62,7 @@ export function ChatBot() {
     };
     
     initializeConversation();
-  }, []);
+  }, [messages]);
 
   // Focus input when chat opens
   useEffect(() => {
@@ -70,7 +70,7 @@ export function ChatBot() {
       inputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [messages]);
 
   // Handle sending a message
   const handleSendMessage = async () => {

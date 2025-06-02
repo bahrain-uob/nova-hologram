@@ -20,28 +20,33 @@ export default function withRoleProtection<P extends Record<string, unknown> = R
 
     useEffect(() => {
       // Check if user is authenticated and has the right role
-      const checkAuth = () => {
+      const checkAuth = async () => {
         try {
-          // Get user session from localStorage
-          const userSessionStr = localStorage.getItem('userSession');
+          // Import getCurrentUser dynamically to avoid circular dependencies
+          const { getCurrentUser } = await import('@/lib/auth');
           
-          if (!userSessionStr) {
-            // No session found, redirect to login
+          // Get current user from Cognito
+          const currentUser = await getCurrentUser();
+          
+          if (!currentUser || !currentUser.user) {
+            // No authenticated user found, redirect to login
             router.push('/login');
             return;
           }
           
-          const userSession = JSON.parse(userSessionStr);
+          // Extract user attributes
+          const userAttributes = currentUser.user.attributes || {};
+          const userType = userAttributes['custom:userType'] || '';
           
           // Check if user has one of the allowed roles
-          if (userSession && userSession.userType && allowedRoles.includes(userSession.userType)) {
+          if (userType && allowedRoles.includes(userType)) {
             setAuthorized(true);
             setLoading(false);
           } else {
             // User doesn't have the right role, redirect to appropriate dashboard
-            if (userSession && userSession.userType === 'reader') {
+            if (userType === 'reader') {
               router.push('/reader-dashboard');
-            } else if (userSession && userSession.userType === 'librarian') {
+            } else if (userType === 'librarian') {
               router.push('/dashboard');
             } else {
               // If we can't determine the role, send to login

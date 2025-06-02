@@ -2,7 +2,11 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { Payload } from 'recharts/types/component/DefaultLegendContent';
 
-const data = [
+interface GenreChartProps {
+  data?: { name: string; value: number }[];
+}
+
+const defaultData = [
   { name: 'Fiction', value: 35 },
   { name: 'Science', value: 25 },
   { name: 'History', value: 20 },
@@ -17,7 +21,7 @@ interface LegendProps {
   payload?: Payload[];
 }
 
-export function GenreChart() {
+export function GenreChart({ data = defaultData }: GenreChartProps) {
   // Use Recharts' Payload type
   const renderLegend = (props: LegendProps) => {
     const { payload } = props;

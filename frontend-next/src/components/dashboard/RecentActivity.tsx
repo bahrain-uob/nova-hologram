@@ -2,7 +2,11 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
-const activities = [
+interface RecentActivityProps {
+  activities?: any[];
+}
+
+const defaultActivities = [
   {
     user: {
       name: "John Doe",
@@ -36,7 +40,7 @@ const activities = [
   },
 ];
 
-export function RecentActivity() {
+export function RecentActivity({ activities = defaultActivities }: RecentActivityProps) {
   return (
     <Card className="bg-white">
       <CardContent>

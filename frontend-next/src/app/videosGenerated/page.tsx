@@ -19,10 +19,8 @@ function VideosGeneratedContent() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(
-          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
-        );
-        const data = await res.json();
+        if (!bookId) return;
+        const data = await import('@/services/libraryService').then(mod => mod.getBookById(bookId));
         setBookData(data);
       } catch (err) {
         console.error("Error fetching book data:", err);

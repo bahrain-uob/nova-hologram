@@ -9,117 +9,126 @@ import React, { useState, useEffect } from "react";
 // import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
+import { API_ENDPOINTS } from "@/config/api-config";
 
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  cover: string;
-  genre: string;
-  readingLevel: "Easy" | "Medium" | "Hard";
-  publicationYear: number;
-}
+import { Book, BookChapter } from '@/types/book';
 
-const fetchBooks = async (): Promise<Book[]> => [
-  {
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    cover: "/covers/gatsby.jpg",
-    genre: "Classic Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1925,
-  },
-  {
-    id: 2,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    cover: "/covers/mockingbird.jpg",
-    genre: "Literary Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1960,
-  },
-  {
-    id: 3,
-    title: "1984",
-    author: "George Orwell",
-    cover: "/covers/1984.jpg",
-    genre: "Science Fiction",
-    readingLevel: "Hard",
-    publicationYear: 1949,
-  },
-  {
-    id: 4,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    cover: "/covers/pride.jpg",
-    genre: "Romance",
-    readingLevel: "Medium",
-    publicationYear: 1813,
-  },
-  {
-    id: 5,
-    title: "Atomic Habits",
-    author: "James Clear",
-    cover: "/covers/atomichabits.jpg",
-    genre: "Self Help",
-    readingLevel: "Easy",
-    publicationYear: 2018,
-  },
-  {
-    id: 6,
-    title: "The Catcher in the Rye",
-    author: "J.D. Salinger",
-    cover: "/covers/catcher.jpg",
-    genre: "Coming-of-Age",
-    readingLevel: "Medium",
-    publicationYear: 1951,
-  },
-];
+// Remove local Book/Chapter interfaces and fallback mockBooks. Use centralized types only.
 
-const chapters = [
-  { id: 1, title: "Chapter 1: The Beginning" },
-  { id: 2, title: "Chapter 2: Into the Forest" },
-  { id: 3, title: "Chapter 3: The Hidden Village" },
-];
+import { getAllBooks, getBookChapters } from '@/services/libraryService';
+import { LibraryBook } from '@/types';
+import { ChatBot } from '@/components/Chatbot/ChatBot';
+
+const mapLibraryBookToBook = (libBook: LibraryBook): Book => ({
+  id: libBook.id || libBook.book_id || '',
+  title: libBook.title || libBook.book_title || '',
+  author: libBook.author || (libBook.authors && libBook.authors[0]) || '',
+  coverImage: libBook.coverImage || libBook.book_cover || '/covers/default.jpg',
+  genre: Array.isArray(libBook.genre) ? libBook.genre : (libBook.genre ? [libBook.genre] : []),
+  readingLevel: (libBook.readingLevel as Book['readingLevel']) || (libBook.reading_level as Book['readingLevel']) || undefined,
+  publicationYear: (typeof libBook.publicationYear === 'number' ? libBook.publicationYear : parseInt(libBook.publication_year as string)) || undefined,
+  description: libBook.summary || libBook.book_summary || libBook.description || '',
+});
+
+const mapBookChapterToChapter = (ch: BookChapter): BookChapter => ({
+  chapter_id: ch.chapter_id,
+  book_id: ch.book_id,
+  chapter_no: ch.chapter_no,
+  title: ch.title || ch.chapter_title || '',
+  content: ch.content,
+  summary: ch.summary,
+  script: ch.script,
+  trailer: ch.trailer,
+  trailer_status: ch.trailer_status,
+  audio_url: ch.audio_url,
+  ssml: ch.ssml,
+  finalvideo: ch.finalvideo,
+});
 
 const InteractivePage: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
+  const [chapters, setChapters] = useState<BookChapter[]>([]);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
   // Search and filter states - will be used in future implementation
   const [searchQuery] = useState("");
   const [genre] = useState("");
   const [readingLevel] = useState("");
   const [publicationYear] = useState("");
-  const [selectedChapter, setSelectedChapter] = useState(chapters[0]);
+  const [selectedChapter, setSelectedChapter] = useState<BookChapter | null>(null);
 
   const router = useRouter();
 
   useEffect(() => {
     const loadBooks = async () => {
-      const booksData = await fetchBooks();
-      setBooks(booksData);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const booksData = await getAllBooks();
+        const mappedBooks = booksData.map(mapLibraryBookToBook);
+        setBooks(mappedBooks);
+        if (mappedBooks.length > 0) {
+          setSelectedBook(mappedBooks[0]);
+          const chaptersData = await getBookChapters(mappedBooks[0].id);
+          const mappedChapters = chaptersData.map(mapBookChapterToChapter);
+          setChapters(mappedChapters);
+          if (mappedChapters.length > 0) {
+            setSelectedChapter(mappedChapters[0]);
+          }
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to load books');
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadBooks();
   }, []);
 
-  const handleEditBook = (bookId: number) => {
-    router.push(`/bookdetail-librarian`);
+  const handleEditBook = (bookId: string) => {
+    router.push(`/bookdetail-librarian?id=${bookId}`);
     console.log(`Editing book with id: ${bookId}`);
   };
 
-  const handleDeleteBook = (bookId: number) => {
+  const handleDeleteBook = (bookId: string) => {
     console.log(`Deleting book with id: ${bookId}`);
+  };
+  
+  // Load chapters when a book is selected
+  const handleBookSelect = async (book: Book) => {
+    setSelectedBook(book);
+    setSelectedChapter(null);
+    setIsLoading(true);
+    try {
+      const chaptersData = await getBookChapters(book.id);
+      const mappedChapters = chaptersData.map(mapBookChapterToChapter);
+      setChapters(mappedChapters);
+      if (mappedChapters.length > 0) {
+        setSelectedChapter(mappedChapters[0]);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load chapters');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredBooks = books.filter((book) => {
+    const searchLower = searchQuery.toLowerCase();
+    const genreLower = genre ? genre.toLowerCase() : '';
+    
     const matchesSearch =
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase());
+      (book.title || '').toLowerCase().includes(searchLower) ||
+      (book.author || '').toLowerCase().includes(searchLower);
 
-    const matchesGenre = genre
-      ? book.genre.toLowerCase().includes(genre.toLowerCase())
-      : true;
+    const matchesGenre = !genre || (
+      Array.isArray(book.genre)
+        ? book.genre.some(g => (g || '').toLowerCase().includes(genreLower))
+        : false
+    );
     const matchesLevel = readingLevel
       ? book.readingLevel === readingLevel
       : true;
@@ -145,16 +154,17 @@ const InteractivePage: React.FC = () => {
             </label>
             <select
               id="chapter-select"
-              value={selectedChapter.id}
+              value={selectedChapter?.chapter_id || ""}
               onChange={(e) =>
                 setSelectedChapter(
-                  chapters.find((ch) => ch.id === Number(e.target.value))!
+                  chapters.find((ch) => ch.chapter_id === e.target.value) || null
                 )
               }
               className="w-full md:w-64 p-2 border border-gray-300 rounded-lg shadow-sm text-sm"
+              disabled={isLoading || chapters.length === 0}
             >
               {chapters.map((chapter) => (
-                <option key={chapter.id} value={chapter.id}>
+                <option key={chapter.chapter_id} value={chapter.chapter_id}>
                   {chapter.title}
                 </option>
               ))}
@@ -162,14 +172,14 @@ const InteractivePage: React.FC = () => {
           </div>
 
           <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            {selectedChapter.title}
+            {selectedChapter?.title || "No chapter selected"}
           </h2>
 
           <div className="flex flex-col gap-4">
             <div className="relative mb-6">
               <video width="100%" controls className="rounded-lg shadow-lg">
                 <source
-                  src="https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4"
+                  src={selectedChapter?.trailer || selectedChapter?.finalvideo || "https://bedrock-video-generation-us-east-1-qvk1dv.s3.amazonaws.com/output.mp4"}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
@@ -180,62 +190,9 @@ const InteractivePage: React.FC = () => {
 
         {/* Right Column - Chat Panel */}
         <div className="w-96 bg-white shadow-lg p-6 flex flex-col justify-between">
-          {/* Greeting */}
-          <div className="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Princess Elena
-            </h3>
-            <div className="text-sm text-gray-500">
-              <p>
-                Greetings, brave reader! I am Princess Elena. What would you
-                like to know about my quest?
-              </p>
-            </div>
-          </div>
-
-          {/* Chat messages */}
-          <div className="flex flex-col gap-6 overflow-y-auto flex-1">
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>What&apos;s your mission in this story?</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>What&apos;s the forest&apos;s secret?</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Talk to Character
-              </h3>
-              <div className="text-sm text-gray-500">
-                <p>Who is your biggest enemy?</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Chat Input */}
-          <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
-            <textarea
-              className="w-full p-2 text-sm text-gray-700 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Type your message..."
-              rows={2}
-            ></textarea>
-            <div className="flex justify-end mt-2">
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                Send
-              </button>
-            </div>
-          </div>
+          {/* Live Amazon Lex Chatbot */}
+          <ChatBot />
+          {/* </div> */}
         </div>
       </main>
     </MainLayout>

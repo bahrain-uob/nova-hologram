@@ -10,76 +10,17 @@ import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
 import { useRouter } from "next/navigation";
 
-interface Book {
-id: number;
-title: string;
-author: string;
-cover: string;
-genre: string;
-readingLevel: "Easy" | "Medium" | "Hard";
-publicationYear: number;
-}
+import { Book as BaseBook } from '@/types/book';
 
-const fetchBooks = async (): Promise<Book[]> => [
-{
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    cover: "/covers/gatsby.jpg",
-    genre: "Classic Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1925,
-},
-{
-    id: 2,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    cover: "/covers/mockingbird.jpg",
-    genre: "Literary Fiction",
-    readingLevel: "Medium",
-    publicationYear: 1960,
-},
-{
-    id: 3,
-    title: "1984",
-    author: "George Orwell",
-    cover: "/covers/1984.jpg",
-    genre: "Science Fiction",
-    readingLevel: "Hard",
-    publicationYear: 1949,
-},
-{
-    id: 4,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    cover: "/covers/pride.jpg",
-    genre: "Romance",
-    readingLevel: "Medium",
-    publicationYear: 1813,
-},
-{
-    id: 5,
-    title: "Atomic Habits",
-    author: "James Clear",
-    cover: "/covers/atomichabits.jpg",
-    genre: "Self Help",
-    readingLevel: "Easy",
-    publicationYear: 2018,
-},
-{
-    id: 6,
-    title: "The Catcher in the Rye",
-    author: "J.D. Salinger",
-    cover: "/covers/catcher.jpg",
-    genre: "Coming-of-Age",
-    readingLevel: "Medium",
-    publicationYear: 1951,
-},
-];
+// Use shared Book type from centralized types
+import { Book } from '@/types/book';
+
+import { getAllBooks } from '@/services/libraryService';
+
 
 const LibrarianRecommendation: React.FC = () => {
 const [books, setBooks] = useState<Book[]>([]);
-const [recommendedBooks, setRecommendedBooks] = useState<number[]>([]);
+const [recommendedBooks, setRecommendedBooks] = useState<string[]>([]);
 const [searchQuery, setSearchQuery] = useState("");
 const [genre, setGenre] = useState("");
 const [readingLevel, setReadingLevel] = useState("");
@@ -87,37 +28,51 @@ const [publicationYear, setPublicationYear] = useState("");
 const router = useRouter();
 
 useEffect(() => {
-    const loadBooks = async () => {
-    const booksData = await fetchBooks();
-    setBooks(booksData);
-    };
-    loadBooks();
+  const loadBooks = async () => {
+    try {
+      const booksData = await getAllBooks();
+      setBooks(Array.isArray(booksData) ? booksData.map((b: any) => ({
+        ...b,
+        id: b.id?.toString() || b.book_id?.toString() || '',
+        title: b.title || b.book_title || '',
+        author: b.author || (b.authors && b.authors[0]) || '',
+        coverImage: b.coverImage || b.book_cover || '/covers/default.jpg',
+        genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+        readingLevel: b.readingLevel || b.reading_level || undefined,
+        publicationYear: typeof b.publicationYear === 'number' ? b.publicationYear : parseInt(b.publication_year as string) || undefined,
+      })) : []);
+    } catch (err) {
+      setBooks([]);
+    }
+  };
+  loadBooks();
 }, []);
 
-const toggleRecommendation = (bookId: number) => {
-    setRecommendedBooks((prev) =>
+const toggleRecommendation = (bookId: string) => {
+  setRecommendedBooks((prev) =>
     prev.includes(bookId)
-        ? prev.filter((id) => id !== bookId)
-        : [...prev, bookId]
-    );
+      ? prev.filter((id) => id !== bookId)
+      : [...prev, bookId]
+  );
 };
 
 const filteredBooks = books.filter((book) => {
-    const matchesSearch =
+  const matchesSearch =
     book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     book.author.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesGenre = genre
-    ? book.genre.toLowerCase().includes(genre.toLowerCase())
+  const genreString = Array.isArray(book.genre) ? book.genre.join(', ') : book.genre || '';
+  const matchesGenre = genre
+    ? genreString.toLowerCase().includes(genre.toLowerCase())
     : true;
-    const matchesLevel = readingLevel
+  const matchesLevel = readingLevel
     ? book.readingLevel === readingLevel
     : true;
-    const matchesYear = publicationYear
-    ? book.publicationYear.toString() === publicationYear
+  const matchesYear = publicationYear
+    ? (book.publicationYear ? book.publicationYear.toString() : '') === publicationYear
     : true;
 
-    return matchesSearch && matchesGenre && matchesLevel && matchesYear;
+  return matchesSearch && matchesGenre && matchesLevel && matchesYear;
 });
 
 return (
@@ -148,7 +103,7 @@ return (
                 className="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow flex flex-col"
             >
                 <Image
-                src={book.cover}
+                src={book.coverImage}
                 alt={book.title}
                 width={200}
                 height={280}

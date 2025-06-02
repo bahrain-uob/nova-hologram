@@ -1,7 +1,8 @@
 "use client";
 
 import type React from "react";
-import type { Book } from "@/services/api";
+import Image from "next/image";
+import type { Book } from "@/types/book";
 
 interface SimilarBookCardProps {
   book: Book;
@@ -21,10 +22,12 @@ export const SimilarBookCard: React.FC<SimilarBookCardProps> = ({
 
       <div className="flex justify-center mb-4">
         <div className="h-44 w-32 rounded-md overflow-hidden">
-          <img
+          <Image
             src={book.coverImage || "/placeholder.svg?height=176&width=128"}
             alt={book.title}
             className="w-full h-full object-cover"
+            width={128}
+            height={176}
           />
         </div>
       </div>

@@ -137,14 +137,13 @@ const [collection, setCollection] = React.useState<string | undefined>(undefined
   
     const fetchData = async () => {
       try {
-        const res = await fetch(
-          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
-        );
-        const data = await res.json();
+        if (!bookId) return;
+        const data = await import('@/services/libraryService').then(mod => mod.getBookById(bookId));
+        if (!data) throw new Error('Book not found');
         setBookData(data);
         setChapters(data.chapters || []);
 
-        const book = data.book;
+        const book = data; // Support both wrapped and direct
         console.log("Fetched book:", book);
 
         setTitle(book.title || "");
@@ -154,7 +153,7 @@ const [collection, setCollection] = React.useState<string | undefined>(undefined
             ? book.publisher
             : book.publisher?.name || ""
         );
-        setPublishedDate(book.publication_year || "");
+        setPublishedDate(book.publication_year ? book.publication_year.toString() : "");
         setMaturity(book.reading_level || "");
         setSummary(book.summary || "");
         setType(typeof book.type === "string" ? book.type : undefined);
@@ -165,20 +164,39 @@ const [collection, setCollection] = React.useState<string | undefined>(undefined
             ? book.genre
             : undefined
         );
-        setCollection(typeof book.collection === "string" ? book.collection : undefined);
+        setCollection(Array.isArray(book.collection_id) ? book.collection_id[0] : undefined);
 
         setIsbn(book.isbn || "");
-  
+
+        // Handle objectives
         if (Array.isArray(book.objectives)) {
-          if (typeof book.objectives[0] === "string") {
-            // It's an array of strings
-            setObjectives(book.objectives.map((text, index) => ({ id: index + 1, text })));
-          } else if (typeof book.objectives[0] === "object" && book.objectives[0].text) {
-            // It's already an array of objects
-            setObjectives(book.objectives);
+          if (book.objectives.length > 0) {
+            if (typeof book.objectives[0] === "string") {
+              // If objectives is string[], convert to proper format
+              const formattedObjectives = book.objectives.map((text, index) => ({
+                id: index + 1,
+                text: String(text)
+              }));
+              setObjectives(formattedObjectives);
+            } else {
+              // If objectives is already { id: number; text: string }[]
+              const formattedObjectives = book.objectives
+                .filter(obj => obj && typeof obj === 'object' && 'id' in obj && 'text' in obj)
+                .map(obj => ({
+                  id: Number(obj.id) || 0,
+                  text: String(obj.text)
+                }));
+              setObjectives(formattedObjectives.length > 0 ? formattedObjectives : [{ id: 1, text: "" }]);
+            }
+          } else {
+            // Empty array case
+            setObjectives([{ id: 1, text: "" }]);
           }
+        } else {
+          // No objectives case
+          setObjectives([{ id: 1, text: "" }]);
         }
-  
+
       } catch (err) {
         console.error("Error fetching book data:", err);
       } finally {

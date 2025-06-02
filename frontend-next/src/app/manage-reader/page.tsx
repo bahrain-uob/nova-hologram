@@ -12,7 +12,7 @@ import  { User } from "@/types/user";
 
 
 
-const API_URL = "https://your-api-url.execute-api.region.amazonaws.com/prod/readers";
+import { getAllReaders, deleteReader } from '@/services/userService';
 
 const ManageReaders: React.FC = () => {
   const [readers, setReaders] = useState<User[]>([]);
@@ -25,9 +25,7 @@ const ManageReaders: React.FC = () => {
   useEffect(() => {
     const loadReaders = async () => {
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Failed to fetch readers');
-        const data = await response.json();
+        const data = await getAllReaders();
         setReaders(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch readers');
@@ -43,10 +41,23 @@ const ManageReaders: React.FC = () => {
     // Add your edit logic here
   };
 
-  const handleDeleteReader = (userId: string) => {
-    console.log(`Deleting user with id: ${userId}`);
-    // Add your delete logic here
+  const handleDeleteReader = async (userId: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this reader?');
+    if (!confirmed) return;
+    setLoading(true);
+    try {
+      const success = await deleteReader(userId);
+      if (!success) throw new Error('Failed to delete reader');
+      setReaders(prev => prev.filter(r => r.user_id !== userId));
+      alert('Reader deleted successfully!');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Failed to delete reader. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   const filteredReaders = readers.filter((user) => {
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();

@@ -1,7 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 
-const books = [
+interface TopBooksProps {
+  books?: any[];
+}
+
+const defaultBooks = [
   {
     title: "The AI Revolution",
     author: "Sarah Johnson",
@@ -22,7 +26,7 @@ const books = [
   },
 ];
 
-export function TopBooks() {
+export function TopBooks({ books = defaultBooks }: TopBooksProps) {
   return (
     <Card className="bg-white">
       <CardHeader></CardHeader>

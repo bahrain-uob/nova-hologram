@@ -6,13 +6,9 @@ import { RecommendationSection } from "@/components/recommendations/recommendati
 import { SimilarBookCard } from "@/components/recommendations/similar-book-card";
 import withRoleProtection from "@/components/auth/withRoleProtection";
 
-import {
-  fetchTopPicks,
-  fetchLibrarianPicks,
-  fetchBecauseYouLiked,
-  addToReadingList,
-  type Book,
-} from "@/services/api";
+import { Book } from '@/types/book';
+import { fetchTrendingBooks, fetchCuratedRecommendations, fetchSimilarBooks } from '@/services/recommendationsService';
+import { addBookToReadingList, fetchReadingLists, createReadingList } from '@/services/booksService';
 import { useRouter } from "next/navigation";
 import MainLayout from "@/components/layout/readerLayout";
 export default function RecommendationsPage() {
@@ -37,66 +33,125 @@ export default function RecommendationsPage() {
     similarBooks: false,
   });
 
-  // Fetch top picks
+  // Fetch top picks from backend
   useEffect(() => {
     const getTopPicks = async () => {
       try {
-        const books = await fetchTopPicks();
-        setTopPicks(books);
+        const books = await fetchTrendingBooks(10);
+        // Map backend BookRecommendation to Book type for UI
+        const mapped = books.map((b: any) => ({
+          id: b.id || b.book_id || '',
+          title: b.title || b.book_title || '',
+          author: b.author || (b.authors && b.authors[0]) || '',
+          coverImage: b.coverImage || b.book_cover || '/placeholder-book.jpg',
+          genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+          readingLevel: b.readingLevel || b.reading_level,
+          publicationYear: b.publicationYear || b.publication_year,
+          rating: b.rating,
+          description: b.description || b.summary || '',
+        }));
+        setTopPicks(mapped);
         setIsLoading((prev) => ({ ...prev, topPicks: false }));
       } catch (error) {
-        console.error("Error fetching top picks:", error);
+        console.error('Error fetching top picks:', error);
         setErrors((prev) => ({ ...prev, topPicks: true }));
         setIsLoading((prev) => ({ ...prev, topPicks: false }));
       }
     };
-
     getTopPicks();
   }, []);
 
-  // Fetch librarian picks
+  // Fetch librarian picks from backend
   useEffect(() => {
     const getLibrarianPicks = async () => {
       try {
-        const books = await fetchLibrarianPicks();
-        setLibrarianPicks(books);
+        const books = await fetchCuratedRecommendations(10);
+        const mapped = books.map((b: any) => ({
+          id: b.id || b.book_id || '',
+          title: b.title || b.book_title || '',
+          author: b.author || (b.authors && b.authors[0]) || '',
+          coverImage: b.coverImage || b.book_cover || '/placeholder-book.jpg',
+          genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+          readingLevel: b.readingLevel || b.reading_level,
+          publicationYear: b.publicationYear || b.publication_year,
+          rating: b.rating,
+          description: b.description || b.summary || '',
+        }));
+        setLibrarianPicks(mapped);
         setIsLoading((prev) => ({ ...prev, librarianPicks: false }));
       } catch (error) {
-        console.error("Error fetching librarian picks:", error);
+        console.error('Error fetching librarian picks:', error);
         setErrors((prev) => ({ ...prev, librarianPicks: true }));
         setIsLoading((prev) => ({ ...prev, librarianPicks: false }));
       }
     };
-
     getLibrarianPicks();
   }, []);
 
-  // Fetch similar books (based on "The Red Pathways")
+  // Fetch similar books from backend
   useEffect(() => {
     const getSimilarBooks = async () => {
       try {
-        // Hardcoded to "The Red Pathways" for this example
-        const books = await fetchBecauseYouLiked("1");
-        setSimilarBooks(books);
+        const bookId = topPicks[0]?.id;
+        if (!bookId) return;
+        const books = await fetchSimilarBooks(bookId, 5, false);
+        const mapped = books.map((b: any) => ({
+          id: b.id || b.book_id || '',
+          title: b.title || b.book_title || '',
+          author: b.author || (b.authors && b.authors[0]) || '',
+          coverImage: b.coverImage || b.book_cover || '/placeholder-book.jpg',
+          genre: Array.isArray(b.genre) ? b.genre : (b.genre ? [b.genre] : []),
+          readingLevel: b.readingLevel || b.reading_level,
+          publicationYear: b.publicationYear || b.publication_year,
+          rating: b.rating,
+          description: b.description || b.summary || '',
+        }));
+        setSimilarBooks(mapped);
         setIsLoading((prev) => ({ ...prev, similarBooks: false }));
       } catch (error) {
-        console.error("Error fetching similar books:", error);
+        console.error('Error fetching similar books:', error);
         setErrors((prev) => ({ ...prev, similarBooks: true }));
         setIsLoading((prev) => ({ ...prev, similarBooks: false }));
       }
     };
+    if (!isLoading.topPicks && topPicks.length > 0) {
+      getSimilarBooks();
+    }
+  }, [isLoading.topPicks, topPicks]);
 
-    getSimilarBooks();
+  const [defaultListId, setDefaultListId] = useState<string>('');
+
+  // Initialize default reading list
+  useEffect(() => {
+    const initializeReadingList = async () => {
+      try {
+        // Try to get existing reading lists
+        const lists = await fetchReadingLists();
+        if (lists && lists.length > 0) {
+          // Use the first list as default
+          setDefaultListId(lists[0].id);
+        } else {
+          // Create a new reading list if none exists
+          const newList = await createReadingList('My Reading List');
+          if (newList) {
+            setDefaultListId(newList.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing reading list:', error);
+      }
+    };
+    initializeReadingList();
   }, []);
-
-  //  const handleStartReading = (bookId: string) => {
-  //    router.push(`/reader/${bookId}`);
-  //  };
 
   const handleAddToList = async (bookId: string) => {
     try {
-      const result = await addToReadingList(bookId);
-      if (result.success) {
+      if (!defaultListId) {
+        console.error("No reading list available");
+        return;
+      }
+      const result = await addBookToReadingList(defaultListId, bookId);
+      if (result) {
         setTopPicks((prev) => prev.filter((book) => book.id !== bookId));
       } else {
         console.error("Failed to add book to list");
@@ -117,7 +172,15 @@ export default function RecommendationsPage() {
             <RecommendationSection
               title="Top Picks for You"
               description="Based on your reading list and interests"
-              books={topPicks}
+              books={topPicks.map((b) => ({
+                id: b.id,
+                title: b.title,
+                author: b.author,
+                coverImage: b.coverImage || '/placeholder-book.jpg',
+                genre: Array.isArray(b.genre) ? b.genre[0] : (b.genre || ''),
+                rating: b.rating,
+                description: b.description,
+              }))}
               isLoading={isLoading.topPicks}
               error={errors.topPicks}
             />
@@ -125,7 +188,15 @@ export default function RecommendationsPage() {
             <RecommendationSection
               title="Recommended for you by Librarian"
               description="Books selected by librarian"
-              books={librarianPicks}
+              books={librarianPicks.map((b) => ({
+                id: b.id,
+                title: b.title,
+                author: b.author,
+                coverImage: b.coverImage || '/placeholder-book.jpg',
+                genre: Array.isArray(b.genre) ? b.genre[0] : (b.genre || ''),
+                rating: b.rating,
+                description: b.description,
+              }))}
               isLoading={isLoading.librarianPicks}
               error={errors.librarianPicks}
             />
@@ -151,8 +222,11 @@ export default function RecommendationsPage() {
                 <p className="text-sm text-gray-500 mb-3">&quot;The Red Pathways&quot;</p>
 
                 <SimilarBookCard
-                  book={similarBooks[0]}
-                  //onStartReading={() => handleStartReading(similarBooks[0].id)}
+                  book={{
+                    ...similarBooks[0],
+                    coverImage: similarBooks[0].coverImage || '/placeholder-book.jpg',
+                    genre: Array.isArray(similarBooks[0].genre) ? similarBooks[0].genre : [similarBooks[0].genre || ''],
+                  }}
                   onStartReading={() => router.push(`/bookdetail-reader`)}
                   onAddToList={() => handleAddToList(similarBooks[0].id)}
                 />
