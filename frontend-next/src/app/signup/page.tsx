@@ -248,7 +248,7 @@ export default function Signup() {
             </button>
 
             <div className="form-footer">
-              <a href="/dashboard" className="guest-link">
+              <a href="/guest-page" className="guest-link">
                 Enter as a Guest
               </a>
               <a href="#" className="login-link" onClick={handleLoginClick}>
