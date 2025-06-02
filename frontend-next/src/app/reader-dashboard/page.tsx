@@ -32,6 +32,27 @@ const ReaderDashboard: React.FC = () => {
     inProgress: true,
     favorites: true,
   });
+  // Define Book interface based on the API response
+  interface Book {
+    book_id: string;
+    book_title: string;
+    authors: string[];
+    book_cover: string;
+    genre: string[];
+    reading_level: string;
+    publication_year: string;
+    isbn?: string;
+    language?: string;
+    publisher?: {
+      name: string;
+    };
+    book_summary?: string;
+  }
+
+  interface BooksResponse {
+    books?: Book[];
+    error?: string;
+  }
 
   // Scroll state for book carousel
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -55,12 +76,39 @@ const ReaderDashboard: React.FC = () => {
     } catch (error) {
       console.error("Error getting user session:", error);
     }
+    const fetchBooks = async (): Promise<BooksResponse> => {
+      try {
+        const response = await fetch(
+          "https://k63byt45a5.execute-api.us-east-1.amazonaws.com/books"
+        );
+
+        if (!response.ok) {
+          return { error: `API error: ${response.status}` };
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          return { error: data.error };
+        }
+
+        // Make sure it's an array
+        if (!Array.isArray(data)) {
+          return { error: "Invalid data format" };
+        }
+
+        return { books: data };
+      } catch (error) {
+        console.error("Error fetching books:", error);
+        return { error: "Failed to fetch books" };
+      }
+    };
 
     // Fetch data from API
     const fetchData = async () => {
       try {
-        const books = await fetchTopPicks();
-        setTopPicks(books);
+        const books = await fetchBooks();
+        setTopPicks(books.books || []);
         setIsLoading((prev) => ({ ...prev, topPicks: false }));
       } catch (error) {
         console.error("Error fetching top picks:", error);
@@ -193,28 +241,28 @@ const ReaderDashboard: React.FC = () => {
             >
               {topPicks.map((book) => (
                 <div
-                  key={book.id}
+                  key={book.book_id}
                   className="flex-shrink-0 w-50 bg-white rounded-md shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden flex flex-col h-full"
                 >
                   <div className="aspect-[3/4] w-full relative">
                     <Image
                       src={
-                        book.coverImage ||
+                        book.book_cover ||
                         "/placeholder.svg?height=150&width=112"
                       }
                       width={150}
                       height={200}
-                      alt={book.title}
+                      alt={book.book_title}
                       className="w-full h-full object-cover"
                     />
                   </div>
 
                   <div className="p-2 flex flex-col flex-grow">
                     <h3 className="font-medium text-xs mb-0.5 line-clamp-1">
-                      {book.title}
+                      {book.book_title}
                     </h3>
                     <p className="text-xs mb-1 text-gray-600 line-clamp-1">
-                      {book.author}
+                      {book.authors.join(", ") || "Unknown Author"}
                     </p>
                     <div className="flex items-center mb-2">
                       <span className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full">
@@ -224,7 +272,11 @@ const ReaderDashboard: React.FC = () => {
                     <div className="mt-auto">
                       <button
                         className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] rounded transition-colors duration-200"
-                        onClick={() => router.push(`/reader/${book.id}`)}
+                        onClick={() =>
+                          router.push(
+                            `/bookdetail-reader?bookid=${book.book_id}`
+                          )
+                        }
                       >
                         Start Reading
                       </button>
