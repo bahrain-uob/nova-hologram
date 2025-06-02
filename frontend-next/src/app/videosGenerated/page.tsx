@@ -5,8 +5,6 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 
-
-
 export default function VideosGeneratedPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +19,7 @@ export default function VideosGeneratedPage() {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
+          `https://9b8264bvl5.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
         );
         const data = await res.json();
         setBookData(data);
@@ -37,47 +35,43 @@ export default function VideosGeneratedPage() {
     return () => clearInterval(interval);
   }, [bookId]);
 
-  const isAddBookEnabled = !loading &&
-  (
-    (bookData?.book?.trailer_status === "completed" && bookData?.book?.trailer) ||
-    bookData?.book?.trailer_status === "failed"
-  ) &&
-  (
-    !bookData?.chapters?.length ||
-    bookData.chapters.every(ch =>
-      (ch.trailer_status === "completed" && ch.trailer) || ch.trailer_status === "failed"
-    )
-  );
-
+  const isAddBookEnabled =
+    !loading &&
+    ((bookData?.book?.trailer_status === "completed" &&
+      bookData?.book?.trailer) ||
+      bookData?.book?.trailer_status === "failed") &&
+    (!bookData?.chapters?.length ||
+      bookData.chapters.every(
+        (ch) =>
+          (ch.trailer_status === "completed" && ch.trailer) ||
+          ch.trailer_status === "failed"
+      ));
 
   const Spinner = ({ text = "Generating..." }) => (
     <div className="flex items-center gap-2 text-gray-500 text-sm">
-  {text}
-  <svg
-    className="animate-spin h-4 w-4 text-gray-500"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-  >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8v8z"
-    />
-  </svg>
-</div>
-
+      {text}
+      <svg
+        className="animate-spin h-4 w-4 text-gray-500"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8z"
+        />
+      </svg>
+    </div>
   );
-  
-  
 
   return (
     <MainLayout activePage="Manage Books">
@@ -91,12 +85,13 @@ export default function VideosGeneratedPage() {
               </div>
 
               <div className="px-5">
-              <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm">
-                {loading || !bookData?.book?.summary
-                  ? <Spinner text="Generating summary..." />
-                  : bookData.book.summary}
-              </div>
-
+                <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm">
+                  {loading || !bookData?.book?.summary ? (
+                    <Spinner text="Generating summary..." />
+                  ) : (
+                    bookData.book.summary
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-between items-center px-5 pt-4">
@@ -105,23 +100,24 @@ export default function VideosGeneratedPage() {
 
               <div className="px-5 pb-5">
                 <div className="flex items-center justify-center">
-                {loading ? (
-                  <Spinner text="Generating trailer..." />
-                ) : bookData?.book?.trailer_status === "completed" ? (
-                  bookData.book.trailer ? (
-                    <video controls className="rounded-md w-full max-w-4xl aspect-video">
-                      <source src={bookData.book.trailer} type="video/mp4" />
-                    </video>
+                  {loading ? (
+                    <Spinner text="Generating trailer..." />
+                  ) : bookData?.book?.trailer_status === "completed" ? (
+                    bookData.book.trailer ? (
+                      <video
+                        controls
+                        className="rounded-md w-full max-w-4xl aspect-video"
+                      >
+                        <source src={bookData.book.trailer} type="video/mp4" />
+                      </video>
+                    ) : (
+                      <Spinner text="Final video being prepared..." />
+                    )
+                  ) : bookData?.book?.trailer_status === "failed" ? (
+                    <p className="text-red-500">Trailer generation failed.</p>
                   ) : (
-                    <Spinner text="Final video being prepared..." />
-                  )
-                ) : bookData?.book?.trailer_status === "failed" ? (
-                  <p className="text-red-500">Trailer generation failed.</p>
-                ) : (
-                  <Spinner text="Generating trailer..." />
-                )}
-
-
+                    <Spinner text="Generating trailer..." />
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -138,46 +134,54 @@ export default function VideosGeneratedPage() {
                 <p className="text-sm px-5 py-5">Loading chapters...</p>
               ) : bookData?.chapters?.length ? (
                 [...bookData.chapters]
-                .sort((a, b) => a.chapter_no - b.chapter_no)
-                .map((chapter, index) => {
-                  const trailerStatus = chapter.trailer_status;
-                  return (
-                    <div
-                      key={chapter.chapter_id}
-                      className="px-5 mt-12 pb-8 space-y-4"
-                    >
-                      <h3 className="text-base font-medium">Ch{chapter.chapter_no} Summary</h3>
+                  .sort((a, b) => a.chapter_no - b.chapter_no)
+                  .map((chapter, index) => {
+                    const trailerStatus = chapter.trailer_status;
+                    return (
+                      <div
+                        key={chapter.chapter_id}
+                        className="px-5 mt-12 pb-8 space-y-4"
+                      >
+                        <h3 className="text-base font-medium">
+                          Ch{chapter.chapter_no} Summary
+                        </h3>
 
-                      <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm">
-                        {chapter.summary?.length > 0
-                          ? chapter.summary
-                          : "Generating summary..."}
+                        <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm">
+                          {chapter.summary?.length > 0
+                            ? chapter.summary
+                            : "Generating summary..."}
+                        </div>
+
+                        <h3 className="text-base font-medium pt-4">
+                          Ch{chapter.chapter_no} Trailer
+                        </h3>
+
+                        <div className="flex items-center justify-center">
+                          {trailerStatus === "completed" ? (
+                            chapter.trailer ? (
+                              <video
+                                controls
+                                className="rounded-md w-full max-w-4xl aspect-video"
+                              >
+                                <source
+                                  src={chapter.trailer}
+                                  type="video/mp4"
+                                />
+                              </video>
+                            ) : (
+                              <Spinner text="Final video being prepared..." />
+                            )
+                          ) : trailerStatus === "failed" ? (
+                            <p className="text-red-500">
+                              Trailer failed to generate.
+                            </p>
+                          ) : (
+                            <Spinner text="Generating trailer..." />
+                          )}
+                        </div>
                       </div>
-
-                      <h3 className="text-base font-medium pt-4">Ch{chapter.chapter_no} Trailer</h3>
-
-                      <div className="flex items-center justify-center">
-                      {trailerStatus === "completed" ? (
-                        chapter.trailer ? (
-                          <video
-                            controls
-                            className="rounded-md w-full max-w-4xl aspect-video"
-                          >
-                            <source src={chapter.trailer} type="video/mp4" />
-                          </video>
-                        ) : (
-                          <Spinner text="Final video being prepared..." />
-                        )
-                      ) : trailerStatus === "failed" ? (
-                        <p className="text-red-500">Trailer failed to generate.</p>
-                      ) : (
-                        <Spinner text="Generating trailer..." />
-                      )}
-
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
               ) : (
                 <p className="text-sm px-5 pb-5">No chapters available.</p>
               )}
@@ -186,37 +190,41 @@ export default function VideosGeneratedPage() {
 
           {/* Bottom Buttons */}
           <div className="flex justify-end gap-3 pt-6">
-          <Button
-  variant="outline"
-  disabled={!isAddBookEnabled}
-  className="rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors disabled:opacity-50"
-  onClick={async () => {
-    const confirmed = confirm("Are you sure you want to delete this book?");
-    if (!confirmed || !bookId) return;
+            <Button
+              variant="outline"
+              disabled={!isAddBookEnabled}
+              className="rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black transition-colors disabled:opacity-50"
+              onClick={async () => {
+                const confirmed = confirm(
+                  "Are you sure you want to delete this book?"
+                );
+                if (!confirmed || !bookId) return;
 
-    try {
-      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId }),
-      });
+                try {
+                  const res = await fetch(
+                    "https://o23wy8otk1.execute-api.us-east-1.amazonaws.com/delete-book",
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ bookId }),
+                    }
+                  );
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData?.error || "Unknown error");
-      }
+                  if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData?.error || "Unknown error");
+                  }
 
-      alert("Book deleted successfully.");
-      router.push("/manage-book");
-    } catch (err) {
-      console.error("Delete failed:", err);
-      alert("Failed to delete book. Please try again.");
-    }
-  }}
->
-  Cancel
-</Button>
-
+                  alert("Book deleted successfully.");
+                  router.push("/manage-book");
+                } catch (err) {
+                  console.error("Delete failed:", err);
+                  alert("Failed to delete book. Please try again.");
+                }
+              }}
+            >
+              Cancel
+            </Button>
 
             <Button
               disabled={!isAddBookEnabled}
@@ -227,7 +235,7 @@ export default function VideosGeneratedPage() {
               }`}
               onClick={() => {
                 if (isAddBookEnabled) {
-                  router.push("/manage-book"); 
+                  router.push("/manage-book");
                 }
               }}
             >

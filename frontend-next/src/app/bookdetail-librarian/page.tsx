@@ -1,659 +1,404 @@
-/* EditBookPage.tsx */
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import MainLayout from "@/components/layout/readerLayout";
 import withRoleProtection from "@/components/auth/withRoleProtection";
-import Image from "next/image";
-import {
-  PlusCircleIcon,
-  SparklesIcon,
-  TrashIcon,
-  PlayCircleIcon,
-  RotateCwIcon,
-  PencilIcon,
-  Upload,
-  FileText,
-} from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/addbook/card";
-import { Input } from "@/components/addbook/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/addbook/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { PlayIcon } from "lucide-react";
+import type { Book, BookTrailer } from "@/types/book";
+import ReviewSection from "@/components/ReviewSection";
 
-
-
-
-function FieldWithLabel({
-  label,
-  value,
-  onChange,
-  editMode,
-}: {
-  label: string;
-  value?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  editMode: boolean;
-}) {
-  return (
-    <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      {editMode ? (
-        <Input value={value} onChange={onChange} />
-      ) : (
-        <p className="text-sm text-gray-900">{value || "-"}</p>
-      )}
-    </div>
-  );
-}
-
-function SelectWithLabel({ label, value, onChange, editMode, options }: { label: string; value: string; onChange: (v: string) => void; editMode: boolean; options: string[] }) {
-  return (
-    <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      {editMode ? (
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
-          <SelectContent>
-            {options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      ) : (
-        <p className="text-sm text-gray-900">{value || "-"}</p>
-      )}
-    </div>
-  );
-}
-
-function TextAreaWithLabel({
-  label,
-  value,
-  onChange,
-  editMode,
-}: {
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  editMode: boolean;
-}) {
-  return (
-    <div className="mb-4">
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      {editMode ? (
-        <textarea
-          value={value}
-          onChange={onChange}
-          rows={5}
-          className="w-full border border-gray-300 rounded p-2 text-sm"
-        />
-      ) : (
-        <p className="text-sm text-gray-900 whitespace-pre-wrap">{value || "-"}</p> // ← removed bg, border, and padding
-      )}
-    </div>
-  );
-}
-
-
-
-const EditBookPage: React.FC = () => {
+const BookDetailPageReader: React.FC = () => {
   const searchParams = useSearchParams();
-  const bookId = searchParams.get('bookId');
+  const bookId = searchParams.get("bookid");
   const router = useRouter();
 
-  
-  const [editMode, setEditMode] = React.useState(false);
-  //const [bookData, setBookData] = React.useState<BookData | null>(null);
-  const [title, setTitle] = React.useState("");
-  const [authors, setAuthors] = React.useState("");
-  const [publisher, setPublisher] = React.useState("");
-  const [publishedDate, setPublishedDate] = React.useState("");
-  const [maturity, setMaturity] = React.useState("");
-  const [type, setType] = React.useState<string | undefined>(undefined);
-const [genre, setGenre] = React.useState<string | undefined>(undefined);
-const [collection, setCollection] = React.useState<string | undefined>(undefined);
+  const [book, setBook] = useState<Book | null>(null);
+  const [summary, setSummary] = useState<string>("");
+  const [trailer, setTrailer] = useState<BookTrailer | null>(null);
+  const [showListModal, setShowListModal] = useState(false);
+  const [bookLists, setBookLists] = useState(["2025 Books", "2024 Books"]);
+  const [selectedList, setSelectedList] = useState("");
+  const [creatingNewList, setCreatingNewList] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const [showDropdownIndex, setShowDropdownIndex] = useState<number | null>(
+    null
+  );
+  const [showTrailer, setShowTrailer] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [isbn, setIsbn] = React.useState("");
-  const [uploadedImage, setUploadedImage] = React.useState<File | null>(null);
-  //const [uploadedBookFile, setUploadedBookFile] = React.useState<File | null>(null);
-  const imageInputRef = React.useRef<HTMLInputElement>(null);
-  //const bookFileInputRef = React.useRef<HTMLInputElement>(null);
-  const [objectives, setObjectives] = React.useState([{ id: 1, text: "" }]);
-  const [summary, setSummary] = React.useState("");
-  //const [chapter1Summary, setChapter1Summary] = React.useState("");
-  const [loading, setLoading] = useState(true);
-  const [bookData, setBookData] = useState<any>(null); // You can refine the type later
-  const [chapters, setChapters] = useState([]);
-
+  // User info - in a real app, this would come from authentication context
+  const currentUserId = "user123"; // Replace with actual user ID from auth
+  const currentUserName = "John Doe"; // Replace with actual user name from auth
 
   useEffect(() => {
-    if (!bookId) return;
-  
-    const fetchData = async () => {
-      try {
-        const res = await fetch(
-          `https://dptyxwwej1.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`
-        );
-        const data = await res.json();
-        setBookData(data);
-        setChapters(data.chapters || []);
+    if (bookId) {
+      const fetchBookDetails = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`/api/books/${bookId}`);
+          const data = await response.json();
 
-        const book = data.book;
-        console.log("Fetched book:", book);
-
-        setTitle(book.title || "");
-        setAuthors((book.authors || []).join(", "));
-        setPublisher(
-          typeof book.publisher === "string"
-            ? book.publisher
-            : book.publisher?.name || ""
-        );
-        setPublishedDate(book.publication_year || "");
-        setMaturity(book.reading_level || "");
-        setSummary(book.summary || "");
-        setType(typeof book.type === "string" ? book.type : undefined);
-        setGenre(
-          Array.isArray(book.genre)
-            ? book.genre[0] // or `.join(", ")` if you want to show multiple
-            : typeof book.genre === "string"
-            ? book.genre
-            : undefined
-        );
-        setCollection(typeof book.collection === "string" ? book.collection : undefined);
-
-        setIsbn(book.isbn || "");
-  
-        if (Array.isArray(book.objectives)) {
-          if (typeof book.objectives[0] === "string") {
-            // It's an array of strings
-            setObjectives(book.objectives.map((text, index) => ({ id: index + 1, text })));
-          } else if (typeof book.objectives[0] === "object" && book.objectives[0].text) {
-            // It's already an array of objects
-            setObjectives(book.objectives);
+          if (response.ok) {
+            setBook(data.book);
+            setSummary(data.book.summary || "");
+            setTrailer({
+              trailer_id: data.book.trailer_id ?? "",
+              book_id: data.book.book_id ?? "",
+              video_path: data.book.trailer ?? "",
+            });
+          } else {
+            console.error("Failed to fetch book:", data.error);
           }
+        } catch (error) {
+          console.error("Error fetching book details:", error);
+        } finally {
+          setIsLoading(false);
         }
-  
-      } catch (err) {
-        console.error("Error fetching book data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchData();
-    
-  }, [bookId]);
-  
-  
-  
+      };
 
-  const handleSaveChanges = async () => {
-    try {
-      const updatedFields: any = {
-        title,
-        authors: authors.split(",").map((a) => a.trim()),
-        publisher,
-        publication_year: publishedDate,
-        reading_level: maturity,
-        type,
-        genre,
-        isbn,
-        summary,
-        objectives,
-      };
-      
-      // 🛠️ Only include collection_id if it's not empty, and convert to number
-      if (collection) {
-        updatedFields.collection_id = Number(collection);
-      }
-      
-  
-      const payload = {
-        book_id: bookId,
-        updatedFields,
-        chapters: chapters.map(({ chapter_id, summary }) => ({ chapter_id, summary })),
-      };
-      
-  
-      const res = await fetch("https://ozdejdjb9e.execute-api.us-east-1.amazonaws.com/update-book", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      const data = await res.json();
-      console.log("Update response:", data);
-      alert("Changes saved!");
-      setEditMode(false);
-      window.location.reload();
-    } catch (err) {
-      console.error("Failed to update book:", err);
-      alert("Failed to update. Check console for details.");
+      fetchBookDetails();
     }
-  };
-  
-  
-
-  const addObjective = () => {
-    setObjectives([...objectives, { id: Date.now(), text: "" }]);
-  };
-
-  const removeObjective = (id: number) => {
-    setObjectives(objectives.filter((obj) => obj.id !== id));
-  };
+  }, [bookId]);
 
   return (
-    <MainLayout activePage="Manage Books">
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex justify-between items-center mb-4">
-          <p className="text-sm text-gray-500">
-            <span className="text-gray-400">Manage Books &gt; </span>
-            <span className="text-gray-700 font-medium">Book Details</span>
-          </p>
-          <div className="flex gap-2">
-            {editMode && (
-              <>
-                {/* Cancel Edit = Red/Gray */}
-                <Button
-                  variant="ghost"
-                  className="border-gray-300 text-red-600 hover:bg-red-50"
-                  onClick={() => setEditMode(false)}
-                >
-                  Cancel
-                </Button>
-
-                {/* Save = Indigo like Edit */}
-                <Button
-                  variant="ghost"
-                  className="text-indigo-600 hover:bg-gray-100"
-                  onClick={handleSaveChanges}
-                >
-                  Save Changes
-                </Button>
-              </>
-            )}
-            {!editMode && (
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={async () => {
-                    const confirmed = confirm("Are you sure you want to delete this book?");
-                    if (!confirmed || !bookId) return;
-                  
-                    try {
-                      const res = await fetch("https://0wx717uz2c.execute-api.us-east-1.amazonaws.com/delete-book", {
-                        method: "POST", // REST APIs typically use POST for deletions via Lambda
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ bookId }),
-                      });
-                  
-                      if (!res.ok) {
-                        const errData = await res.json();
-                        throw new Error(errData?.error || "Unknown error");
-                      }
-                  
-                      alert("Book deleted successfully!");
-                      router.push("/manage-book");
-                    } catch (err) {
-                      console.error("Delete failed:", err);
-                      alert("Failed to delete book. Please try again.");
-                    }
-                  }}
-                  
-                >
-                  <TrashIcon className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-indigo-600 hover:bg-gray-100"
-                  onClick={() => setEditMode(true)}
-                >
-                  <PencilIcon className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-
-              </div>
-            )}
-
-          </div>
+    <MainLayout activePage="Browse Books">
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center h-screen gap-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent" />
+          <p className="text-gray-500">Loading book details...</p>
         </div>
+      )}
 
-        <div className="grid grid-cols-3 gap-6 mb-6">
-          <div className="col-span-1">
-            <Card className="bg-white shadow p-4 h-full">
-              <CardContent className="pt-6 flex flex-col items-center">
-              <h3 className="text-sm font-medium text-gray-600 mb-2 self-start">Book Cover</h3>
-              <br></br>
-              {uploadedImage ? (
-                <Image
-                  src={URL.createObjectURL(uploadedImage)}
-                  alt="Uploaded Cover"
-                  width={180}
-                  height={240}
-                  className="object-cover rounded mb-4"
-                />
-              ) : bookData?.book?.cover ? (
-                <Image
-                  src={bookData.book.cover}
-                  alt="Book Cover"
-                  width={180}
-                  height={240}
-                  className="object-cover rounded mb-4"
-                />
-              ) : (
-                <div className="w-40 h-56 bg-gray-100 flex items-center justify-center rounded mb-4">
-                  <Upload className="h-10 w-10 text-gray-400" />
-                </div>
-              )}
+      {!isLoading && !book && (
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-gray-500">Book not found.</p>
+        </div>
+      )}
 
+      {!isLoading && book && (
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6">
+            <div>
+              <Card className="bg-white border border-[#E5E7EB] rounded-xl shadow-none">
+                <CardContent className="p-8">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex flex-col w-full md:w-[273px] gap-3">
+                      <div
+                        className="w-full h-[409px] rounded-md bg-cover bg-center"
+                        style={{ backgroundImage: `url(${book?.cover})` }}
+                      />
+                      <div className="flex flex-col gap-3 mt-3">
+                        <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
+                          Start Reading
+                        </Button>
 
+                        <Button
+                          className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded"
+                          onClick={() => {
+                            router.push(`/Interactive-page?bookid=${bookId}`);
+                          }}
+                        >
+                          Chat with the Book
+                        </Button>
 
+                        <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
+                          Characters Chat
+                        </Button>
 
-                <Button
-                  variant="outline"
-                  className="w-full mb-3 text-gray-700 border-gray-300 hover:bg-gray-100"
-                  onClick={() => imageInputRef.current?.click()}
-                  hidden={!editMode}
-                >
-                  <Upload className="h-4 w-4 mr-2" /> Upload New Cover
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  ref={imageInputRef}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setUploadedImage(file);
-                  }}
-                />
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowListModal(true)}
+                          className="w-full h-[47px] text-[#4f46e5] border border-[#4f46e5] rounded hover:bg-[#4f46e5]/10"
+                        >
+                          Add to List
+                        </Button>
+                      </div>
+                    </div>
 
-                <Button
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                  hidden={!editMode}
-                >
-                  <SparklesIcon className="h-4 w-4 mr-2" /> Generate New Cover
-                </Button>
-                
-                {/* Book File 
-                <hr className="w-full border-t border-gray-200 my-6" />
-                <h3 className="text-sm font-medium text-gray-600 mb-2 self-start">Book File</h3>
-                <div className="bg-gray-50 rounded-lg px-4 py-3 w-full flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <FileText className="w-5 h-5 text-indigo-500" />
-                    <span>{uploadedBookFile ? uploadedBookFile.name : "book-final-version.pdf"}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">12.5 MB</span>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full mt-2 text-gray-700 border-gray-300 hover:bg-gray-100"
-                  onClick={() => bookFileInputRef.current?.click()}
-                  hidden={!editMode}
-                >
-                  <Upload className="w-4 h-4 mr-2" /> Change File
-                </Button>
-                <input
-                  type="file"
-                  accept=".pdf,.epub"
-                  hidden
-                  ref={bookFileInputRef}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setUploadedBookFile(file);
-                  }}
-                />*/}
-              </CardContent>
-            </Card>
+                    <div className="flex flex-col w-full md:w-[494px]">
+                      <h1 className="text-2xl font-medium text-gray-800 mb-6">
+                        {book?.title}
+                      </h1>
 
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="col-span-2">
-            <Card className="bg-white shadow p-6">
-              <CardContent>
-                <br></br>
-                {/* Title r */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <FieldWithLabel label="Title" value={title} onChange={(e) => setTitle(e.target.value)} editMode={editMode} />
-                  </div>
-                </div>
-                {/* Type & Genre */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <SelectWithLabel label="Type" value={type} onChange={setType} editMode={editMode} options={["fiction", "non-fiction", "textbook"]} />
-                  </div>
-                  <div>
-                    <SelectWithLabel label="Genre" value={genre} onChange={setGenre} editMode={editMode} options={["mystery", "science", "history"]} />
-                  </div>
-                </div>
-
-                {/* Collection & ISBN */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <SelectWithLabel label="Collection (Optional)" value={collection} onChange={setCollection} editMode={editMode} options={["summer-reading", "classics", "bestsellers"]} />
-                  </div>
-                  <div>
-                    <FieldWithLabel label="ISBN / DOI" value={isbn} onChange={(e) => setIsbn(e.target.value)} editMode={editMode} />
-                  </div>
-                </div>
-
-                {/*  Author & Publisher*/}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <FieldWithLabel label="Author" value={authors} onChange={(e) => setAuthors(e.target.value)} editMode={editMode} />
-                  </div>
-                  <div>
-                    <FieldWithLabel label="Publisher" value={publisher} onChange={(e) => setPublisher(e.target.value)} editMode={editMode} />
-                  </div>
-                </div>
-
-                {/* Year & Maturity Rating*/}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <FieldWithLabel label="Publication Year" value={publishedDate} onChange={(e) => setPublishedDate(e.target.value)} editMode={editMode} />
-                  </div>
-                  <div className="mb-4">
-                    <FieldWithLabel label="Maturity Rating" value={maturity} onChange={(e) => setMaturity(e.target.value)} editMode={editMode} />
-                  </div>
-                </div>
-
-                {/* Learning Objectives */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label>
-                  {editMode ? (
-                    <>
-                      <div className="space-y-2">
-                        {objectives.map((objective) => (
-                          <div key={objective.id} className="flex items-center gap-2">
-                            <Input
-                              value={objective.text}
-                              onChange={(e) => {
-                                const newText = e.target.value;
-                                setObjectives((prev) =>
-                                  prev.map((obj) =>
-                                    obj.id === objective.id ? { ...obj, text: newText } : obj
-                                  )
-                                );
-                              }}
-                              className="flex-1"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeObjective(objective.id)}
-                              className="h-8 w-8 text-gray-400"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {(Array.isArray(book?.genre)
+                          ? book?.genre
+                          : typeof book?.genre === "string"
+                          ? [book?.genre]
+                          : []
+                        ).map((genre, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="bg-zinc-200 text-black rounded-full px-3 py-1 text-sm"
+                          >
+                            {genre}
+                          </Badge>
                         ))}
                       </div>
-                      <Button
-                        variant="ghost"
-                        className="mt-2 text-indigo-600 flex items-center gap-1"
-                        onClick={addObjective}
-                      >
-                        <PlusCircleIcon className="h-4 w-4" />
-                        <span>Add Learning Objective</span>
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                      {objectives.length > 0 ? (
-                        objectives.map((obj) => (
-                          <p key={obj.id} className="text-sm text-gray-900">- {obj.text}</p>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">-</p>
+
+                      <div className="mb-6 space-y-4">
+                        <div className="flex items-center">
+                          <span className="text-zinc-400 w-20">Author:</span>
+                          <span className="text-black">
+                            {Array.isArray(book?.authors)
+                              ? book.authors[0]
+                              : typeof book?.authors === "string"
+                              ? book.authors
+                              : ""}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-zinc-400 w-24">Language:</span>
+                          <span className="text-black">{book?.language}</span>
+                        </div>
+                      </div>
+
+                      <div className="mb-6">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">
+                          Summary
+                        </h2>
+                        <p className="text-zinc-700 text-sm">{summary}</p>
+                      </div>
+
+                      <div className="mb-10">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">
+                          Learning Objectives
+                        </h2>
+                        <ul className="space-y-3">
+                          {book?.objectives?.map((obj, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-zinc-700 text-sm">
+                                • {obj.text}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Trailer Section */}
+                      <div className="mt-0">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">
+                          Watch Book Trailer
+                        </h2>
+                        <div className="relative w-full h-[202px] rounded overflow-hidden">
+                          <div
+                            className="w-full h-full bg-cover bg-center cursor-pointer"
+                            style={{ backgroundImage: `url(${book?.cover})` }}
+                            onClick={() => setShowTrailer(true)}
+                          >
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full flex items-center justify-center">
+                              <PlayIcon className="w-5 h-5 ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Modal for Trailer */}
+                      {showTrailer && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                          <div className="bg-white rounded-xl overflow-hidden shadow-lg w-full max-w-3xl relative">
+                            <button
+                              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                              onClick={() => setShowTrailer(false)}
+                            >
+                              ✕
+                            </button>
+
+                            <div className="px-6 py-4">
+                              <h3 className="text-xl font-semibold mb-1">
+                                {book?.title} – Book Trailer
+                              </h3>
+                              <p className="text-gray-500 text-sm">
+                                Experience the magic in 1 minutes
+                              </p>
+                            </div>
+
+                            {trailer?.video_path ? (
+                              <video
+                                src={trailer.video_path}
+                                controls
+                                autoPlay
+                                className="w-full h-[400px] object-cover"
+                              />
+                            ) : (
+                              <div className="p-4 text-center text-zinc-500 text-sm">
+                                No trailer available for this book.
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-none border border-gray-200 rounded-xl bg-white mt-6">
-              <CardContent className="p-0 space-y-6">
-                {/* Book Summary */}
-                <div className="flex justify-between items-center p-5 pb-0">
-                  <h2 className="text-lg font-medium">Book Summary</h2>
-                  {editMode && (
-                    <div className="flex items-center gap-2">
-                      <Input className="w-64 text-sm border border-gray-200" placeholder="Prompt..." />
-                      <Button className="bg-indigo-600 text-white">
-                        <RotateCwIcon className="h-4 w-4 mr-2" />
-                        Regenerate
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="px-5">
-                  {editMode ? (
-                    <textarea
-                      value={summary}
-                      onChange={(e) => setSummary(e.target.value)}
-                      rows={5}
-                      className="w-full border border-gray-300 rounded p-2 text-sm"
-                    />
-                  ) : (
-                    <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm whitespace-pre-wrap">
-                      {loading
-                        ? "Generating summary..."
-                        : bookData?.book?.summary || "No summary available."}
-                    </div>
-                  )}
-                </div>
-
-
-                {/* Book-level Trailer */}
-                {bookData?.book?.trailer && bookData.book.trailer_status === "completed" && (
-                  <div className="space-y-2 px-5 pt-4">
-                    <h3 className="text-base font-medium">Book Trailer</h3>
-                    <div className="flex items-center justify-center">
-                      <video controls className="rounded-md w-full max-w-4xl aspect-video">
-                        <source src={bookData.book.trailer} type="video/mp4" />
-                      </video>
-                    </div>
                   </div>
-                )}
-                   <div className="pb-2" />
-
                 </CardContent>
-            </Card>
+              </Card>
+            </div>
 
-            {/* Book Summary, Trailer, and Chapter-wise Section */}
-          <Card className="shadow-none border border-gray-200 rounded-xl bg-white mt-6">
-          <CardContent className="p-0 space-y-6">
-          <div className="px-5 pt-5">
-                <h2 className="text-lg font-semibold">Chapter-wise</h2>
-              </div>
-          {loading ? (
-            <p className="text-sm px-5 py-5">Loading chapters...</p>
-          ) : bookData?.chapters?.length ? (
-            bookData.chapters.map((chapter, index) => (
-              <div key={chapter.chapter_id} className="space-y-6 px-5 pt-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-base font-medium">Ch{index + 1} Summary</h3>
-                  {editMode && (
-                    <div className="flex items-center gap-2">
-                      <Input className="w-64 text-sm border border-gray-200" placeholder="Prompt..." />
-                      <Button className="bg-indigo-600 text-white"><RotateCwIcon className="h-4 w-4 mr-2" /> Regenerate</Button>
-                    </div>
-                  )}
-                </div>
-                
-                {editMode ? (
-                  <TextAreaWithLabel
-  label=""
-  value={chapters[index]?.summary || ""}
-  onChange={(e) => {
-    const newSummary = e.target.value;
-    setChapters((prev) =>
-      prev.map((ch, i) =>
-        i === index ? { ...ch, summary: newSummary } : ch
-      )
-    );
-  }}
-  editMode={true}
-/>
-
-                ) : (
-                  <div className="border border-gray-200 rounded-md min-h-24 p-4 bg-white text-sm whitespace-pre-wrap">
-                    {chapter.summary || "No summary available."}
-                  </div>
-                )}
-
-
-                <div className="flex justify-between items-center pt-2">
-                  <h3 className="text-base font-medium">Ch{index + 1} Trailer</h3>
-                  {editMode && (
-                    <div className="flex items-center gap-2">
-                      <Input className="w-64 text-sm border border-gray-200" placeholder="Prompt..." />
-                      <Button className="bg-indigo-600 text-white"><RotateCwIcon className="h-4 w-4 mr-2" /> Regenerate</Button>
-                    </div>
-                  )}
-                </div>
-                <div className=" flex items-center justify-center">
-                  {chapter.trailer_status === "completed" && chapter.trailer ? (
-                    <video controls className="rounded-md w-full max-w-4xl aspect-video">
-                      <source src={chapter.trailer} type="video/mp4" />
-                    </video>
-                  ) : chapter.trailer_status === "failed" ? (
-                    <p className="text-red-500">Trailer failed to generate.</p>
-                  ) : (
-                    <p className="text-gray-400">Generating trailer...</p>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm px-5 pb-5">No chapters available.</p>
-          )}  <div className="pb-2" />
-
+            {/* Reviews Section - Updated to use new ReviewSection component */}
+            <div className="h-full">
+              <Card className="bg-white border border-[#E5E7EB] rounded-xl shadow-none h-full flex flex-col">
+                <CardContent className="p-6 flex flex-col h-full">
+                  {bookId && <ReviewSection bookId={bookId} />}
                 </CardContent>
-                </Card>
-
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Add to List Modal - keeping your existing modal code */}
+      {showListModal && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+          <div className="bg-white w-[400px] rounded-xl p-6 shadow-lg relative">
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowListModal(false)}
+            >
+              ✕
+            </button>
+
+            <h2 className="text-lg font-semibold mb-4">Add to Your List</h2>
+            <div className="space-y-3 mb-4">
+              {bookLists.map((name, index) => (
+                <div
+                  key={index}
+                  className="relative border border-[#E5E7EB] px-4 py-3 rounded-md flex items-center justify-between"
+                >
+                  <label className="flex items-center gap-3 w-full">
+                    <input
+                      type="radio"
+                      name="booklist"
+                      value={name}
+                      checked={selectedList === name}
+                      onChange={() => setSelectedList(name)}
+                      className="accent-[#4f46e5]"
+                    />
+                    <span>{name}</span>
+                  </label>
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setShowDropdownIndex((prev) =>
+                          prev === index ? null : index
+                        )
+                      }
+                      className="p-1 rounded hover:bg-gray-100"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <circle cx="5" cy="12" r="1.5" />
+                        <circle cx="12" cy="12" r="1.5" />
+                        <circle cx="19" cy="12" r="1.5" />
+                      </svg>
+                    </button>
+                    {showDropdownIndex === index && (
+                      <div className="absolute right-0 mt-2 w-24 bg-white border border-gray-200 shadow rounded z-50">
+                        <button
+                          onClick={() => {
+                            const updated = bookLists.filter(
+                              (_, i) => i !== index
+                            );
+                            setBookLists(updated);
+                            if (selectedList === name) setSelectedList("");
+                            setShowDropdownIndex(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {creatingNewList && (
+                <input
+                  type="text"
+                  value={newListName}
+                  onChange={(e) => setNewListName(e.target.value)}
+                  placeholder="New list name"
+                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-md focus:outline-none focus:ring text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newListName.trim()) {
+                      e.preventDefault();
+                      setBookLists((prev) => [...prev, newListName.trim()]);
+                      setSelectedList(newListName.trim());
+                      setNewListName("");
+                      setCreatingNewList(false);
+                    }
+                    if (
+                      e.key === "Escape" ||
+                      (e.key === "Enter" && newListName.trim() === "")
+                    ) {
+                      setNewListName("");
+                      setCreatingNewList(false);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (newListName.trim()) {
+                      setBookLists((prev) => [...prev, newListName.trim()]);
+                      setSelectedList(newListName.trim());
+                    }
+                    setNewListName("");
+                    setCreatingNewList(false);
+                  }}
+                />
+              )}
+
+              <button
+                className="w-full border border-[#E5E7EB] text-[#4f46e5] px-4 py-3 rounded-md flex items-center justify-center gap-2"
+                onClick={() => setCreatingNewList(true)}
+              >
+                <span className="text-lg font-semibold">+</span> Create New List
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 bg-[#4f46e5] hover:bg-[#4338ca] text-white"
+                onClick={() => {
+                  if (creatingNewList && newListName.trim() === "") {
+                    alert("List name can't be empty.");
+                    return;
+                  }
+                  if (creatingNewList && newListName.trim() !== "") {
+                    setBookLists([...bookLists, newListName.trim()]);
+                    setSelectedList(newListName.trim());
+                  }
+                  setCreatingNewList(false);
+                  setNewListName("");
+                  setShowListModal(false);
+                  alert("Book added to list: " + (selectedList || newListName));
+                }}
+              >
+                Confirm
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 border border-[#E5E7EB]"
+                onClick={() => setShowListModal(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
-}
+};
 
-// Protect this route - only librarians can access it
-export default withRoleProtection(EditBookPage, ["librarian"]);
+export default withRoleProtection(BookDetailPageReader, ["reader"]);

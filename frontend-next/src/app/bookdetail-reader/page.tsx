@@ -1,23 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import MainLayout from "@/components/layout/readerLayout";
 import withRoleProtection from "@/components/auth/withRoleProtection";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { PlayIcon, StarIcon } from "lucide-react";
-import { Book, BookTrailer } from "@/types/book";
-
+import { PlayIcon } from "lucide-react";
+import type { Book, BookTrailer } from "@/types/book";
+import ReviewSection from "@/components/ReviewSection";
 
 const BookDetailPageReader: React.FC = () => {
   const searchParams = useSearchParams();
@@ -27,316 +21,239 @@ const BookDetailPageReader: React.FC = () => {
   const [book, setBook] = useState<Book | null>(null);
   const [summary, setSummary] = useState<string>("");
   const [trailer, setTrailer] = useState<BookTrailer | null>(null);
-  const [userRating, setUserRating] = useState(0);
   const [showListModal, setShowListModal] = useState(false);
   const [bookLists, setBookLists] = useState(["2025 Books", "2024 Books"]);
   const [selectedList, setSelectedList] = useState("");
   const [creatingNewList, setCreatingNewList] = useState(false);
   const [newListName, setNewListName] = useState("");
-  const [showDropdownIndex, setShowDropdownIndex] = useState<number | null>(null);
+  const [showDropdownIndex, setShowDropdownIndex] = useState<number | null>(
+    null
+  );
   const [showTrailer, setShowTrailer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-useEffect(() => {
-  if (bookId) {
-    const fetchBookDetails = async () => {
-      setIsLoading(true); // Start loading
-      try {
-        const response = await fetch(`/api/books/${bookId}`);
-        const data = await response.json();
+  // User info - in a real app, this would come from authentication context
+  const currentUserId = "user123"; // Replace with actual user ID from auth
+  const currentUserName = "John Doe"; // Replace with actual user name from auth
 
-        if (response.ok) {
-          setBook(data.book);
-          setSummary(data.book.summary || "");
-          setTrailer({
-            trailer_id: data.book.trailer_id ?? "",
-            book_id: data.book.book_id ?? "",
-            video_path: data.book.trailer ?? "",
-          });
-        } else {
-          console.error("Failed to fetch book:", data.error);
+  useEffect(() => {
+    if (bookId) {
+      const fetchBookDetails = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`/api/books/${bookId}`);
+          const data = await response.json();
+
+          if (response.ok) {
+            setBook(data.book);
+            setSummary(data.book.summary || "");
+            setTrailer({
+              trailer_id: data.book.trailer_id ?? "",
+              book_id: data.book.book_id ?? "",
+              video_path: data.book.trailer ?? "",
+            });
+          } else {
+            console.error("Failed to fetch book:", data.error);
+          }
+        } catch (error) {
+          console.error("Error fetching book details:", error);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching book details:", error);
-      } finally {
-        setIsLoading(false); // Done loading
-      }
-    };
+      };
 
-    fetchBookDetails();
-  }
-}, [bookId]);
-
-  const reviews = [
-    {
-      id: 1,
-      name: "Michael Chen",
-      avatar: "https://c.animaapp.com/m9wqaqhuGF8Qd0/img/img.png",
-      rating: 5,
-      text: "A magical journey that captivated me from start to finish. The world-building is simply extraordinary!",
-    },
-    {
-      id: 2,
-      name: "Sarah Williams",
-      avatar: "https://c.animaapp.com/m9wqaqhuGF8Qd0/img/img-1.png",
-      rating: 4,
-      text: "Perfect introduction to the wizarding world. The characters are so well developed!",
-    },
-  ];
+      fetchBookDetails();
+    }
+  }, [bookId]);
 
   return (
-    <MainLayout activePage="Browse Books"> 
-      {isLoading && ( // Loading state
+    <MainLayout activePage="Browse Books">
+      {isLoading && (
         <div className="flex flex-col items-center justify-center h-screen gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent" />
           <p className="text-gray-500">Loading book details...</p>
         </div>
       )}
 
-      {!isLoading && !book && ( // Book not found state
+      {!isLoading && !book && (
         <div className="flex items-center justify-center h-screen">
           <p className="text-gray-500">Book not found.</p>
         </div>
       )}
 
-      {!isLoading && book && ( // Book details found state
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6">
-          <div>
-            <Card className="bg-white border border-[#E5E7EB] rounded-xl shadow-none">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row gap-8">
-                  <div className="flex flex-col w-full md:w-[273px] gap-3">
-                    <div
-                      className="w-full h-[409px] rounded-md bg-cover bg-center"
-                      style={{ backgroundImage: `url(${book?.cover})` }}
-                    />
-                    <div className="flex flex-col gap-3 mt-3">
-                      <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
-                        Start Reading
-                      </Button>
+      {!isLoading && book && (
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6">
+            <div>
+              <Card className="bg-white border border-[#E5E7EB] rounded-xl shadow-none">
+                <CardContent className="p-8">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex flex-col w-full md:w-[273px] gap-3">
+                      <div
+                        className="w-full h-[409px] rounded-md bg-cover bg-center"
+                        style={{ backgroundImage: `url(${book?.cover})` }}
+                      />
+                      <div className="flex flex-col gap-3 mt-3">
+                        <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
+                          Start Reading
+                        </Button>
 
-                      <Button
-                        className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded"
+                        <Button
+                          className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded"
                           onClick={() => {
-                          router.push(`/Interactive-page?bookid=${bookId}`); // Navigate to the interactive page passing bookId
+                            router.push(`/Interactive-page?bookid=${bookId}`);
                           }}
-                          >
+                        >
                           Chat with the Book
-                      </Button>
+                        </Button>
 
+                        <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
+                          Characters Chat
+                        </Button>
 
-                      <Button className="w-full h-[45px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded">
-                        Characters Chat
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowListModal(true)}
-                        className="w-full h-[47px] text-[#4f46e5] border border-[#4f46e5] rounded hover:bg-[#4f46e5]/10"
-                      >
-                        Add to List
-                      </Button>
-
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col w-full md:w-[494px]">
-                    <h1 className="text-2xl font-medium text-gray-800 mb-6">
-                      {book?.title}
-                    </h1>
-                    <div className="flex items-center mb-4">
-                      <div className="flex">
-                        {[1, 2, 3, 4].map((_, index) => (
-                          <StarIcon key={index} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                        ))}
-                        <StarIcon className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowListModal(true)}
+                          className="w-full h-[47px] text-[#4f46e5] border border-[#4f46e5] rounded hover:bg-[#4f46e5]/10"
+                        >
+                          Add to List
+                        </Button>
                       </div>
-                      <span className="ml-2 text-zinc-400 text-sm">
-                        4.9 (2.3k reviews)
-                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {(Array.isArray(book?.genre)
-                        ? book?.genre
-                        : typeof book?.genre === "string"
+
+                    <div className="flex flex-col w-full md:w-[494px]">
+                      <h1 className="text-2xl font-medium text-gray-800 mb-6">
+                        {book?.title}
+                      </h1>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {(Array.isArray(book?.genre)
+                          ? book?.genre
+                          : typeof book?.genre === "string"
                           ? [book?.genre]
                           : []
-                      ).map((genre, index) => (
-                        <Badge key={index} variant="secondary" className="bg-zinc-200 text-black rounded-full px-3 py-1 text-sm">
-                          {genre}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="mb-6 space-y-4">
-                      <div className="flex items-center">
-                        <span className="text-zinc-400 w-20">Author:</span>
-                        <span className="text-black">
-                          {Array.isArray(book?.authors)
-                            ? book.authors[0]
-                            : typeof book?.authors === "string"
+                        ).map((genre, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="bg-zinc-200 text-black rounded-full px-3 py-1 text-sm"
+                          >
+                            {genre}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      <div className="mb-6 space-y-4">
+                        <div className="flex items-center">
+                          <span className="text-zinc-400 w-20">Author:</span>
+                          <span className="text-black">
+                            {Array.isArray(book?.authors)
+                              ? book.authors[0]
+                              : typeof book?.authors === "string"
                               ? book.authors
                               : ""}
-                        </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-zinc-400 w-24">Language:</span>
+                          <span className="text-black">{book?.language}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <span className="text-zinc-400 w-24">Language:</span>
-                        <span className="text-black">{book?.language}</span>
-                      </div>
-                    </div>
-                    <div className="mb-6">
-                      <h2 className="text-lg font-medium text-gray-900 mb-3">Summary</h2>
-                      <p className="text-zinc-700 text-sm">{summary}</p>
-                    </div>
-                    <div className="mb-10">
-                      <h2 className="text-lg font-medium text-gray-900 mb-3">Learning Objectives</h2>
-                      <ul className="space-y-3">
-                        {book?.objectives?.map((obj, index) => (
-                        <li key={index} className="flex items-start">
-                        <span className="text-zinc-700 text-sm">• {obj.text}</span>
-                        </li>
-                       ))}
 
-                      </ul>
-                    </div>
-                    {/* Trailer Section */}
-                    <div className="mt-0">
-                      <h2 className="text-lg font-medium text-gray-900 mb-3">Watch Book Trailer</h2>
-                      <div className="relative w-full h-[202px] rounded overflow-hidden">
-                        <div
-                          className="w-full h-full bg-cover bg-center cursor-pointer"
-                          style={{ backgroundImage: `url(${book?.cover})` }}
-                          onClick={() => setShowTrailer(true)} // 👈 open the trailer modal
-                        >
-                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full flex items-center justify-center">
-                            <PlayIcon className="w-5 h-5 ml-0.5" />
+                      <div className="mb-6">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">
+                          Summary
+                        </h2>
+                        <p className="text-zinc-700 text-sm">{summary}</p>
+                      </div>
+
+                      <div className="mb-10">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">
+                          Learning Objectives
+                        </h2>
+                        <ul className="space-y-3">
+                          {book?.objectives?.map((obj, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="text-zinc-700 text-sm">
+                                • {obj.text}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Trailer Section */}
+                      <div className="mt-0">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">
+                          Watch Book Trailer
+                        </h2>
+                        <div className="relative w-full h-[202px] rounded overflow-hidden">
+                          <div
+                            className="w-full h-full bg-cover bg-center cursor-pointer"
+                            style={{ backgroundImage: `url(${book?.cover})` }}
+                            onClick={() => setShowTrailer(true)}
+                          >
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 rounded-full flex items-center justify-center">
+                              <PlayIcon className="w-5 h-5 ml-0.5" />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Modal for Trailer */}
-                    {showTrailer && (
-                      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-                        <div className="bg-white rounded-xl overflow-hidden shadow-lg w-full max-w-3xl relative">
-                          {/* Close button */}
-                          <button
-                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-                            onClick={() => setShowTrailer(false)}
-                          >
-                            ✕
-                          </button>
+                      {/* Modal for Trailer */}
+                      {showTrailer && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                          <div className="bg-white rounded-xl overflow-hidden shadow-lg w-full max-w-3xl relative">
+                            <button
+                              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                              onClick={() => setShowTrailer(false)}
+                            >
+                              ✕
+                            </button>
 
-                          {/* Title */}
-                          <div className="px-6 py-4">
-                            <h3 className="text-xl font-semibold mb-1">{book?.title} – Book Trailer</h3>
-                            <p className="text-gray-500 text-sm">Experience the magic in 1 minutes</p>
-                          </div>
+                            <div className="px-6 py-4">
+                              <h3 className="text-xl font-semibold mb-1">
+                                {book?.title} – Book Trailer
+                              </h3>
+                              <p className="text-gray-500 text-sm">
+                                Experience the magic in 1 minutes
+                              </p>
+                            </div>
 
-                          {/* Video */}
-                          {trailer?.video_path ? (
-                            <video
-                             src={trailer.video_path}
-                             controls
-                             autoPlay
-                             className="w-full h-[400px] object-cover"
-                           />
-                          ) : (
+                            {trailer?.video_path ? (
+                              <video
+                                src={trailer.video_path}
+                                controls
+                                autoPlay
+                                className="w-full h-[400px] object-cover"
+                              />
+                            ) : (
                               <div className="p-4 text-center text-zinc-500 text-sm">
                                 No trailer available for this book.
-                             </div>
-                    )}
-                  </div>
-            </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="h-full">
-            <Card className="bg-white border border-[#E5E7EB] rounded-xl shadow-none h-full flex flex-col">
-
-              <CardContent className="p-6 flex flex-col h-full">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Reviews</h2>
-                <div className="flex items-center mb-2">
-                  <span className="text-2xl text-yellow-400">4.2</span>
-                  <div className="flex ml-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                    <StarIcon className="w-5 h-5 text-yellow-400 fill-none stroke-current" />
-                  </div>
-                </div>
-                <p className="text-sm text-zinc-400 mb-4">Based on 2,384 reviews</p>
-                <br></br>
-                {/* Write a Review Section */}
-                <div className="mb-8">
-                  <h3 className="text-base font-medium mb-3">Write a Review</h3>
-
-                  {/* Star Rating (static for now) */}
-                  <div className="flex gap-1 mb-3 cursor-pointer">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <StarIcon
-                        key={i}
-                        onClick={() => setUserRating(i)}
-                        className={`w-6 h-6 ${i <= userRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                          } transition-colors duration-150`}
-                      />
-                    ))}
-                  </div>
-
-
-                  {/* Text Area */}
-                  <textarea
-                    className="w-full min-h-[120px] p-3 border border-gray-300 rounded-md text-sm placeholder:text-[#adaebc] focus:outline-none focus:ring focus:ring-indigo-200"
-                    placeholder="Share your thoughts..."
-                  />
-
-                  {/* Submit Button */}
-                  <Button className="w-full mt-3 bg-[#4f46e5] hover:bg-[#4338ca] text-white">
-                    Submit Review
-                  </Button>
-                </div>
-
-                <ScrollArea className="flex-1 pr-4">
-                  {reviews.map((review, index) => (
-                    <div key={review.id} className="mb-6">
-                      <div className="flex items-start mb-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={review.avatar} alt={review.name} />
-                          <AvatarFallback>{review.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="ml-4">
-                          <p className="text-sm font-medium text-gray-800">{review.name}</p>
-                          <div className="flex mt-1">
-                            {[...Array(5)].map((_, i) => (
-                              <StarIcon
-                                key={i}
-                                className={`w-4 h-4 ${i < review.rating
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-300"
-                                  }`}
-                              />
-                            ))}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-zinc-700">{review.text}</p>
-                      <br></br>
-                      {index < reviews.length - 1 && (
-                        <Separator className="my-4 border-t border-[#E5E7EB]" />
                       )}
                     </div>
-                  ))}
-                  <ScrollBar orientation="vertical" />
-                </ScrollArea>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Reviews Section - Updated to use new ReviewSection component */}
+            <div className="h-full">
+              <Card className="bg-white border border-[#E5E7EB] rounded-xl shadow-none h-full flex flex-col">
+                <CardContent className="p-6 flex flex-col h-full">
+                  {bookId && <ReviewSection bookId={bookId} />}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
       )}
+
+      {/* Add to List Modal - keeping your existing modal code */}
       {showListModal && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
           <div className="bg-white w-[400px] rounded-xl p-6 shadow-lg relative">
@@ -368,11 +285,19 @@ useEffect(() => {
                   <div className="relative">
                     <button
                       onClick={() =>
-                        setShowDropdownIndex((prev) => (prev === index ? null : index))
+                        setShowDropdownIndex((prev) =>
+                          prev === index ? null : index
+                        )
                       }
                       className="p-1 rounded hover:bg-gray-100"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-4 h-4 text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <circle cx="5" cy="12" r="1.5" />
                         <circle cx="12" cy="12" r="1.5" />
                         <circle cx="19" cy="12" r="1.5" />
@@ -382,7 +307,9 @@ useEffect(() => {
                       <div className="absolute right-0 mt-2 w-24 bg-white border border-gray-200 shadow rounded z-50">
                         <button
                           onClick={() => {
-                            const updated = bookLists.filter((_, i) => i !== index);
+                            const updated = bookLists.filter(
+                              (_, i) => i !== index
+                            );
                             setBookLists(updated);
                             if (selectedList === name) setSelectedList("");
                             setShowDropdownIndex(null);
@@ -396,7 +323,6 @@ useEffect(() => {
                   </div>
                 </div>
               ))}
-
 
               {creatingNewList && (
                 <input
@@ -413,7 +339,10 @@ useEffect(() => {
                       setNewListName("");
                       setCreatingNewList(false);
                     }
-                    if (e.key === "Escape" || (e.key === "Enter" && newListName.trim() === "")) {
+                    if (
+                      e.key === "Escape" ||
+                      (e.key === "Enter" && newListName.trim() === "")
+                    ) {
                       setNewListName("");
                       setCreatingNewList(false);
                     }
@@ -435,8 +364,6 @@ useEffect(() => {
               >
                 <span className="text-lg font-semibold">+</span> Create New List
               </button>
-
-
             </div>
 
             <div className="flex gap-2">
@@ -470,11 +397,8 @@ useEffect(() => {
           </div>
         </div>
       )}
-
-
     </MainLayout>
   );
-}
+};
 
-// Protect this route - only readers can access it
 export default withRoleProtection(BookDetailPageReader, ["reader"]);

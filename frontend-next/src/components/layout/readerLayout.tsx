@@ -14,6 +14,7 @@ import { Input } from "../addbook/input";
 import { userPool } from "@/app/aws-config";
 import { useRouter } from "next/navigation";
 import { ChatbotButton } from "@/components/chatbot/ChatbotButton";
+import path from "path";
 
 export default function MainLayout({
   children,
@@ -53,7 +54,11 @@ export default function MainLayout({
       icon: <HomeIcon className="h-5 w-5" />,
       path: "/reader-dashboard",
     },
-    { label: "Browse Books", icon: <BookOpenIcon className="h-5 w-5" /> },
+    {
+      label: "Browse Books",
+      icon: <BookOpenIcon className="h-5 w-5" />,
+      path: "/browse-books",
+    },
     { label: "Collections", icon: <LibraryIcon className="h-5 w-5" /> },
     { label: "Pronunciation Practice", icon: <MicIcon className="h-5 w-5" /> },
     { label: "Reading List", icon: <BookmarkIcon className="h-5 w-5" /> },
@@ -162,7 +167,7 @@ export default function MainLayout({
         {/* Main Page Content */}
         <main className="flex-1 p-6 bg-[#FAFAFB] ml-64">{children}</main>
       </div>
-      
+
       {/* Chatbot Button */}
       <ChatbotButton />
     </div>

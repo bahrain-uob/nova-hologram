@@ -1,177 +1,189 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/readerLayout"; // Page layout component
 import { Badge } from "@/components/ui/badge"; // Badge UI component for genres
-import { BookPreview } from "@/types/book"; // Book type definition
 import withRoleProtection from "@/components/auth/withRoleProtection"; // Role-based access control
+import Link from "next/link"; // Link component for navigation
 
-// ---------- Sample Books Data (mock data) ----------
-const fetchBooks = async (): Promise<BookPreview[]> => [
-  {
-    id: 1,
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    cover: "covers/pride.jpg",
-    genres: ["Romance", "Classic"],
-    language: "English",
-  },
-  {
-    id: 2,
-    title: "Moby-Dick",
-    author: "Herman Melville",
-    cover:
-      "https://cdn.shopify.com/s/files/1/0625/6679/3413/files/Moby-Dick.jpg?v=1716560355",
-    genres: ["Adventure", "Classic"],
-    language: "English",
-  },
-  {
-    id: 3,
-    title: "War and Peace",
-    author: "Leo Tolstoy",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1681127703i/125209426.jpg",
-    genres: ["Historical", "Classic"],
-    language: "English",
-  },
-  {
-    id: 4,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    cover: "covers/gatsby.jpg",
-    genres: ["Fiction", "Classic"],
-    language: "English",
-  },
-  {
-    id: 5,
-    title: "1984",
-    author: "George Orwell",
-    cover: "/covers/1984.jpg",
-    genres: ["Dystopian", "Science Fiction"],
-    language: "English",
-  },
-  {
-    id: 6,
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    cover: "/covers/mockingbird.jpg",
-    genres: ["Fiction", "Classic"],
-    language: "English",
-  },
-  {
-    id: 7,
-    title: "Jane Eyre",
-    author: "Charlotte Brontë",
-    cover:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTtMQtxKo8qQ0jpHaB-pzdUoaPWXUOh9xzJA&s",
-    genres: ["Romance", "Classic"],
-    language: "English",
-  },
-  {
-    id: 8,
-    title: "Crime and Punishment",
-    author: "Fyodor Dostoevsky",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1348523421i/3185003.jpg",
-    genres: ["Psychological", "Classic"],
-    language: "English",
-  },
-  {
-    id: 9,
-    title: "The Catcher in the Rye",
-    author: "J.D. Salinger",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1398034300i/5107.jpg",
-    genres: ["Fiction", "Classic"],
-    language: "English",
-  },
-  {
-    id: 10,
-    title: "The Odyssey",
-    author: "Homer",
-    cover: "https://webfiles.ucpress.edu/coverimage/isbn13/9780520293632.jpg",
-    genres: ["Epic", "Classic"],
-    language: "English",
-  },
-];
+// Define Book interface based on the API response
+interface Book {
+  book_id: string;
+  book_title: string;
+  authors: string[];
+  book_cover: string;
+  genre: string[];
+  reading_level: string;
+  publication_year: string;
+  isbn?: string;
+  language?: string;
+  publisher?: {
+    name: string;
+  };
+  book_summary?: string;
+}
+
+interface BooksResponse {
+  books?: Book[];
+  error?: string;
+}
+
+// Updated fetchBooks function to use the API
+const fetchBooks = async (): Promise<BooksResponse> => {
+  try {
+    const response = await fetch(
+      "https://k63byt45a5.execute-api.us-east-1.amazonaws.com/books"
+    );
+
+    if (!response.ok) {
+      return { error: `API error: ${response.status}` };
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      return { error: data.error };
+    }
+
+    // Make sure it's an array
+    if (!Array.isArray(data)) {
+      return { error: "Invalid data format" };
+    }
+
+    return { books: data };
+  } catch (error) {
+    console.error("Error fetching books:", error);
+    return { error: "Failed to fetch books" };
+  }
+};
 
 // ---------- Main Component ----------
 const BrowseBooks: React.FC = () => {
-  const [books, setBooks] = useState<BookPreview[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
   const [languageFilter, setLanguageFilter] = useState<string>("");
   const [authorFilter, setAuthorFilter] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<string>("a-z");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadBooks = async () => {
-      const booksData = await fetchBooks();
-      setBooks(booksData);
+      try {
+        setLoading(true);
+        const response = await fetchBooks();
+
+        if (response.error) {
+          setError(response.error);
+          setBooks([]);
+        } else {
+          setBooks(response.books || []);
+          setError(null);
+        }
+      } catch (err) {
+        setError("Failed to load books from database");
+        setBooks([]);
+      } finally {
+        setLoading(false);
+      }
     };
+
     loadBooks();
   }, []);
 
-  const allGenres = Array.from(new Set(books.flatMap((book) => book.genres)));
+  // Extract all unique genres from books
+  const allGenres = Array.from(
+    new Set(books.flatMap((book) => book.genre || []))
+  );
+
+  // Extract all unique languages from books
+  const allLanguages = Array.from(
+    new Set(books.map((book) => book.language || "Unknown").filter(Boolean))
+  );
 
   let filteredBooks = books.filter((book) => {
     const matchesGenre =
       genreFilter.length === 0 ||
-      genreFilter.some((genre) => book.genres.includes(genre));
-    const matchesLanguage =
-      !languageFilter || book.language === languageFilter;
+      (book.genre &&
+        genreFilter.some((genre) =>
+          book.genre.some((g) => g.toLowerCase().includes(genre.toLowerCase()))
+        ));
+
+    const matchesLanguage = !languageFilter || book.language === languageFilter;
+
     const matchesAuthor =
       !authorFilter ||
-      book.author.toLowerCase().includes(authorFilter.toLowerCase());
+      (Array.isArray(book.authors) &&
+        book.authors.some((author) =>
+          author.toLowerCase().includes(authorFilter.toLowerCase())
+        ));
+
     return matchesGenre && matchesLanguage && matchesAuthor;
   });
 
   filteredBooks = filteredBooks.sort((a, b) => {
     return sortOrder === "a-z"
-      ? a.title.localeCompare(b.title)
-      : b.title.localeCompare(a.title);
+      ? a.book_title.localeCompare(b.book_title)
+      : b.book_title.localeCompare(a.book_title);
   });
 
   return (
     <MainLayout activePage="Browse Books">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-semibold mb-6">Browse Books</h1>
+
+        {/* Loading and error messages */}
+        {loading && (
+          <p className="text-center text-gray-600">Loading books...</p>
+        )}
+        {error && <p className="text-center text-red-600">{error}</p>}
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
           {/* Book Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.length > 0 ? (
-              filteredBooks.map((book) => (
-                <div
-                  key={book.id}
-                  className="rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white"
-                >
-                  <div className="w-full aspect-[3/4] overflow-hidden">
-                    <img
-                      src={book.cover}
-                      alt={book.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-medium text-base mb-1">{book.title}</h3>
-                    <p className="text-sm text-gray-500 mb-2">{book.author}</p>
-                    <div className="flex gap-1 flex-wrap">
-                      {book.genres.map((genre) => (
-                        <Badge
-                          key={genre}
-                          className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full"
-                        >
-                          {genre}
-                        </Badge>
-                      ))}
+            {filteredBooks.length > 0
+              ? filteredBooks.map((book) => (
+                  <Link
+                    key={book.book_id}
+                    href={`bookdetail-reader?bookid=${book.book_id}`}
+                    className="block rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 bg-white"
+                  >
+                    <div className="w-full aspect-[3/4] overflow-hidden">
+                      <img
+                        src={book.book_cover || "/placeholder-book.jpg"}
+                        alt={book.book_title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="col-span-full text-center text-gray-500">
-                No books found for the selected filters.
-              </p>
-            )}
+                    <div className="p-3">
+                      <h3 className="font-medium text-base mb-1">
+                        {book.book_title}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {Array.isArray(book.authors)
+                          ? book.authors.join(", ")
+                          : book.authors || "Unknown Author"}
+                      </p>
+                      <div className="flex gap-1 flex-wrap">
+                        {book.genre &&
+                          book.genre.map((genre, index) => (
+                            <Badge
+                              key={index}
+                              className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full"
+                            >
+                              {genre}
+                            </Badge>
+                          ))}
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              : !loading && (
+                  <p className="col-span-full text-center text-gray-500">
+                    No books found for the selected filters.
+                  </p>
+                )}
           </div>
 
           {/* Filters Sidebar */}
@@ -179,9 +191,9 @@ const BrowseBooks: React.FC = () => {
             <h3 className="text-lg font-semibold mb-2">Filter By</h3>
             <div>
               <label className="block text-sm font-medium mb-1">Genres</label>
-              <div className="space-y-1">
-                {allGenres.map((genre) => (
-                  <div key={genre} className="flex items-center">
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {allGenres.map((genre, index) => (
+                  <div key={index} className="flex items-center">
                     <input
                       type="checkbox"
                       value={genre}
@@ -194,6 +206,7 @@ const BrowseBooks: React.FC = () => {
                             : prev.filter((g) => g !== genre)
                         );
                       }}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
                     />
                     <span className="ml-2 text-sm">{genre}</span>
                   </div>
@@ -208,7 +221,11 @@ const BrowseBooks: React.FC = () => {
                 className="w-full border border-gray-300 rounded p-2 text-sm"
               >
                 <option value="">All Languages</option>
-                <option value="English">English</option>
+                {allLanguages.map((language, index) => (
+                  <option key={index} value={language}>
+                    {language}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -239,10 +256,12 @@ const BrowseBooks: React.FC = () => {
           <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
             ←
           </button>
-          <button className="w-10 h-10 rounded-lg bg-indigo-600 text-white">1</button>
+          <button className="w-10 h-10 rounded-lg bg-indigo-600 text-white">
+            1
+          </button>
           <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
             →
-          </button> 
+          </button>
         </div>
       </div>
     </MainLayout>

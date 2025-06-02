@@ -137,7 +137,7 @@ const ReaderDashboard: React.FC = () => {
           </p>
           <button
             className="mt-4 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded transition-colors duration-200"
-            onClick={() => router.push("/topPicks")}
+            onClick={() => router.push("/browse-books")}
           >
             View Books
           </button>
@@ -375,27 +375,6 @@ const ReaderDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Action buttons at the bottom */}
-        <div className="flex justify-end gap-4 mt-8">
-          <button
-            className="px-4 py-2 border border-[#E4E4E7] hover:bg-[#F4F4F5] text-gray-700 rounded"
-            onClick={() => router.push("/browse-books")}
-          >
-            Browse More
-          </button>
-          <button
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded flex items-center gap-2"
-            onClick={() => {
-              if (inProgressBooks.length > 0) {
-                router.push(`/reader/${inProgressBooks[0].id}`);
-              }
-            }}
-          >
-            <BookOpen className="h-4 w-4" />
-            Continue Reading
-          </button>
         </div>
       </div>
     </MainLayout>

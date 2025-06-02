@@ -51,7 +51,11 @@ export default function MainLayout({
       icon: <LayoutDashboardIcon className="h-5 w-5" />,
       path: "/dashboard",
     },
-    { label: "Manage Books", icon: <BookOpenIcon className="h-5 w-5" /> },
+    {
+      label: "Manage Books",
+      icon: <BookOpenIcon className="h-5 w-5" />,
+      path: "/manage-book",
+    },
     { label: "Manage Collections", icon: <LibraryIcon className="h-5 w-5" /> },
     {
       label: "Manage Readers",
