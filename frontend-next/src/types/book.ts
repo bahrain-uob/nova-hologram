@@ -21,7 +21,7 @@ export interface BookData {
 export interface Book {
   book_id: string;
   user_id: string;
-  book_title: string;
+  title: string; //changed from book_title to tittle to match the API
   type: string;
   genre: JSON;
   collection_id?: string[];
@@ -31,7 +31,7 @@ export interface Book {
   publisher: JSON;
   publication_year: string;
   reading_level: string;
-  book_cover?: string;
+  cover?: string; // changed from book_cover to cover to match the API
   summary?: string;
   script?: string;
   book_trailer?: string;
