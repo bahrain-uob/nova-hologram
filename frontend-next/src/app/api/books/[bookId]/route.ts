@@ -45,6 +45,40 @@ export async function DELETE(
   }
 }
 
+// This file defines the Next.js API route for fetching a specific book by its ID.
+export async function GET(
+  request: Request,
+  { params }: { params: { bookId: string } }
+) {
+  try {
+    // Extract the bookId from the request parameters
+    const bookId = params.bookId;
 
+    const response = await fetch(
+      `https://9b8264bvl5.execute-api.us-east-1.amazonaws.com/get-book/${bookId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    // Log the response status for debugging
+    const data = await response.json();
 
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: `Failed to fetch book: ${response.status}` },
+        { status: response.status }
+      );
+    }
 
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Error fetching book:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
