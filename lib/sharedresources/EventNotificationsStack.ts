@@ -7,8 +7,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as subs from "aws-cdk-lib/aws-sns-subscriptions";
 import * as iam from "aws-cdk-lib/aws-iam";
-import { StorageStack } from "../Storage/storage-stack";
-import { lambdastack } from "../Backend/lambda-stacks";
+// Removed stack imports, using resource props instead
 
 /**
  * EventNotificationsStack
@@ -32,18 +31,11 @@ export class EventNotificationsStack extends cdk.Stack {
   constructor(
     scope: Construct, 
     id: string, 
-    storageStack: StorageStack,
-    lambdaStack: lambdastack,
     props?: cdk.StackProps
   ) {
     super(scope, id, props);
 
-    // Set up S3 event notification to trigger Lambda
-    // This fixes the circular dependency between StorageStack and LambdaStack
-    storageStack.audioFilesBucket.addEventNotification(
-      s3.EventType.OBJECT_CREATED,
-      new s3n.LambdaDestination(lambdaStack.playResponse)
-    );
+    // Audio file bucket notifications are now handled in PermissionsStack
 
     // Create SNS topic for real-time notifications
     this.notificationsTopic = new sns.Topic(this, 'NotificationsTopic', {

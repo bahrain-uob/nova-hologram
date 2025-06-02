@@ -2,14 +2,14 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { StorageStack } from "../Storage/storage-stack";
-import { lambdastack } from "./lambda-stacks";
+import { LambdaStack } from "./lambda-stacks";
 
 export class BedrockStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, lambdastack: lambdastack, storagestack: StorageStack,  props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, lambdaStack: LambdaStack, storagestack: StorageStack,  props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Update the addToRolePolicy statement
-    lambdastack.BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
+    lambdaStack.BedRockFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: [
         'bedrock:*',  // Full access to Amazon Bedrock
         's3:PutObject',
@@ -22,7 +22,7 @@ export class BedrockStack extends cdk.Stack {
     
 
         
-        storagestack.genVideos.grantReadWrite(lambdastack.BedRockFunction);
+        storagestack.genVideos.grantReadWrite(lambdaStack.BedRockFunction);
         
         new cdk.CfnOutput(this, "GenVideosBucketURI", {
         value: `s3://${storagestack.genVideos.bucketName}/upload/`,

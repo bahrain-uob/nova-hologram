@@ -180,30 +180,35 @@ deploy_aws_resources() {
     echo -e "${YELLOW}Synthesizing CloudFormation template...${NC}"
     export CDK_SYNTH_MODE=true
     
-    # First try to synthesize the template
-    if npm run cdk synth; then
-      echo -e "${GREEN}CloudFormation template synthesized successfully.${NC}"
+    # Build TypeScript files first
+    echo -e "${YELLOW}Building TypeScript files...${NC}"
+    if npm run build; then
+      echo -e "${GREEN}TypeScript build successful.${NC}"
       
-      # Ask if the user wants to proceed with deployment
-      echo -e "\n${YELLOW}Do you want to proceed with deployment? (y/n)${NC}"
-      read -r proceed_deploy
+      # Now try to synthesize the template
+      echo -e "${YELLOW}Running CDK synth...${NC}"
+      if npx cdk synth "*"; then
+        echo -e "${GREEN}CloudFormation template synthesized successfully.${NC}"
       
-      if [[ "$proceed_deploy" =~ ^[Yy]$ ]]; then
-        echo -e "${BLUE}Deploying stacks...${NC}"
-        npm run cdk deploy -- --all
-        echo -e "${GREEN}AWS resources deployed.${NC}"
+        # Ask if the user wants to proceed with deployment
+        echo -e "\n${YELLOW}Do you want to proceed with deployment? (y/n)${NC}"
+        read -r proceed_deploy
+      
+        if [[ "$proceed_deploy" =~ ^[Yy]$ ]]; then
+          echo -e "${BLUE}Deploying stacks...${NC}"
+          npx cdk deploy "*" --require-approval never
+          echo -e "${GREEN}AWS resources deployed.${NC}"
+        else
+          echo -e "${YELLOW}Deployment skipped.${NC}"
+        fi
       else
-        echo -e "${BLUE}Skipping deployment.${NC}"
+        echo -e "${RED}Failed to synthesize CloudFormation template.${NC}"
       fi
     else
-      echo -e "${RED}Failed to synthesize CloudFormation template.${NC}"
-      echo -e "${YELLOW}You can still run the frontend without deploying AWS resources.${NC}"
+      echo -e "${RED}TypeScript build failed.${NC}"
     fi
-    
-    # Unset the environment variable
-    unset CDK_SYNTH_MODE
   else
-    echo -e "${BLUE}Skipping AWS resource deployment.${NC}"
+    echo -e "${YELLOW}Skipping AWS deployment.${NC}"
   fi
 }
 

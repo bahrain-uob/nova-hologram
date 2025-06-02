@@ -10,45 +10,21 @@ export class StorageStack extends cdk.Stack {
   public readonly genVideos: s3.Bucket;
   public readonly audioFilesBucket: s3.Bucket;
   public readonly novaContentBucket: s3.Bucket;
-  public readonly readingMaterialsQueue: sqs.Queue; ;
-  public readonly extractedTextQueue: sqs.Queue;
-  constructor(scope: Construct, id: string, shared:SharedResourcesStack, props?: cdk.StackProps) {
+  public readonly readingMaterialsQueue: sqs.Queue;
+  constructor(scope: Construct, id: string, shared: SharedResourcesStack, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    this.readingMaterials = new s3.Bucket(this, "ReadingMaterials", {
-      websiteIndexDocument: "index.html",
-      websiteErrorDocument: "error.html",
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-    });
-
-    this.genVideos = new s3.Bucket(this, "GenVideos", {
-      websiteIndexDocument: "index.html",
-      websiteErrorDocument: "error.html",
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-    });
+    // Use buckets from SharedResourcesStack
+    this.readingMaterials = shared.readingMaterialsBucket;
+    this.genVideos = shared.genVideosBucket;
+    this.audioFilesBucket = shared.audioFilesBucket;
+    this.novaContentBucket = shared.novaContentBucket;
     
-          // SQS Queue for new uploads from reading materials s3 bucket
-     this.readingMaterialsQueue = new sqs.Queue(this, "ReadingMaterialsQueue",{}); //this takes readingmaterials s3 object and puts it in the queue for the lambda function to process it
-
-     // SQS Queue for extracted text from textract function 
-     this.extractedTextQueue = new sqs.Queue(this, "ExtractedTextQueue",{}); //after the textextraction lambda function processes the object, it puts the result in this queue for the next lambda function to process it
-
-     // Notifications are now handled in storage-notifications.ts
-
-      //Student
-       // Bucket for audio files
-          this.audioFilesBucket = new s3.Bucket(this, 'AudioFilesBucket', {
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-            autoDeleteObjects: true,
-          });
-      
-          // Bucket for Nova-generated content
-          this.novaContentBucket = new s3.Bucket(this, 'NovaGeneratedContentBucket', {
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-            autoDeleteObjects: true,
-          });
+    // SQS Queue for new uploads from reading materials s3 bucket
+    this.readingMaterialsQueue = new sqs.Queue(this, "ReadingMaterialsQueue", {
+      visibilityTimeout: cdk.Duration.seconds(300),
+      retentionPeriod: cdk.Duration.days(1),
+    });
 
           // NOTE: Event notifications for these buckets are now handled in EventNotificationsStack
           // to avoid circular dependencies

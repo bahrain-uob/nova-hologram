@@ -3,7 +3,7 @@ import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { DBStack } from "../DB/db-stack";
-import { lambdastack } from "./lambda-stacks";
+import { LambdaStack } from "./lambda-stacks";
 import { StorageStack } from "../Storage/storage-stack";
 import { EventNotificationsStack } from "../sharedresources/EventNotificationsStack";
 
@@ -17,7 +17,7 @@ export class APIStack extends cdk.Stack {
     scope: cdk.App,
     id: string,
     dbStack: DBStack,
-    lambdaStack: lambdastack,
+    lambdaStack: LambdaStack,
     storageStack: StorageStack,
     eventNotificationsStack?: EventNotificationsStack,
     props?: cdk.StackProps
