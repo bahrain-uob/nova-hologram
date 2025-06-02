@@ -173,6 +173,15 @@ const InteractivePage: React.FC = () => {
                 />
                 Your browser does not support the video tag.
               </video>
+
+              <div className="flex justify-start mt-4">
+                <button
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 hover:scale-105 hover:shadow-lg active:scale-95 active:bg-indigo-800 cursor-pointer transition-all duration-200 font-semibold shadow-md"
+                  onClick={() => console.log("Hologram activated")}
+                >
+                  Hologram
+                </button>
+              </div>
             </div>
           </div>
         </div>
