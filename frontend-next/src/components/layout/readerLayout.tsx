@@ -15,6 +15,7 @@ import { userPool } from "@/app/aws-config";
 import { useRouter } from "next/navigation";
 import { ChatbotButton } from "@/components/chatbot/ChatbotButton";
 import path from "path";
+import Image from "next/image";
 
 export default function MainLayout({
   children,
@@ -78,7 +79,14 @@ export default function MainLayout({
     <div className="bg-[#FAFAFB]">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#E4E4E7] z-10 flex items-center justify-between px-6">
-        <div className="text-2xl font-bold text-indigo-600">ClarityUI</div>
+                <div className="text-2xl font-bold text-indigo-600"><Image
+              src="/logo.svg"
+              alt="VIBE Logo"
+              width={180}
+              height={60}
+              className="h-[60px] w-auto"
+              priority
+            /></div>
         <div className="relative flex-1 max-w-2xl mx-auto">
           <svg
             xmlns="http://www.w3.org/2000/svg"

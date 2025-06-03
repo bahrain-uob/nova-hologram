@@ -142,7 +142,8 @@ export default function Signup() {
     <div className="signup-container">
       <div className="signup-card">
         <div className="logo">
-          <Image src="/logo.svg" alt="Logo" onClick={handleBackToHome} width={50} height={50} />
+          <Image src="/logo.svg" alt="Logo" onClick={handleBackToHome}             width={120}
+            height={120} />
         </div>
 
         <div className="user-type-selector">
