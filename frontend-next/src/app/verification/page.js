@@ -18,7 +18,8 @@ export default function Verification() {
     <div className="verification-container">
       <div className="verification-card">
         <div className="logo">
-          <Image src="/logo.svg" alt="Logo" width={50} height={50} />
+          <Image src="/logo.svg" alt="Logo"             width={120}
+            height={120} />
         </div>
 
         <h1>Verification</h1>

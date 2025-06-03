@@ -130,8 +130,8 @@ export default function Login() {
             src="/logo.svg"
             alt="Logo"
             onClick={handleBackToHome}
-            width={50}
-            height={50}
+            width={120}
+            height={120}
           />
         </div>
 
