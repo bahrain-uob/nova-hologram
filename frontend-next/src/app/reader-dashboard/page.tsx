@@ -265,9 +265,14 @@ const ReaderDashboard: React.FC = () => {
                       {book.authors.join(", ") || "Unknown Author"}
                     </p>
                     <div className="flex items-center mb-2">
-                      <span className="bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded-full">
-                        {book.genre}
-                      </span>
+                      {book.genre.map((g, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded mr-1"
+                          >
+                          {g}
+                          </span>
+                      ))}
                     </div>
                     <div className="mt-auto">
                       <button
