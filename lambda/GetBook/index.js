@@ -25,7 +25,7 @@ async function getPresignedUrl(s3Path) {
   if (!s3Path || !s3Path.startsWith("s3://")) return null;
 
   const parts = s3Path.replace("s3://", "").split("/");
-  const bucket = parts.shift();
+  const bucket = parts.shift()?.trim();
   const key = parts.join("/");
 
   const command = new GetObjectCommand({

@@ -405,13 +405,15 @@ const ManageBooks: React.FC = () => {
               key={book.book_id}
               className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex gap-6"
             >
-              <Image
-                src={book.book_cover || "/placeholder-book.jpg"}
-                alt={book.book_title}
-                width={96}
-                height={128}
-                className="object-cover rounded-lg"
-              />
+        <Image
+          src={book.book_cover || "/placeholder-book.jpg"}
+          alt={book.book_title}
+          width={96}
+          height={128}
+          className="object-cover rounded-lg"
+          unoptimized 
+        />
+
 
               <div className="flex flex-col justify-between ml-2">
                 <div>
