@@ -840,8 +840,10 @@ export class lambdastack extends cdk.Stack {
     });
 
     dbStack.book.grantReadData(getAllBooksLambda);
+    StorageStack.readingMaterials.grantRead(getAllBooksLambda);
 
     this.getAllBooksLambda = getAllBooksLambda;
+    StorageStack.genVideos.grantRead(getBookLambda);
 
     this.deleteBookLambdav2 = new lambda.Function(this, "DeleteBookLambdav2", {
       runtime: lambda.Runtime.NODEJS_18_X,

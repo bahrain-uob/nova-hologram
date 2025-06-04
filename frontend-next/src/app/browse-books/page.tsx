@@ -268,4 +268,4 @@ const BrowseBooks: React.FC = () => {
   );
 };
 
-export default withRoleProtection(BrowseBooks, ["reader"]);
+export default withRoleProtection(BrowseBooks, ["librarian"]);

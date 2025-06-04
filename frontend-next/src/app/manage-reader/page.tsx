@@ -8,74 +8,99 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import MainLayout from "@/components/layout/MainLayout";
-import  { User } from "@/types/user";
+
+interface Reader {
+  id: number;
+  name: string;
+  avatar: string;
+  grade: string;
+  readingLevel: "Beginner" | "Intermediate" | "Advanced";
+}
+
+// Simulated fetch function
+const fetchReaders = async (): Promise<Reader[]> => [
+  {
+    id: 1,
+    name: "Fatima Yasser",
+    avatar: "https://ui-avatars.com/api/?name=Fatima+Yasser&background=E4E4E7&color=3F3F46",
+    grade: "Primary 4",
+    readingLevel: "Beginner",
+  },
+  {
+    id: 2,
+    name: "Ahmed Mansoor",
+    avatar: "https://ui-avatars.com/api/?name=Ahmed+Mansoor&background=E4E4E7&color=3F3F46",
+    grade: "Intermediate 3",
+    readingLevel: "Intermediate",
+  },
+  {
+    id: 3,
+    name: "Noora Ali",
+    avatar: "https://ui-avatars.com/api/?name=Noora+Ali&background=E4E4E7&color=3F3F46",
+    grade: "Secondary 2",
+    readingLevel: "Advanced",
+  },
+  {
+    id: 4,
+    name: "Salman Saleh",
+    avatar: "https://ui-avatars.com/api/?name=Salman+Saleh&background=E4E4E7&color=3F3F46",
+    grade: "Primary 1",
+    readingLevel: "Beginner",
+  },
+  {
+    id: 5,
+    name: "Aisha Mohammed",
+    avatar: "https://ui-avatars.com/api/?name=Aisha+Mohammed&background=E4E4E7&color=3F3F46",
+    grade: "Intermediate 1",
+    readingLevel: "Intermediate",
+  },
+  {
+    id: 6,
+    name: "Yousef Hassan",
+    avatar: "https://ui-avatars.com/api/?name=Yousef+Hassan&background=E4E4E7&color=3F3F46",
+    grade: "Secondary 3",
+    readingLevel: "Advanced",
+  },
+];
 
 
-
-const API_URL = "https://your-api-url.execute-api.region.amazonaws.com/prod/readers";
 
 const ManageReaders: React.FC = () => {
-  const [readers, setReaders] = useState<User[]>([]);
+  const [readers, setReaders] = useState<Reader[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [grade, setGrade] = useState("");
   const [readingLevel, setReadingLevel] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadReaders = async () => {
-      try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Failed to fetch readers');
-        const data = await response.json();
-        setReaders(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch readers');
-      } finally {
-        setLoading(false);
-      }
+      const readersData = await fetchReaders();
+      setReaders(readersData);
     };
     loadReaders();
   }, []);
 
-  const handleEditReader = (userId: string) => {
-    console.log(`Editing user with id: ${userId}`);
-    // Add your edit logic here
+  const handleEditReader = (readerId: number) => {
+    console.log(`Editing reader with id: ${readerId}`);
   };
 
-  const handleDeleteReader = (userId: string) => {
-    console.log(`Deleting user with id: ${userId}`);
-    // Add your delete logic here
+  const handleDeleteReader = (readerId: number) => {
+    console.log(`Deleting reader with id: ${readerId}`);
   };
 
-  const filteredReaders = readers.filter((user) => {
-    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase());
-    const matchesGrade = grade ? User.grade === grade : true;
-    const matchesLevel = readingLevel ? User.readingLevel === readingLevel : true;
+  const filteredReaders = readers.filter((reader) => {
+    const matchesSearch = reader.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesGrade = grade ? reader.grade === grade : true;
+    const matchesLevel = readingLevel
+      ? reader.readingLevel === readingLevel
+      : true;
     return matchesSearch && matchesGrade && matchesLevel;
   });
 
-  if (loading) {
-    return (
-      <MainLayout activePage="Manage Readers">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <MainLayout activePage="Manage Readers">
-        <div className="text-center py-8 text-red-600">{error}</div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout activePage="Manage Readers">
+      {/* Main Content */}
       <main className="flex-1 bg-gray-50">
         <div className="flex justify-between mb-6">
           <h2 className="text-2xl font-semibold text-gray-700">
@@ -131,14 +156,14 @@ const ManageReaders: React.FC = () => {
 
         {/* Reader Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-          {filteredReaders.map((user) => (
+          {filteredReaders.map((reader) => (
             <div
-              key={user.user_id}
+              key={reader.id}
               className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex gap-6"
             >
               <Image
-                src={user.avatar || '/default-avatar.png'}
-                alt={`${user.first_name} ${user.last_name}`}
+                src={reader.avatar}
+                alt={reader.name}
                 width={96}
                 height={96}
                 className="object-cover rounded-full"
@@ -147,28 +172,23 @@ const ManageReaders: React.FC = () => {
               <div className="flex flex-col justify-between ml-2">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
-                    {user.first_name} {user.last_name}
+                    {reader.name}
                   </h3>
-                  <p className="text-sm text-gray-500">{user.email}</p>
-                  {user.grade && (
-                    <p className="text-sm text-gray-500 mt-1">{user.grade}</p>
-                  )}
-                  {user.readingLevel && (
-                    <p className="text-xs bg-gray-200 text-gray-700 font-medium mt-1 px-2 py-0.5 rounded w-fit">
-                      {user.readingLevel}
-                    </p>
-                  )}
+                  <p className="text-sm text-gray-500">{reader.grade}</p>
+                  <p className="text-xs bg-gray-200 text-gray-700 font-medium mt-1 px-2 py-0.5 rounded w-fit">
+                    {reader.readingLevel}
+                  </p>
                 </div>
 
                 <div className="flex gap-4 mt-2">
                   <button
-                    onClick={() => handleEditReader(user.user_id)}
+                    onClick={() => handleEditReader(reader.id)}
                     className="text-indigo-600 hover:text-indigo-800"
                   >
                     <EditIcon className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => handleDeleteReader(user.user_id)}
+                    onClick={() => handleDeleteReader(reader.id)}
                     className="text-red-600 hover:text-red-800"
                   >
                     <DeleteIcon className="w-5 h-5" />
@@ -179,7 +199,7 @@ const ManageReaders: React.FC = () => {
           ))}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination (placeholder) */}
         <div className="flex justify-center items-center gap-4">
           <button className="w-10 h-10 border border-zinc-200 rounded-lg flex items-center justify-center">
             ←
