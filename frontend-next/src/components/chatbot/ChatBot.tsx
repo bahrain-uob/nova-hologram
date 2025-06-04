@@ -23,11 +23,9 @@ type Message = {
 
 // Dummy bot responses
 const dummyResponses = [
-  "I found several books that might interest you based on your reading history.",
-  "Would you like me to recommend books similar to 'The Red Pathways'?",
-  "I can help you find books in specific genres. What are you interested in?",
-  "Based on your preferences, I think you might enjoy 'The Silent Echo' by Maria Johnson.",
-  "I've noticed you enjoy mystery novels. Have you tried the latest release by James Patterson?",
+  "Of course! I'd love to help. Are you interested in any particular genre?",
+  "If you're looking for a drama, I suggest reading The Little Match Girl by Hans Christian Andersen.",
+  "Sure! I can help you find books. What genre are you interested in?",
 ];
 
 export function ChatBot() {
